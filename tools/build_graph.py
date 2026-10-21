@@ -14,7 +14,6 @@
 import json
 import os
 import re
-from datetime import datetime, timezone
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "docs", "graph.json")
@@ -62,7 +61,6 @@ STAGES = [
 
 for sid, label, period in STAGES:
     node(f"stage:{sid}", label, "stage", period=period)
-    node(f"section:{sid}", f"#stage-{sid[1]}", "dom", desc="بخش HTML مرحله")
     node(f"file:index.html#stage-{sid[1]}", f"#stage-{sid[1]}", "dom")
 
 # نگاشت رندر: app.js بخش‌ها را پر می‌کند
@@ -155,7 +153,7 @@ graph = {
     "meta": {
         "project": "everest-5x5-system",
         "title": "سیستم ۵×۵ تیم اورست",
-        "generated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "schema": 1,
         "generator": "tools/build_graph.py",
         "counts": {
             "nodes": len(NODES),

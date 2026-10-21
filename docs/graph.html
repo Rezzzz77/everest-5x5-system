@@ -201,7 +201,7 @@
     document.getElementById('meta').textContent =
       `${m.title || 'پروژه'} · ${nodes.length} گره · ${edges.length} یال`;
     document.getElementById('stat').textContent =
-      `${(m.generated || '').slice(0, 10)}`;
+      `${m.schema ? 'v' + m.schema : ''}`;
 
     buildLegend();
     resize();
