@@ -6,6 +6,7 @@
 import { loadFromStorage, saveToStorage, syncState, loadFromCloud, isSupabaseConfigured, testConnection } from './src/db.js';
 import { getSupabaseConfig, saveSupabaseConfig, clearSupabaseConfig, validateConfig } from './src/config.js';
 import { sendOtp, verifyOtp, signOut, loadSession, currentUser, isValidEmail, authErrorText } from './src/auth.js';
+import { getNextAction, getMotivation, getOverallProgress, generateCoachCard, getStageTheme } from './src/coach.js';
 
 // وضعیت اپلیکیشن
 let appState = loadFromStorage();
@@ -57,6 +58,7 @@ let cloudTimer = null;
 function saveAll() {
   appState.lastModified = Date.now();
   saveToStorage(appState);
+  renderCoachCard();
   clearTimeout(cloudTimer);
   cloudTimer = setTimeout(async () => {
     try {
@@ -176,6 +178,54 @@ function disconnectCloud() {
   clearSupabaseConfig();
   cloudLabel('off');
   cloudBox('info', 'اتصال قطع شد. اپ به‌صورت آفلاین با حافظه دستگاه کار می‌کند.');
+}
+
+/* ---------------- Agent Coach ---------------- */
+function renderCoachCard() {
+  const container = document.getElementById('coach-card');
+  if (!container) return;
+  
+  if (!appState.user) {
+    container.innerHTML = '';
+    return;
+  }
+
+  const card = generateCoachCard(appState);
+  const theme = getStageTheme(card.stage);
+
+  container.innerHTML = `
+    <div class="${theme.bg} ${theme.border} rounded-2xl p-3.5 space-y-2.5 shadow-lg">
+      <!-- Header -->
+      <div class="flex justify-between items-start">
+        <div>
+          <span class="text-[10px] ${theme.badge} text-white px-2 py-0.5 rounded-full font-bold">Coach ۵×۵</span>
+          <h3 class="text-sm font-extrabold mt-1 ${theme.text}">اقدام بعدی + انگیزه</h3>
+        </div>
+        <div class="text-right">
+          <div class="text-[10px] font-mono font-bold ${theme.text}">${card.progress}%</div>
+          <div class="text-[9px] text-slate-500">پیشرفت کلی</div>
+        </div>
+      </div>
+
+      <!-- Progress bar -->
+      <div class="w-full bg-slate-950 h-1.5 rounded-full overflow-hidden">
+        <div class="${theme.badge.replace('bg-', 'bg-')} h-full transition-all duration-500" style="width: ${card.progress}%"></div>
+      </div>
+
+      <!-- Next Action -->
+      <div class="bg-slate-900/80 rounded-xl p-3 border ${theme.border}">
+        <div class="flex items-center gap-2 mb-1.5">
+          <span class="text-[10px] font-bold ${theme.text}">🎯 اقدام بعدی:</span>
+        </div>
+        <p class="text-[11px] text-slate-200 leading-relaxed">${card.nextAction}</p>
+      </div>
+
+      <!-- Motivation -->
+      <div class="bg-gradient-to-r ${theme.bg} border ${theme.border} rounded-xl p-3">
+        <p class="text-[11px] ${theme.text} leading-relaxed font-medium">"${card.motivation}"</p>
+      </div>
+    </div>
+  `;
 }
 
 /* ---------------- ورود (OTP) ---------------- */
@@ -303,8 +353,8 @@ function resetDemo() {
   }
 }
 
-// محاسبه بالاترین مرحله باز
-function getHighestUnlockedStage() {
+// محاسبه بالاترین مرحله باز — export برای Coach
+export function getHighestUnlockedStage(state = appState) { 
   if (!appState.s1Steps || appState.s1Steps.length === 0) return 1;
   const s1Done = appState.s1Steps.every(s => s.done);
   if (!s1Done) return 1;
@@ -769,6 +819,7 @@ function initApp() {
   renderStage3();
   renderStage4();
   renderStage5();
+  renderCoachCard();
   updateCloudBadge();
   update72HourTimer();
   setInterval(update72HourTimer, 1000);
@@ -790,6 +841,7 @@ function initApp() {
         renderStage3();
         renderStage4();
         renderStage5();
+        renderCoachCard();
       }
     }).catch(() => {});
   }
@@ -833,7 +885,8 @@ Object.assign(window, {
   testCloudConnection,
   saveCloudConfigAndSync,
   disconnectCloud,
-  saveAll
+  saveAll,
+  renderCoachCard
 });
 
 // راه‌اندازی
