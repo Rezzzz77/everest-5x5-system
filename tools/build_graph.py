@@ -45,6 +45,10 @@ FILES = [
     ("docs/MEMORY.md", "doc", "حافظه پایدار پروژه — تصمیم‌ها، باگ‌ها، وضعیت"),
     ("docs/graph.html", "entry", "نمایش تعاملی گراف دانش"),
     ("tools/build_graph.py", "module", "تولیدکننده گراف از منبع"),
+    ("tools/check_contracts.py", "module", "تست قرارداد HTML ↔ JS"),
+    ("tools/make_icons.py", "module", "تولید آیکون‌های PWA"),
+    ("tests/core.test.mjs", "module", "تست‌های واحد (config / db / defaults)"),
+    ("package.json", "config", "اسکریپت‌های test / check / graph / serve"),
 ]
 
 for path, ntype, desc in FILES:
@@ -84,6 +88,7 @@ FEATURES = [
     ("f:catalog", "کاتالوگ محصول", "فلش‌کارت نیوشانیک"),
     ("f:offline", "حالت آفلاین", "Service Worker"),
     ("f:sync", "همگام‌سازی ابری", "Supabase (اختیاری)"),
+    ("f:cloud-setup", "تنظیم اتصال درون‌برنامه", "URL + anon key + تست اتصال"),
 ]
 for fid, label, desc in FEATURES:
     node(fid, label, "feature", desc=desc)
@@ -120,6 +125,10 @@ edge("file:README.md", "file:index.html", "documents")
 edge("file:README.md", "file:docs/MEMORY.md", "references")
 edge("file:docs/graph.html", "file:docs/MEMORY.md", "documents")
 edge("file:tools/build_graph.py", "file:docs/graph.html", "produces")
+edge("file:tools/check_contracts.py", "file:app.js", "validates")
+edge("file:tests/core.test.mjs", "file:src/config.js", "tests")
+edge("file:tests/core.test.mjs", "file:src/db.js", "tests")
+edge("file:package.json", "file:tests/core.test.mjs", "runs")
 
 # هر مرحله: یک بخش HTML + یک رندرکننده در app.js
 for sid, _, _ in STAGES:
@@ -143,6 +152,8 @@ edge("f:kpi", "stage:s5")
 edge("f:offline", "file:sw.js")
 edge("f:sync", "file:src/db.js")
 edge("f:sync", "table:user_state")
+edge("f:cloud-setup", "file:src/config.js")
+edge("f:cloud-setup", "f:sync")
 edge("f:catalog", "stage:s3")
 edge("f:timer", "stage:s1")
 edge("f:voice", "stage:s2")

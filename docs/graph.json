@@ -5,8 +5,8 @@
     "schema": 1,
     "generator": "tools/build_graph.py",
     "counts": {
-      "nodes": 50,
-      "edges": 81
+      "nodes": 55,
+      "edges": 88
     }
   },
   "nodes": [
@@ -15,6 +15,12 @@
       "label": "manifest.json",
       "type": "config",
       "desc": "تنظیمات PWA"
+    },
+    {
+      "id": "file:package.json",
+      "label": "package.json",
+      "type": "config",
+      "desc": "اسکریپت‌های test / check / graph / serve"
     },
     {
       "id": "file:src/config.js",
@@ -165,6 +171,12 @@
       "desc": "فلش‌کارت نیوشانیک"
     },
     {
+      "id": "f:cloud-setup",
+      "label": "تنظیم اتصال درون‌برنامه",
+      "type": "feature",
+      "desc": "URL + anon key + تست اتصال"
+    },
+    {
       "id": "f:crm",
       "label": "CRM مخاطبین",
       "type": "feature",
@@ -237,10 +249,28 @@
       "desc": "Service Worker — کش آفلاین"
     },
     {
+      "id": "file:tests/core.test.mjs",
+      "label": "tests/core.test.mjs",
+      "type": "module",
+      "desc": "تست‌های واحد (config / db / defaults)"
+    },
+    {
       "id": "file:tools/build_graph.py",
       "label": "tools/build_graph.py",
       "type": "module",
       "desc": "تولیدکننده گراف از منبع"
+    },
+    {
+      "id": "file:tools/check_contracts.py",
+      "label": "tools/check_contracts.py",
+      "type": "module",
+      "desc": "تست قرارداد HTML ↔ JS"
+    },
+    {
+      "id": "file:tools/make_icons.py",
+      "label": "tools/make_icons.py",
+      "type": "module",
+      "desc": "تولید آیکون‌های PWA"
     },
     {
       "id": "file:supabase/schema.sql",
@@ -361,6 +391,26 @@
       "source": "file:tools/build_graph.py",
       "target": "file:docs/graph.html",
       "type": "produces"
+    },
+    {
+      "source": "file:tools/check_contracts.py",
+      "target": "file:app.js",
+      "type": "validates"
+    },
+    {
+      "source": "file:tests/core.test.mjs",
+      "target": "file:src/config.js",
+      "type": "tests"
+    },
+    {
+      "source": "file:tests/core.test.mjs",
+      "target": "file:src/db.js",
+      "type": "tests"
+    },
+    {
+      "source": "file:package.json",
+      "target": "file:tests/core.test.mjs",
+      "type": "runs"
     },
     {
       "source": "file:index.html",
@@ -638,6 +688,11 @@
       "type": "implemented_in"
     },
     {
+      "source": "f:cloud-setup",
+      "target": "file:app.js",
+      "type": "implemented_in"
+    },
+    {
       "source": "f:auth",
       "target": "stage:s1",
       "type": "uses"
@@ -675,6 +730,16 @@
     {
       "source": "f:sync",
       "target": "table:user_state",
+      "type": "uses"
+    },
+    {
+      "source": "f:cloud-setup",
+      "target": "file:src/config.js",
+      "type": "uses"
+    },
+    {
+      "source": "f:cloud-setup",
+      "target": "f:sync",
       "type": "uses"
     },
     {
