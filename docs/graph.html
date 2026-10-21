@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>گراف دانش پروژه | سیستم ۵×۵ تیم اورست</title>
+<style>
+  :root{
+    --bg:#0a0f1a; --panel:#111827; --line:#1f2a3a; --txt:#e5e7eb; --dim:#94a3b8;
+    --entry:#60a5fa; --module:#34d399; --config:#fbbf24; --sql:#f472b6;
+    --doc:#a78bfa; --stage:#fb923c; --feature:#22d3ee; --dom:#64748b; --table:#ef4444;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  body{
+    background:radial-gradient(circle at 20% 0%,#132033 0%,var(--bg) 55%);
+    color:var(--txt); font-family:"Vazirmatn","Segoe UI",Tahoma,sans-serif;
+    overflow:hidden; -webkit-tap-highlight-color:transparent;
+  }
+  header{
+    position:fixed; inset:0 0 auto 0; height:64px; z-index:10;
+    display:flex; align-items:center; gap:12px; padding:0 14px;
+    background:rgba(10,15,26,.82); backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--line);
+  }
+  .brand{display:flex;flex-direction:column;line-height:1.25;min-width:0}
+  .brand b{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .brand span{font-size:10px;color:var(--dim)}
+  #q{
+    margin-inline-start:auto; width:190px; max-width:40vw;
+    background:#0e1726; border:1px solid var(--line); color:var(--txt);
+    border-radius:10px; padding:8px 11px; font:inherit; font-size:12px; outline:none;
+  }
+  #q:focus{border-color:#3b82f6}
+  .stat{font-size:11px;color:var(--dim);white-space:nowrap}
+
+  #legend{
+    position:fixed; top:76px; right:12px; z-index:10;
+    display:flex; flex-direction:column; gap:5px;
+    background:rgba(17,24,39,.86); backdrop-filter:blur(10px);
+    border:1px solid var(--line); border-radius:14px; padding:9px;
+    max-height:calc(100vh - 96px); overflow:auto;
+  }
+  .chip{
+    display:flex; align-items:center; gap:7px; cursor:pointer; user-select:none;
+    font-size:11px; color:var(--txt); padding:5px 7px; border-radius:9px;
+    transition:.15s; border:1px solid transparent;
+  }
+  .chip:hover{background:#182234}
+  .chip.off{opacity:.32}
+  .chip i{width:9px;height:9px;border-radius:50%;display:block;flex:0 0 auto}
+  .chip b{font-weight:600}
+  .chip small{color:var(--dim);margin-inline-start:auto;font-size:10px}
+
+  #panel{
+    position:fixed; inset-inline-start:12px; bottom:12px; z-index:10;
+    width:min(320px,calc(100vw - 24px));
+    background:rgba(17,24,39,.92); backdrop-filter:blur(12px);
+    border:1px solid var(--line); border-radius:14px; padding:13px;
+    font-size:12px; line-height:1.75;
+    transform:translateY(12px); opacity:0; pointer-events:none; transition:.2s;
+  }
+  #panel.show{transform:none;opacity:1;pointer-events:auto}
+  #panel .t{font-weight:700;font-size:13px;margin-bottom:2px;direction:ltr;text-align:right}
+  #panel .k{color:var(--dim);font-size:10.5px}
+  #panel .rels{margin-top:9px;padding-top:9px;border-top:1px solid var(--line)}
+  #panel .rel{display:flex;gap:6px;align-items:baseline;font-size:11px;margin-top:4px}
+  #panel .rel em{color:var(--dim);font-style:normal;font-size:10px;flex:0 0 auto}
+  #panel .rel span{color:#cbd5e1;direction:ltr;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #panel .close{
+    position:absolute; top:8px; inset-inline-start:10px; cursor:pointer;
+    color:var(--dim); font-size:15px; line-height:1; background:none;border:0;
+  }
+  canvas{display:block; touch-action:none; cursor:grab}
+  canvas.drag{cursor:grabbing}
+  #hint{
+    position:fixed; bottom:14px; inset-inline-end:14px; z-index:9;
+    font-size:10px; color:var(--dim); text-align:left; direction:ltr;
+    line-height:1.7; pointer-events:none;
+  }
+  @media (max-width:640px){
+    #legend{flex-direction:row;flex-wrap:wrap;top:auto;bottom:56px;right:8px;left:8px;max-height:120px;overflow:auto}
+    .chip{font-size:10px;padding:4px 6px}
+    #panel{width:calc(100vw - 16px);inset-inline-start:8px;bottom:8px;max-height:44vh;overflow:auto}
+    #hint{display:none}
+    #q{width:130px}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <b>گراف دانش — سیستم ۵×۵ اورست</b>
+    <span id="meta">در حال بارگذاری…</span>
+  </div>
+  <input id="q" type="search" placeholder="جستجوی گره…" autocomplete="off" />
+  <div class="stat" id="stat"></div>
+</header>
+
+<div id="legend"></div>
+
+<div id="panel">
+  <button class="close" id="p-close" aria-label="بستن">✕</button>
+  <div class="t" id="p-title"></div>
+  <div class="k" id="p-type"></div>
+  <div id="p-desc" style="margin-top:6px;color:#cbd5e1"></div>
+  <div class="rels" id="p-rels"></div>
+</div>
+
+<div id="hint">
+  drag = move · wheel = zoom · click = details
+</div>
+
+<canvas id="c"></canvas>
+
+<script>
+(() => {
+  const TYPE = {
+    entry:   { fa: 'ورودی',        c: '#60a5fa', r: 15 },
+    module:  { fa: 'ماژول',        c: '#34d399', r: 13 },
+    config:  { fa: 'تنظیمات',      c: '#fbbf24', r: 11 },
+    sql:     { fa: 'SQL',          c: '#f472b6', r: 12 },
+    doc:     { fa: 'مستند',        c: '#a78bfa', r: 11 },
+    stage:   { fa: 'مرحله',        c: '#fb923c', r: 16 },
+    feature: { fa: 'ویژگی',        c: '#22d3ee', r: 12 },
+    dom:     { fa: 'المان DOM',    c: '#94a3b8', r: 8  },
+    table:   { fa: 'جدول داده',    c: '#ef4444', r: 13 },
+  };
+
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+  const panel = document.getElementById('panel');
+  const qEl = document.getElementById('q');
+
+  let W = 0, H = 0, DPR = 1;
+  let nodes = [], edges = [], byId = new Map();
+  let activeTypes = new Set(Object.keys(TYPE));
+  let hovered = null, selected = null, query = '';
+  let cam = { x: 0, y: 0, k: 1 };
+  let dragNode = null, panning = false, moved = false;
+  let pointer = { x: -1, y: -1 };
+  let ticks = 0, running = true;
+
+  /* ---------------- اندازه بوم ---------------- */
+  function resize() {
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    W = window.innerWidth;
+    H = window.innerHeight;
+    canvas.width = W * DPR;
+    canvas.height = H * DPR;
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  }
+
+  /* ---------------- مختصات ---------------- */
+  const toScreen = (x, y) => ({
+    x: (x - cam.x) * cam.k + W / 2,
+    y: (y - cam.y) * cam.k + H / 2,
+  });
+  const toWorld = (sx, sy) => ({
+    x: (sx - W / 2) / cam.k + cam.x,
+    y: (sy - H / 2) / cam.k + cam.y,
+  });
+
+  /* ---------------- داده ---------------- */
+  async function load() {
+    try {
+      const res = await fetch('./graph.json', { cache: 'no-cache' });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const g = await res.json();
+      init(g);
+    } catch (err) {
+      document.getElementById('meta').textContent = 'خطا در بارگذاری graph.json: ' + err.message;
+    }
+  }
+
+  function init(g) {
+    const c = Math.sqrt(g.nodes.length) * 95;
+    nodes = g.nodes.map((n, i) => {
+      const a = (i / g.nodes.length) * Math.PI * 2;
+      return {
+        ...n,
+        x: Math.cos(a) * c * 0.6 + (Math.random() - 0.5) * 40,
+        y: Math.sin(a) * c * 0.6 + (Math.random() - 0.5) * 40,
+        vx: 0, vy: 0,
+        deg: 0,
+        dim: false,
+      };
+    });
+    byId = new Map(nodes.map(n => [n.id, n]));
+
+    edges = g.edges
+      .map(e => ({ ...e, s: byId.get(e.source), t: byId.get(e.target) }))
+      .filter(e => e.s && e.t);
+
+    edges.forEach(e => { e.s.deg++; e.t.deg++; });
+
+    const m = g.meta || {};
+    document.getElementById('meta').textContent =
+      `${m.title || 'پروژه'} · ${nodes.length} گره · ${edges.length} یال`;
+    document.getElementById('stat').textContent =
+      `${(m.generated || '').slice(0, 10)}`;
+
+    buildLegend();
+    resize();
+    applyFilter();
+    requestAnimationFrame(frame);
+  }
+
+  /* ---------------- راهنما ---------------- */
+  function buildLegend() {
+    const box = document.getElementById('legend');
+    const counts = {};
+    nodes.forEach(n => counts[n.type] = (counts[n.type] || 0) + 1);
+    box.innerHTML = Object.entries(TYPE)
+      .filter(([t]) => counts[t])
+      .map(([t, cfg]) => `
+        <div class="chip" data-type="${t}">
+          <i style="background:${cfg.c};box-shadow:0 0 8px ${cfg.c}88"></i>
+          <b>${cfg.fa}</b><small>${counts[t]}</small>
+        </div>`).join('');
+
+    box.querySelectorAll('.chip').forEach(chip => {
+      chip.onclick = () => {
+        const t = chip.dataset.type;
+        if (activeTypes.has(t) && activeTypes.size > 1) activeTypes.delete(t);
+        else activeTypes.add(t);
+        chip.classList.toggle('off', !activeTypes.has(t));
+        applyFilter();
+      };
+    });
+  }
+
+  function applyFilter() {
+    nodes.forEach(n => {
+      n.hidden = !activeTypes.has(n.type);
+      n.dim = n.hidden;
+    });
+    updateDim();
+  }
+
+  function updateDim() {
+    const q = query.trim().toLowerCase();
+    const focus = hovered || selected;
+
+    // همسایه‌های گرهٔ فعال
+    const near = new Set();
+    if (focus) {
+      near.add(focus.id);
+      edges.forEach(e => {
+        if (e.s.id === focus.id) near.add(e.t.id);
+        if (e.t.id === focus.id) near.add(e.s.id);
+      });
+    }
+
+    nodes.forEach(n => {
+      let dim = n.hidden;
+      if (q) dim = dim || !n.label.toLowerCase().includes(q);
+      if (focus && !dim) dim = !near.has(n.id);
+      n.dim = dim;
+    });
+  }
+
+  /* ---------------- شبیه‌سازی ---------------- */
+  function simulate() {
+    const n = nodes.length;
+    if (!n) return;
+
+    // دافعه
+    for (let i = 0; i < n; i++) {
+      const a = nodes[i];
+      for (let j = i + 1; j < n; j++) {
+        const b = nodes[j];
+        let dx = b.x - a.x, dy = b.y - a.y;
+        let d2 = dx * dx + dy * dy;
+        if (d2 < 1) { dx = (Math.random() - .5) * 2; dy = (Math.random() - .5) * 2; d2 = 4; }
+        const d = Math.sqrt(d2);
+        const f = 5200 / d2;
+        if (d > 0) {
+          const fx = (dx / d) * f, fy = (dy / d) * f;
+          a.vx -= fx; a.vy -= fy;
+          b.vx += fx; b.vy += fy;
+        }
+      }
+    }
+
+    // کشش یال‌ها
+    const REST = 92;
+    for (const e of edges) {
+      const dx = e.t.x - e.s.x, dy = e.t.y - e.s.y;
+      const d = Math.hypot(dx, dy) || 1;
+      const f = (d - REST) * 0.055;
+      const fx = (dx / d) * f, fy = (dy / d) * f;
+      e.s.vx += fx; e.s.vy += fy;
+      e.t.vx -= fx; e.t.vy -= fy;
+    }
+
+    // گرانش به مرکز
+    for (const p of nodes) {
+      p.vx -= p.x * 0.0022;
+      p.vy -= p.y * 0.0022;
+    }
+
+    // یکپارچه‌سازی
+    for (const p of nodes) {
+      if (p.fixed) { p.vx = p.vy = 0; continue; }
+      p.vx *= 0.86;
+      p.vy *= 0.86;
+      p.x += p.vx;
+      p.y += p.vy;
+    }
+  }
+
+  /* ---------------- رسم ---------------- */
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+
+    // یال‌ها
+    for (const e of edges) {
+      if (e.s.hidden || e.t.hidden) continue;
+      const a = toScreen(e.s.x, e.s.y);
+      const b = toScreen(e.t.x, e.t.y);
+      const active = !e.s.dim || !e.t.dim;
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(b.x, b.y);
+      ctx.lineWidth = active ? 1.15 : 0.6;
+      ctx.strokeStyle = active ? 'rgba(96,165,250,.32)' : 'rgba(100,116,139,.10)';
+      ctx.stroke();
+    }
+
+    // گره‌ها
+    for (const p of nodes) {
+      if (p.hidden) continue;
+      const cfg = TYPE[p.type] || TYPE.dom;
+      const s = toScreen(p.x, p.y);
+      if (s.x < -80 || s.x > W + 80 || s.y < -80 || s.y > H + 80) continue;
+
+      const r = (cfg.r + Math.min(p.deg * 0.55, 7)) * cam.k;
+      const isFocus = (hovered && hovered.id === p.id) || (selected && selected.id === p.id);
+
+      if (!p.dim) {
+        const glow = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, r * 3);
+        glow.addColorStop(0, cfg.c + '55');
+        glow.addColorStop(1, 'transparent');
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, r * 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, r, 0, Math.PI * 2);
+      ctx.fillStyle = p.dim ? '#1e293b' : cfg.c;
+      ctx.fill();
+      ctx.lineWidth = isFocus ? 2.6 : 1;
+      ctx.strokeStyle = p.dim ? 'rgba(148,163,184,.25)' : 'rgba(255,255,255,.55)';
+      ctx.stroke();
+
+      // برچسب
+      const showLabel = cam.k > 0.62 || isFocus || p.type === 'stage' || p.type === 'entry';
+      if (showLabel && !p.dim) {
+        let label = p.label.replace(/^file:/, '');
+        if (label.length > 34) label = '…' + label.slice(-33);
+        const fs = Math.max(10, 11.5 * Math.min(cam.k, 1.25));
+        ctx.font = `600 ${fs}px Vazirmatn, Tahoma, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        const wLabel = ctx.measureText(label).width;
+        ctx.fillStyle = 'rgba(10,15,26,.72)';
+        roundRect(s.x - wLabel / 2 - 4, s.y + r + 3, wLabel + 8, fs + 5, 4);
+        ctx.fill();
+        ctx.fillStyle = isFocus ? '#fff' : '#cbd5e1';
+        ctx.fillText(label, s.x, s.y + r + 5);
+      }
+    }
+  }
+
+  function roundRect(x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  function frame() {
+    if (ticks < 900) { simulate(); ticks++; }
+    draw();
+    if (running) requestAnimationFrame(frame);
+  }
+
+  /* ---------------- تعامل ---------------- */
+  function pick(sx, sy) {
+    let best = null, bestD = 26;
+    for (const p of nodes) {
+      if (p.hidden) continue;
+      const s = toScreen(p.x, p.y);
+      const d = Math.hypot(s.x - sx, s.y - sy);
+      if (d < bestD) { bestD = d; best = p; }
+    }
+    return best;
+  }
+
+  canvas.addEventListener('pointerdown', (ev) => {
+    canvas.setPointerCapture(ev.pointerId);
+    moved = false;
+    const p = pick(ev.offsetX, ev.offsetY);
+    if (p) {
+      dragNode = p;
+      p.fixed = true;
+      canvas.classList.add('drag');
+    } else {
+      panning = true;
+      dragNode = null;
+    }
+    pointer = { x: ev.offsetX, y: ev.offsetY };
+  });
+
+  canvas.addEventListener('pointermove', (ev) => {
+    const { offsetX: sx, offsetY: sy } = ev;
+    if (Math.abs(sx - pointer.x) + Math.abs(sy - pointer.y) > 3) moved = true;
+
+    if (dragNode) {
+      const w = toWorld(sx, sy);
+      dragNode.x = w.x; dragNode.y = w.y;
+      dragNode.vx = dragNode.vy = 0;
+      ticks = Math.min(ticks, 600);
+    } else if (panning) {
+      cam.x -= (sx - pointer.x) / cam.k;
+      cam.y -= (sy - pointer.y) / cam.k;
+    } else {
+      const h = pick(sx, sy);
+      if (h !== hovered) {
+        hovered = h;
+        updateDim();
+        canvas.style.cursor = h ? 'pointer' : 'grab';
+      }
+    }
+    pointer = { x: sx, y: sy };
+  });
+
+  function endDrag() {
+    if (dragNode) {
+      dragNode.fixed = false;
+      ticks = Math.min(ticks, 780);
+    }
+    dragNode = null;
+    panning = false;
+    canvas.classList.remove('drag');
+  }
+  canvas.addEventListener('pointerup', endDrag);
+  canvas.addEventListener('pointercancel', endDrag);
+
+  canvas.addEventListener('click', (ev) => {
+    if (moved) return;
+    const p = pick(ev.offsetX, ev.offsetY);
+    if (p) select(p); else deselect();
+  });
+
+  canvas.addEventListener('wheel', (ev) => {
+    ev.preventDefault();
+    const w = toWorld(ev.offsetX, ev.offsetY);
+    const factor = Math.exp(-ev.deltaY * 0.0016);
+    cam.k = Math.min(3.2, Math.max(0.28, cam.k * factor));
+    const w2 = toWorld(ev.offsetX, ev.offsetY);
+    cam.x += w.x - w2.x;
+    cam.y += w.y - w2.y;
+  }, { passive: false });
+
+  /* ---------------- پنل جزئیات ---------------- */
+  function select(p) {
+    selected = p;
+    updateDim();
+    const cfg = TYPE[p.type] || TYPE.dom;
+    document.getElementById('p-title').textContent = p.label;
+    document.getElementById('p-type').textContent =
+      (cfg.fa || p.type) + (p.period ? ' · ' + p.period : '');
+    document.getElementById('p-title').style.color = cfg.c;
+    document.getElementById('p-desc').textContent =
+      p.desc || (p.type === 'stage' ? 'بخش مستقل رابط کاربری' : '');
+
+    const rels = [];
+    edges.forEach(e => {
+      if (e.s.id === p.id) rels.push({ dir: '→', type: e.type, other: e.t });
+      else if (e.t.id === p.id) rels.push({ dir: '←', type: e.type, other: e.s });
+    });
+    document.getElementById('p-rels').innerHTML =
+      `<div class="k">ارتباط‌ها (${rels.length})</div>` +
+      rels.slice(0, 40).map(r =>
+        `<div class="rel"><em>${r.type} ${r.dir}</em><span>${r.other.label}</span></div>`
+      ).join('');
+
+    panel.classList.add('show');
+  }
+
+  function deselect() {
+    selected = null;
+    updateDim();
+    panel.classList.remove('show');
+  }
+
+  document.getElementById('p-close').onclick = deselect;
+
+  qEl.addEventListener('input', () => {
+    query = qEl.value;
+    updateDim();
+    if (query.trim()) ticks = Math.max(ticks, 0);
+  });
+
+  window.addEventListener('resize', resize);
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') deselect();
+    if (e.key === '0') { cam = { x: 0, y: 0, k: 1 }; }
+  });
+
+  load();
+})();
+</script>
+</body>
+</html>
