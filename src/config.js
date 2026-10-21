@@ -67,10 +67,15 @@ export function isConfigured(cfg = getSupabaseConfig()) {
 export function validateConfig({ url, key }) {
   const errors = [];
   if (!url) errors.push('آدرس پروژه (Project URL) را وارد کن.');
+  else if (!/\.supabase\./i.test(url)) errors.push('آدرس باید شامل دامنه‌ی supabase باشد (مثال: https://xxxxx.supabase.co).');
   else if (!/^https:\/\/[a-z0-9-]+\.supabase\.(co|in)$/i.test(String(url).trim().replace(/\/+$/, '')))
     errors.push('آدرس باید شکل https://xxxxx.supabase.co باشد.');
   if (!key) errors.push('کلید anon را وارد کن.');
-  else if (String(key).trim().length < 40)
+  else if (/^sb_secret_/i.test(String(key).trim()))
+    errors.push('این کلید secret است و نباید در کلاینت باشد. از کلید publishable / anon استفاده کن.');
+  else if (/^sb_publishable_/i.test(String(key).trim())) {
+    if (String(key).trim().length < 25) errors.push('کلید publishable ناقص به نظر می‌رسد.');
+  } else if (String(key).trim().length < 40)
     errors.push('کلید anon معمولاً بسیار بلندتر است (شروع با eyJ…).');
   return errors;
 }
