@@ -36,6 +36,9 @@ python3 -m http.server 8080
 
 ## ☁️ اتصال به Supabase
 
+> پروژه فعلی: `https://cupcijeqqiyhqaifjzbl.supabase.co` (کلید در `src/config.js` ثبت شده).
+> تنها قدم باقی‌مانده: اجرای `supabase/schema.sql` در SQL Editor.
+
 ### ۱. ساخت جدول
 در داشبورد Supabase → **SQL Editor** → محتوای [`supabase/schema.sql`](supabase/schema.sql) را اجرا کن.
 

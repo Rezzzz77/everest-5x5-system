@@ -10,8 +10,8 @@
 const LS_KEY = 'everest_supabase_cfg';
 
 export const SUPABASE_CONFIG = {
-  url: '',
-  key: ''
+  url: 'https://cupcijeqqiyhqaifjzbl.supabase.co',
+  key: 'sb_publishable_Xw62TkMlB2hOplAeA2bbTA_luHNTEns'
 };
 
 export const N8N_CONFIG = {
