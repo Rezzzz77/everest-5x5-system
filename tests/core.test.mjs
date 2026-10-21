@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { validateConfig, isConfigured, getSupabaseConfig } from '../src/config.js';
+import { validateConfig, isConfigured, getSupabaseConfig, SUPABASE_CONFIG } from '../src/config.js';
 import { testConnection, mergeWithDefaults } from '../src/db.js';
 import { DEFAULT_DATA } from '../src/defaults.js';
 
@@ -44,8 +44,20 @@ test('isConfigured: اسلش انتهایی مهم نیست', () => {
   assert.equal(isConfigured({ url: URL_OK + '/', key: KEY_OK }), true);
 });
 
-test('getSupabaseConfig: در محیط بدون localStorage خالی برمی‌گردد', () => {
-  assert.deepEqual(getSupabaseConfig(), { url: '', key: '' });
+test('getSupabaseConfig: در محیط بدون localStorage از SUPABASE_CONFIG می‌آید', () => {
+  assert.deepEqual(getSupabaseConfig(), {
+    url: SUPABASE_CONFIG.url,
+    key: SUPABASE_CONFIG.key
+  });
+});
+
+test('config پیش‌فرض پروژه: معتبر است', () => {
+  assert.deepEqual(validateConfig(SUPABASE_CONFIG), []);
+  assert.equal(isConfigured(SUPABASE_CONFIG), true);
+});
+
+test('config پیش‌فرض: هرگز کلید secret در کلاینت نیست', () => {
+  assert.doesNotMatch(SUPABASE_CONFIG.key, /^sb_secret_/i);
 });
 
 test('testConnection: پیکربندی ناقص → not-configured بدون درخواست شبکه', async () => {
