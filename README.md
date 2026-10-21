@@ -39,8 +39,18 @@ python3 -m http.server 8080
 > پروژه فعلی: `https://cupcijeqqiyhqaifjzbl.supabase.co` (کلید در `src/config.js` ثبت شده).
 > تنها قدم باقی‌مانده: اجرای `supabase/schema.sql` در SQL Editor.
 
-### ۱. ساخت جدول
+### ۰. ورود امن (Supabase Auth — OTP ایمیل)
+اپ با **کد یک‌بارمصرف ایمیل** وارد می‌شود؛ رمزی ذخیره نمی‌شود.
+اولین کار پس از اجرای SQL: در Supabase → **Authentication → Providers → Email**
+گزینه *Enable email OTP / Magic Link* فعال باشد. برای تیم واقعی یک SMTP اختصاصی وصل کن
+(SMTP پیش‌فرض رایگان محدودیت ارسال دارد).
+
+### ۱. ساخت جدول‌ها
 در داشبورد Supabase → **SQL Editor** → محتوای [`supabase/schema.sql`](supabase/schema.sql) را اجرا کن.
+اسکریپت idempotent است (دوبار اجرا بی‌خطر).
+
+سپس با [`supabase/verify.sql`](supabase/verify.sql) تأیید کن:
+`rowsecurity=true` و هیچ دسترسی برای `anon`.
 
 ### ۲. گرفتن کلیدها
 **Project Settings → API**:
@@ -68,10 +78,12 @@ everest-5x5-system/
 ├── manifest.json           # تنظیمات PWA
 ├── src/
 │   ├── config.js           # کلیدهای Supabase / n8n
+│   ├── auth.js             # ورود OTP ایمیل (Supabase Auth)
 │   ├── db.js               # لایه داده (local + cloud)
 │   └── defaults.js         # داده‌های پیش‌فرض
 ├── supabase/
-│   └── schema.sql          # جدول user_state + RLS
+│   ├── schema.sql          # user_state + profiles + RLS سخت‌گیرانه
+│   └── verify.sql          # بررسی RLS / grants / triggers
 ├── tools/
 │   ├── build_graph.py      # تولید گراف دانش از سورس
 │   ├── make_icons.py       # تولید آیکون‌های PWA
@@ -122,6 +134,7 @@ python3 tools/build_graph.py   # بازتولید docs/graph.json
 - ✅ گزارش شبانه و زنجیره ۷ روزه
 - ✅ داشبورد مدیریتی (KPI)
 - ✅ لینک مستقیم تماس برای هر مخاطب در CRM
+- ✅ ورود بدون رمز با کد ایمیل + حالت «بدون حساب» برای تست
 - ✅ حالت آفلاین کامل
 - ✅ همگام‌سازی ابری اختیاری + تنظیم کلید از داخل اپ (با تست اتصال)
 - ✅ تست واحد و CI
@@ -138,9 +151,9 @@ python3 tools/build_graph.py   # بازتولید docs/graph.json
 | ۴ | گراف دانش + حافظه پروژه | ✅ |
 | ۴.۱ | CI + تست قرارداد HTML ↔ JS | ✅ |
 | ۵ | ابزار اتصال Supabase درون‌برنامه | ✅ |
-| ۵.۱ | وارد کردن کلید واقعی توسط ادمین | ⏳ |
+| ۵.۱ | امنیت: Auth + RLS سخت‌گیرانه | ✅ کد آماده — نیاز به اجرای SQL |
+| ۵.۲ | اجرای `schema.sql` در داشبورد | ⏳ کار صاحب پروژه |
 | ۶ | ایجنت Coach (پیشنهاددهنده) | ⏳ |
-| ۷ | امنیت: Supabase Auth + RLS سخت‌گیرانه | ⏳ |
 | ۸ | بکاپ خودکار (n8n) | ⏳ |
 
 ---

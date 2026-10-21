@@ -1,4 +1,4 @@
-const CACHE = 'everest-5x5-v3';
+const CACHE = 'everest-5x5-v4';
 
 const PRECACHE = [
   './',
@@ -7,7 +7,8 @@ const PRECACHE = [
   './manifest.json',
   './src/config.js',
   './src/db.js',
-  './src/defaults.js'
+  './src/defaults.js',
+  './src/auth.js'
 ];
 
 self.addEventListener('install', (event) => {

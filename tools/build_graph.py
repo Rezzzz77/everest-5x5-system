@@ -39,7 +39,10 @@ FILES = [
     ("src/db.js", "module", "لایه داده: محلی + ابری"),
     ("src/config.js", "config", "کلیدهای Supabase / n8n"),
     ("src/defaults.js", "module", "داده‌های پیش‌فرض و دمو"),
-    ("supabase/schema.sql", "sql", "جدول user_state + RLS + تریگر"),
+    ("supabase/schema.sql", "sql", "user_state + profiles + RLS سخت‌گیرانه + تریگر"),
+    ("supabase/verify.sql", "sql", "بررسی RLS/grants/triggers پس از نصب"),
+    ("src/auth.js", "module", "احراز هویت OTP ایمیل (Supabase Auth)"),
+    ("tests/auth.test.mjs", "module", "تست‌های auth (اگرایر/نشست/خطاها)"),
     ("docs/SECURITY.md", "doc", "ریسک‌ها و مسیر ارتقای امنیت"),
     ("README.md", "doc", "مستندات پروژه"),
     ("docs/MEMORY.md", "doc", "حافظه پایدار پروژه — تصمیم‌ها، باگ‌ها، وضعیت"),
@@ -89,13 +92,17 @@ FEATURES = [
     ("f:offline", "حالت آفلاین", "Service Worker"),
     ("f:sync", "همگام‌سازی ابری", "Supabase (اختیاری)"),
     ("f:cloud-setup", "تنظیم اتصال درون‌برنامه", "URL + anon key + تست اتصال"),
+    ("f:otp", "ورود با کد یک‌بارمصرف", "ایمیل → کد ۶ رقمی → نشست"),
+    ("f:local-mode", "حالت بدون حساب", "ذخیره فقط روی همین دستگاه"),
 ]
 for fid, label, desc in FEATURES:
     node(fid, label, "feature", desc=desc)
 
 # ---------------------------------------------------------------- جدول‌ها
-node("table:user_state", "user_state", "table", desc="user_id / state_data / updated_at")
-node("table:rls", "RLS policy", "table", desc="فعلاً anon — needs hardening")
+node("table:user_state", "user_state", "table", desc="user_id uuid → auth.users / state_data / updated_at")
+node("table:profiles", "profiles", "table", desc="full_name / national_id / upline — RLS per-user")
+node("table:auth", "auth.users", "table", desc="Supabase Auth — منبع حقیقت هویت")
+node("table:rls", "RLS policy", "table", desc="to authenticated + user_id = auth.uid()")
 
 EDGES = []
 seen = set()
@@ -145,6 +152,9 @@ for fid, _, _ in FEATURES:
     edge(fid, "file:app.js", "implemented_in")
 
 edge("f:auth", "stage:s1")
+edge("f:auth", "f:otp")
+edge("f:otp", "file:src/auth.js")
+edge("f:local-mode", "file:app.js")
 edge("f:streak", "stage:s2")
 edge("f:crm", "stage:s3")
 edge("f:dup", "stage:s4")
@@ -154,6 +164,14 @@ edge("f:sync", "file:src/db.js")
 edge("f:sync", "table:user_state")
 edge("f:cloud-setup", "file:src/config.js")
 edge("f:cloud-setup", "f:sync")
+edge("file:app.js", "file:src/auth.js", "imports")
+edge("file:tests/auth.test.mjs", "file:src/auth.js", "tests")
+edge("file:src/db.js", "file:src/auth.js", "imports")
+edge("file:src/auth.js", "table:auth", "authenticates")
+edge("table:user_state", "table:auth", "references")
+edge("table:profiles", "table:auth", "references")
+edge("file:supabase/verify.sql", "table:rls", "verifies")
+edge("f:auth", "file:src/auth.js")
 edge("f:catalog", "stage:s3")
 edge("f:timer", "stage:s1")
 edge("f:voice", "stage:s2")

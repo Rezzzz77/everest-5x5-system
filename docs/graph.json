@@ -5,8 +5,8 @@
     "schema": 1,
     "generator": "tools/build_graph.py",
     "counts": {
-      "nodes": 55,
-      "edges": 88
+      "nodes": 62,
+      "edges": 101
     }
   },
   "nodes": [
@@ -195,10 +195,22 @@
       "desc": "مدیریت با عدد"
     },
     {
+      "id": "f:local-mode",
+      "label": "حالت بدون حساب",
+      "type": "feature",
+      "desc": "ذخیره فقط روی همین دستگاه"
+    },
+    {
       "id": "f:offline",
       "label": "حالت آفلاین",
       "type": "feature",
       "desc": "Service Worker"
+    },
+    {
+      "id": "f:otp",
+      "label": "ورود با کد یک‌بارمصرف",
+      "type": "feature",
+      "desc": "ایمیل → کد ۶ رقمی → نشست"
     },
     {
       "id": "f:streak",
@@ -231,6 +243,12 @@
       "desc": "منطق اپلیکیشن (ES Module)"
     },
     {
+      "id": "file:src/auth.js",
+      "label": "src/auth.js",
+      "type": "module",
+      "desc": "احراز هویت OTP ایمیل (Supabase Auth)"
+    },
+    {
       "id": "file:src/db.js",
       "label": "src/db.js",
       "type": "module",
@@ -247,6 +265,12 @@
       "label": "sw.js",
       "type": "module",
       "desc": "Service Worker — کش آفلاین"
+    },
+    {
+      "id": "file:tests/auth.test.mjs",
+      "label": "tests/auth.test.mjs",
+      "type": "module",
+      "desc": "تست‌های auth (اگرایر/نشست/خطاها)"
     },
     {
       "id": "file:tests/core.test.mjs",
@@ -276,7 +300,13 @@
       "id": "file:supabase/schema.sql",
       "label": "supabase/schema.sql",
       "type": "sql",
-      "desc": "جدول user_state + RLS + تریگر"
+      "desc": "user_state + profiles + RLS سخت‌گیرانه + تریگر"
+    },
+    {
+      "id": "file:supabase/verify.sql",
+      "label": "supabase/verify.sql",
+      "type": "sql",
+      "desc": "بررسی RLS/grants/triggers پس از نصب"
     },
     {
       "id": "stage:s1",
@@ -309,16 +339,28 @@
       "period": "مستمر"
     },
     {
+      "id": "table:auth",
+      "label": "auth.users",
+      "type": "table",
+      "desc": "Supabase Auth — منبع حقیقت هویت"
+    },
+    {
+      "id": "table:profiles",
+      "label": "profiles",
+      "type": "table",
+      "desc": "full_name / national_id / upline — RLS per-user"
+    },
+    {
       "id": "table:rls",
       "label": "RLS policy",
       "type": "table",
-      "desc": "فعلاً anon — needs hardening"
+      "desc": "to authenticated + user_id = auth.uid()"
     },
     {
       "id": "table:user_state",
       "label": "user_state",
       "type": "table",
-      "desc": "user_id / state_data / updated_at"
+      "desc": "user_id uuid → auth.users / state_data / updated_at"
     }
   ],
   "edges": [
@@ -693,8 +735,33 @@
       "type": "implemented_in"
     },
     {
+      "source": "f:otp",
+      "target": "file:app.js",
+      "type": "implemented_in"
+    },
+    {
+      "source": "f:local-mode",
+      "target": "file:app.js",
+      "type": "implemented_in"
+    },
+    {
       "source": "f:auth",
       "target": "stage:s1",
+      "type": "uses"
+    },
+    {
+      "source": "f:auth",
+      "target": "f:otp",
+      "type": "uses"
+    },
+    {
+      "source": "f:otp",
+      "target": "file:src/auth.js",
+      "type": "uses"
+    },
+    {
+      "source": "f:local-mode",
+      "target": "file:app.js",
       "type": "uses"
     },
     {
@@ -740,6 +807,46 @@
     {
       "source": "f:cloud-setup",
       "target": "f:sync",
+      "type": "uses"
+    },
+    {
+      "source": "file:app.js",
+      "target": "file:src/auth.js",
+      "type": "imports"
+    },
+    {
+      "source": "file:tests/auth.test.mjs",
+      "target": "file:src/auth.js",
+      "type": "tests"
+    },
+    {
+      "source": "file:src/db.js",
+      "target": "file:src/auth.js",
+      "type": "imports"
+    },
+    {
+      "source": "file:src/auth.js",
+      "target": "table:auth",
+      "type": "authenticates"
+    },
+    {
+      "source": "table:user_state",
+      "target": "table:auth",
+      "type": "references"
+    },
+    {
+      "source": "table:profiles",
+      "target": "table:auth",
+      "type": "references"
+    },
+    {
+      "source": "file:supabase/verify.sql",
+      "target": "table:rls",
+      "type": "verifies"
+    },
+    {
+      "source": "f:auth",
+      "target": "file:src/auth.js",
       "type": "uses"
     },
     {
