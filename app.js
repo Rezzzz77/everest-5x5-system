@@ -50,11 +50,15 @@ const newshaProducts = [
   }
 ];
 
-// ذخیره‌سازی (محلی + ابری در پس‌زمینه)
+// ذخیره‌سازی (محلی فوری + ابری با تأخیر کوتاه برای جلوگیری از هجوم درخواست)
+let cloudTimer = null;
 function saveAll() {
   appState.lastModified = Date.now();
   saveToStorage(appState);
-  syncState(appState).catch(() => {});
+  clearTimeout(cloudTimer);
+  cloudTimer = setTimeout(() => {
+    syncState(appState).catch(() => {});
+  }, 400);
 }
 
 // ثبت نام و ورود

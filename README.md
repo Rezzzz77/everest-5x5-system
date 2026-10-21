@@ -4,6 +4,9 @@
 
 `Offline-first` · `PWA` · `Supabase` · `فارسی / RTL`
 
+**دمو زنده:** https://rezzzz77.github.io/everest-5x5-system/  
+**گراف دانش پروژه:** https://rezzzz77.github.io/everest-5x5-system/docs/graph.html
+
 ---
 
 ## 📖 ساختار سیستم
@@ -69,9 +72,28 @@ everest-5x5-system/
 │   └── defaults.js         # داده‌های پیش‌فرض
 ├── supabase/
 │   └── schema.sql          # جدول user_state + RLS
+├── tools/
+│   └── build_graph.py      # تولید گراف دانش از سورس
 └── docs/
-    └── SECURITY.md         # نکات امنیتی و مسیر ارتقا
+    ├── MEMORY.md           # 🧠 حافظه پروژه — از اینجا ادامه بده
+    ├── graph.html          # نمایش تعاملی گراف
+    ├── graph.json          # داده گراف (تولیدشده)
+    └── SECURITY.md         # ریسک‌ها و مسیر ارتقا
 ```
+
+### 🧠 حافظه پروژه
+
+هر نشست جدید (انسان یا ایجنت) باید ابتدا [`docs/MEMORY.md`](docs/MEMORY.md) را بخواند:
+تصمیم‌های ثبت‌شده، باگ‌های حل‌شده، وضعیت فعلی و قدم بعدی آنجاست.
+
+### 🕸 گراف دانش
+
+```bash
+python3 tools/build_graph.py   # بازتولید docs/graph.json
+```
+
+سپس `docs/graph.html` را باز کن (یا نسخه آنلاین). گراف فایل‌ها، ماژول‌ها،
+مراحل، ویژگی‌ها و جدول‌ها را با قابلیت جستجو، فیلتر و کشیدن گره نشان می‌دهد.
 
 ---
 
@@ -95,9 +117,11 @@ everest-5x5-system/
 | ۱ | ساختار پایه + UI | ✅ |
 | ۲ | لایه داده و Supabase | ✅ |
 | ۳ | PWA + Service Worker | ✅ |
-| ۴ | ایجنت Coach (پیشنهاددهنده) | ⏳ |
-| ۵ | امنیت: Supabase Auth + RLS سخت‌گیرانه | ⏳ |
-| ۶ | بکاپ خودکار (n8n) | ⏳ |
+| ۴ | گراف دانش + حافظه پروژه | ✅ |
+| ۵ | اتصال واقعی Supabase (کلیدها) | ⏳ |
+| ۶ | ایجنت Coach (پیشنهاددهنده) | ⏳ |
+| ۷ | امنیت: Supabase Auth + RLS سخت‌گیرانه | ⏳ |
+| ۸ | بکاپ خودکار (n8n) | ⏳ |
 
 ---
 

@@ -1,0 +1,731 @@
+{
+  "meta": {
+    "project": "everest-5x5-system",
+    "title": "سیستم ۵×۵ تیم اورست",
+    "generated": "2026-10-21T14:45:29+00:00",
+    "generator": "tools/build_graph.py",
+    "counts": {
+      "nodes": 55,
+      "edges": 81
+    }
+  },
+  "nodes": [
+    {
+      "id": "file:manifest.json",
+      "label": "manifest.json",
+      "type": "config",
+      "desc": "تنظیمات PWA"
+    },
+    {
+      "id": "file:src/config.js",
+      "label": "src/config.js",
+      "type": "config",
+      "desc": "کلیدهای Supabase / n8n"
+    },
+    {
+      "id": "file:README.md",
+      "label": "README.md",
+      "type": "doc",
+      "desc": "مستندات پروژه"
+    },
+    {
+      "id": "file:docs/MEMORY.md",
+      "label": "docs/MEMORY.md",
+      "type": "doc",
+      "desc": "حافظه پایدار پروژه — تصمیم‌ها، باگ‌ها، وضعیت"
+    },
+    {
+      "id": "file:docs/SECURITY.md",
+      "label": "docs/SECURITY.md",
+      "type": "doc",
+      "desc": "ریسک‌ها و مسیر ارتقای امنیت"
+    },
+    {
+      "id": "dom:crm-contacts-container",
+      "label": "#crm-contacts-container",
+      "type": "dom"
+    },
+    {
+      "id": "dom:crm-total-badge",
+      "label": "#crm-total-badge",
+      "type": "dom"
+    },
+    {
+      "id": "dom:duplication-members-container",
+      "label": "#duplication-members-container",
+      "type": "dom"
+    },
+    {
+      "id": "dom:meetings-list",
+      "label": "#meetings-list",
+      "type": "dom"
+    },
+    {
+      "id": "dom:s1-progress-bar",
+      "label": "#s1-progress-bar",
+      "type": "dom"
+    },
+    {
+      "id": "dom:s1-progress-label",
+      "label": "#s1-progress-label",
+      "type": "dom"
+    },
+    {
+      "id": "dom:s1-steps-container",
+      "label": "#s1-steps-container",
+      "type": "dom"
+    },
+    {
+      "id": "dom:s2-counters-list",
+      "label": "#s2-counters-list",
+      "type": "dom"
+    },
+    {
+      "id": "dom:s2-days-bar",
+      "label": "#s2-days-bar",
+      "type": "dom"
+    },
+    {
+      "id": "dom:s2-note",
+      "label": "#s2-note",
+      "type": "dom"
+    },
+    {
+      "id": "dom:s2-streak-badge",
+      "label": "#s2-streak-badge",
+      "type": "dom"
+    },
+    {
+      "id": "dom:s3-counters-list",
+      "label": "#s3-counters-list",
+      "type": "dom"
+    },
+    {
+      "id": "dom:s3-pass-criteria",
+      "label": "#s3-pass-criteria",
+      "type": "dom"
+    },
+    {
+      "id": "dom:s4-pass-criteria",
+      "label": "#s4-pass-criteria",
+      "type": "dom"
+    },
+    {
+      "id": "dom:s5-standards-list",
+      "label": "#s5-standards-list",
+      "type": "dom"
+    },
+    {
+      "id": "file:index.html#stage-1",
+      "label": "#stage-1",
+      "type": "dom"
+    },
+    {
+      "id": "file:index.html#stage-2",
+      "label": "#stage-2",
+      "type": "dom"
+    },
+    {
+      "id": "file:index.html#stage-3",
+      "label": "#stage-3",
+      "type": "dom"
+    },
+    {
+      "id": "file:index.html#stage-4",
+      "label": "#stage-4",
+      "type": "dom"
+    },
+    {
+      "id": "file:index.html#stage-5",
+      "label": "#stage-5",
+      "type": "dom"
+    },
+    {
+      "id": "section:s1",
+      "label": "#stage-1",
+      "type": "dom",
+      "desc": "بخش HTML مرحله"
+    },
+    {
+      "id": "section:s2",
+      "label": "#stage-2",
+      "type": "dom",
+      "desc": "بخش HTML مرحله"
+    },
+    {
+      "id": "section:s3",
+      "label": "#stage-3",
+      "type": "dom",
+      "desc": "بخش HTML مرحله"
+    },
+    {
+      "id": "section:s4",
+      "label": "#stage-4",
+      "type": "dom",
+      "desc": "بخش HTML مرحله"
+    },
+    {
+      "id": "section:s5",
+      "label": "#stage-5",
+      "type": "dom",
+      "desc": "بخش HTML مرحله"
+    },
+    {
+      "id": "file:docs/graph.html",
+      "label": "docs/graph.html",
+      "type": "entry",
+      "desc": "نمایش تعاملی گراف دانش"
+    },
+    {
+      "id": "file:index.html",
+      "label": "index.html",
+      "type": "entry",
+      "desc": "رابط کاربری اصلی (RTL + Tailwind)"
+    },
+    {
+      "id": "f:auth",
+      "label": "ثبت‌نام / ورود",
+      "type": "feature",
+      "desc": "نام، کد ملی، حامی"
+    },
+    {
+      "id": "f:catalog",
+      "label": "کاتالوگ محصول",
+      "type": "feature",
+      "desc": "فلش‌کارت نیوشانیک"
+    },
+    {
+      "id": "f:crm",
+      "label": "CRM مخاطبین",
+      "type": "feature",
+      "desc": "تماس / واتساپ / پیامک"
+    },
+    {
+      "id": "f:dup",
+      "label": "ماتریس تکثیر",
+      "type": "feature",
+      "desc": "۵ گام استقلال عضو"
+    },
+    {
+      "id": "f:kpi",
+      "label": "داشبورد KPI",
+      "type": "feature",
+      "desc": "مدیریت با عدد"
+    },
+    {
+      "id": "f:offline",
+      "label": "حالت آفلاین",
+      "type": "feature",
+      "desc": "Service Worker"
+    },
+    {
+      "id": "f:streak",
+      "label": "زنجیره ۷ روزه",
+      "type": "feature",
+      "desc": "گزارش شبانه"
+    },
+    {
+      "id": "f:sync",
+      "label": "همگام‌سازی ابری",
+      "type": "feature",
+      "desc": "Supabase (اختیاری)"
+    },
+    {
+      "id": "f:timer",
+      "label": "تایمر ۷۲ ساعت",
+      "type": "feature",
+      "desc": "شمارش معکوس واقعی"
+    },
+    {
+      "id": "f:voice",
+      "label": "تایپ صوتی فارسی",
+      "type": "feature",
+      "desc": "Web Speech API"
+    },
+    {
+      "id": "file:app.js",
+      "label": "app.js",
+      "type": "module",
+      "desc": "منطق اپلیکیشن (ES Module)"
+    },
+    {
+      "id": "file:src/db.js",
+      "label": "src/db.js",
+      "type": "module",
+      "desc": "لایه داده: محلی + ابری"
+    },
+    {
+      "id": "file:src/defaults.js",
+      "label": "src/defaults.js",
+      "type": "module",
+      "desc": "داده‌های پیش‌فرض و دمو"
+    },
+    {
+      "id": "file:sw.js",
+      "label": "sw.js",
+      "type": "module",
+      "desc": "Service Worker — کش آفلاین"
+    },
+    {
+      "id": "file:tools/build_graph.py",
+      "label": "tools/build_graph.py",
+      "type": "module",
+      "desc": "تولیدکننده گراف از منبع"
+    },
+    {
+      "id": "file:supabase/schema.sql",
+      "label": "supabase/schema.sql",
+      "type": "sql",
+      "desc": "جدول user_state + RLS + تریگر"
+    },
+    {
+      "id": "stage:s1",
+      "label": "مرحله ۱ — شروع",
+      "type": "stage",
+      "period": "۷۲ ساعت"
+    },
+    {
+      "id": "stage:s2",
+      "label": "مرحله ۲ — حرکت",
+      "type": "stage",
+      "period": "۷ روز"
+    },
+    {
+      "id": "stage:s3",
+      "label": "مرحله ۳ — ساخت",
+      "type": "stage",
+      "period": "۳۰ روز"
+    },
+    {
+      "id": "stage:s4",
+      "label": "مرحله ۴ — تکثیر",
+      "type": "stage",
+      "period": "۹۰ روز"
+    },
+    {
+      "id": "stage:s5",
+      "label": "مرحله ۵ — راهبری",
+      "type": "stage",
+      "period": "مستمر"
+    },
+    {
+      "id": "table:rls",
+      "label": "RLS policy",
+      "type": "table",
+      "desc": "فعلاً anon — needs hardening"
+    },
+    {
+      "id": "table:user_state",
+      "label": "user_state",
+      "type": "table",
+      "desc": "user_id / state_data / updated_at"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:index.html",
+      "target": "file:app.js",
+      "type": "loads"
+    },
+    {
+      "source": "file:index.html",
+      "target": "file:manifest.json",
+      "type": "declares"
+    },
+    {
+      "source": "file:index.html",
+      "target": "file:sw.js",
+      "type": "registers"
+    },
+    {
+      "source": "file:app.js",
+      "target": "file:src/db.js",
+      "type": "imports"
+    },
+    {
+      "source": "file:src/db.js",
+      "target": "file:src/config.js",
+      "type": "imports"
+    },
+    {
+      "source": "file:src/db.js",
+      "target": "file:src/defaults.js",
+      "type": "imports"
+    },
+    {
+      "source": "file:src/db.js",
+      "target": "table:user_state",
+      "type": "writes"
+    },
+    {
+      "source": "file:supabase/schema.sql",
+      "target": "table:user_state",
+      "type": "defines"
+    },
+    {
+      "source": "file:supabase/schema.sql",
+      "target": "table:rls",
+      "type": "defines"
+    },
+    {
+      "source": "file:docs/SECURITY.md",
+      "target": "table:rls",
+      "type": "documents"
+    },
+    {
+      "source": "file:README.md",
+      "target": "file:index.html",
+      "type": "documents"
+    },
+    {
+      "source": "file:README.md",
+      "target": "file:docs/MEMORY.md",
+      "type": "references"
+    },
+    {
+      "source": "file:docs/graph.html",
+      "target": "file:docs/MEMORY.md",
+      "type": "documents"
+    },
+    {
+      "source": "file:tools/build_graph.py",
+      "target": "file:docs/graph.html",
+      "type": "produces"
+    },
+    {
+      "source": "file:index.html",
+      "target": "file:index.html#stage-1",
+      "type": "contains"
+    },
+    {
+      "source": "file:index.html#stage-1",
+      "target": "stage:s1",
+      "type": "represents"
+    },
+    {
+      "source": "stage:s1",
+      "target": "file:app.js",
+      "type": "rendered_by"
+    },
+    {
+      "source": "file:app.js",
+      "target": "dom:s1-steps-container",
+      "type": "writes"
+    },
+    {
+      "source": "stage:s1",
+      "target": "dom:s1-steps-container",
+      "type": "contains"
+    },
+    {
+      "source": "file:app.js",
+      "target": "dom:s1-progress-label",
+      "type": "writes"
+    },
+    {
+      "source": "stage:s1",
+      "target": "dom:s1-progress-label",
+      "type": "contains"
+    },
+    {
+      "source": "file:app.js",
+      "target": "dom:s1-progress-bar",
+      "type": "writes"
+    },
+    {
+      "source": "stage:s1",
+      "target": "dom:s1-progress-bar",
+      "type": "contains"
+    },
+    {
+      "source": "file:index.html",
+      "target": "file:index.html#stage-2",
+      "type": "contains"
+    },
+    {
+      "source": "file:index.html#stage-2",
+      "target": "stage:s2",
+      "type": "represents"
+    },
+    {
+      "source": "stage:s2",
+      "target": "file:app.js",
+      "type": "rendered_by"
+    },
+    {
+      "source": "file:app.js",
+      "target": "dom:s2-streak-badge",
+      "type": "writes"
+    },
+    {
+      "source": "stage:s2",
+      "target": "dom:s2-streak-badge",
+      "type": "contains"
+    },
+    {
+      "source": "file:app.js",
+      "target": "dom:s2-days-bar",
+      "type": "writes"
+    },
+    {
+      "source": "stage:s2",
+      "target": "dom:s2-days-bar",
+      "type": "contains"
+    },
+    {
+      "source": "file:app.js",
+      "target": "dom:s2-counters-list",
+      "type": "writes"
+    },
+    {
+      "source": "stage:s2",
+      "target": "dom:s2-counters-list",
+      "type": "contains"
+    },
+    {
+      "source": "file:app.js",
+      "target": "dom:s2-note",
+      "type": "writes"
+    },
+    {
+      "source": "stage:s2",
+      "target": "dom:s2-note",
+      "type": "contains"
+    },
+    {
+      "source": "file:index.html",
+      "target": "file:index.html#stage-3",
+      "type": "contains"
+    },
+    {
+      "source": "file:index.html#stage-3",
+      "target": "stage:s3",
+      "type": "represents"
+    },
+    {
+      "source": "stage:s3",
+      "target": "file:app.js",
+      "type": "rendered_by"
+    },
+    {
+      "source": "file:app.js",
+      "target": "dom:s3-counters-list",
+      "type": "writes"
+    },
+    {
+      "source": "stage:s3",
+      "target": "dom:s3-counters-list",
+      "type": "contains"
+    },
+    {
+      "source": "file:app.js",
+      "target": "dom:crm-contacts-container",
+      "type": "writes"
+    },
+    {
+      "source": "stage:s3",
+      "target": "dom:crm-contacts-container",
+      "type": "contains"
+    },
+    {
+      "source": "file:app.js",
+      "target": "dom:crm-total-badge",
+      "type": "writes"
+    },
+    {
+      "source": "stage:s3",
+      "target": "dom:crm-total-badge",
+      "type": "contains"
+    },
+    {
+      "source": "file:app.js",
+      "target": "dom:s3-pass-criteria",
+      "type": "writes"
+    },
+    {
+      "source": "stage:s3",
+      "target": "dom:s3-pass-criteria",
+      "type": "contains"
+    },
+    {
+      "source": "file:index.html",
+      "target": "file:index.html#stage-4",
+      "type": "contains"
+    },
+    {
+      "source": "file:index.html#stage-4",
+      "target": "stage:s4",
+      "type": "represents"
+    },
+    {
+      "source": "stage:s4",
+      "target": "file:app.js",
+      "type": "rendered_by"
+    },
+    {
+      "source": "file:app.js",
+      "target": "dom:duplication-members-container",
+      "type": "writes"
+    },
+    {
+      "source": "stage:s4",
+      "target": "dom:duplication-members-container",
+      "type": "contains"
+    },
+    {
+      "source": "file:app.js",
+      "target": "dom:s4-pass-criteria",
+      "type": "writes"
+    },
+    {
+      "source": "stage:s4",
+      "target": "dom:s4-pass-criteria",
+      "type": "contains"
+    },
+    {
+      "source": "file:index.html",
+      "target": "file:index.html#stage-5",
+      "type": "contains"
+    },
+    {
+      "source": "file:index.html#stage-5",
+      "target": "stage:s5",
+      "type": "represents"
+    },
+    {
+      "source": "stage:s5",
+      "target": "file:app.js",
+      "type": "rendered_by"
+    },
+    {
+      "source": "file:app.js",
+      "target": "dom:meetings-list",
+      "type": "writes"
+    },
+    {
+      "source": "stage:s5",
+      "target": "dom:meetings-list",
+      "type": "contains"
+    },
+    {
+      "source": "file:app.js",
+      "target": "dom:s5-standards-list",
+      "type": "writes"
+    },
+    {
+      "source": "stage:s5",
+      "target": "dom:s5-standards-list",
+      "type": "contains"
+    },
+    {
+      "source": "f:auth",
+      "target": "file:app.js",
+      "type": "implemented_in"
+    },
+    {
+      "source": "f:timer",
+      "target": "file:app.js",
+      "type": "implemented_in"
+    },
+    {
+      "source": "f:crm",
+      "target": "file:app.js",
+      "type": "implemented_in"
+    },
+    {
+      "source": "f:streak",
+      "target": "file:app.js",
+      "type": "implemented_in"
+    },
+    {
+      "source": "f:dup",
+      "target": "file:app.js",
+      "type": "implemented_in"
+    },
+    {
+      "source": "f:kpi",
+      "target": "file:app.js",
+      "type": "implemented_in"
+    },
+    {
+      "source": "f:voice",
+      "target": "file:app.js",
+      "type": "implemented_in"
+    },
+    {
+      "source": "f:catalog",
+      "target": "file:app.js",
+      "type": "implemented_in"
+    },
+    {
+      "source": "f:offline",
+      "target": "file:app.js",
+      "type": "implemented_in"
+    },
+    {
+      "source": "f:sync",
+      "target": "file:app.js",
+      "type": "implemented_in"
+    },
+    {
+      "source": "f:auth",
+      "target": "stage:s1",
+      "type": "uses"
+    },
+    {
+      "source": "f:streak",
+      "target": "stage:s2",
+      "type": "uses"
+    },
+    {
+      "source": "f:crm",
+      "target": "stage:s3",
+      "type": "uses"
+    },
+    {
+      "source": "f:dup",
+      "target": "stage:s4",
+      "type": "uses"
+    },
+    {
+      "source": "f:kpi",
+      "target": "stage:s5",
+      "type": "uses"
+    },
+    {
+      "source": "f:offline",
+      "target": "file:sw.js",
+      "type": "uses"
+    },
+    {
+      "source": "f:sync",
+      "target": "file:src/db.js",
+      "type": "uses"
+    },
+    {
+      "source": "f:sync",
+      "target": "table:user_state",
+      "type": "uses"
+    },
+    {
+      "source": "f:catalog",
+      "target": "stage:s3",
+      "type": "uses"
+    },
+    {
+      "source": "f:timer",
+      "target": "stage:s1",
+      "type": "uses"
+    },
+    {
+      "source": "f:voice",
+      "target": "stage:s2",
+      "type": "uses"
+    },
+    {
+      "source": "f:voice",
+      "target": "stage:s5",
+      "type": "uses"
+    }
+  ]
+}
