@@ -1,44 +1,58 @@
 /**
- * لایه داده برای ذخیره‌سازی محلی و ابری
- * پشتیبانی از Offline-first و Sync با Supabase
+ * لایه داده: ذخیره‌سازی محلی (Offline-first) + همگام‌سازی با Supabase
  */
 
 import { SUPABASE_CONFIG } from './config.js';
+import { DEFAULT_DATA } from './defaults.js';
 
 const STORAGE_KEY = 'everest_5x5_full_v2';
-const DEFAULT_DATA = {
-  user: null,
-  startTime: null,
-  why: '',
-  story: '',
-  s1Steps: [],
-  s2Streak: 0,
-  s2Counters: [],
-  s3Counters: [],
-  s3Pass: [],
-  crm: [],
-  dupTeam: [],
-  s4Pass: [],
-  meetings: [],
-  s5Standards: []
-};
 
-/**
- * بارگذاری داده از LocalStorage
- */
-export function loadFromStorage() {
-  try {
-    const data = localStorage.getItem(STORAGE_KEY);
-    return data ? JSON.parse(data) : { ...DEFAULT_DATA };
-  } catch (e) {
-    console.error('خطا در بارگذاری داده:', e);
-    return { ...DEFAULT_DATA };
-  }
+function isSupabaseConfigured() {
+  return Boolean(
+    SUPABASE_CONFIG.url &&
+    SUPABASE_CONFIG.key &&
+    !SUPABASE_CONFIG.url.includes('YOUR_PROJECT_ID') &&
+    !SUPABASE_CONFIG.key.includes('YOUR_PUBLIC_ANON_KEY')
+  );
+}
+
+function headers() {
+  return {
+    'apikey': SUPABASE_CONFIG.key,
+    'Authorization': `Bearer ${SUPABASE_CONFIG.key}`,
+    'Content-Type': 'application/json'
+  };
 }
 
 /**
- * ذخیره داده در LocalStorage
+ * ادغام داده ذخیره‌شده با پیش‌فرض‌ها
+ * (کلیدهای ناقص یا آرایه‌های خالی با مقدار پیش‌فرض پر می‌شوند)
  */
+export function mergeWithDefaults(stored) {
+  const out = { ...DEFAULT_DATA, ...(stored || {}) };
+  for (const key of Object.keys(DEFAULT_DATA)) {
+    const def = DEFAULT_DATA[key];
+    const cur = out[key];
+    if (Array.isArray(def) && (!Array.isArray(cur) || cur.length === 0) && def.length > 0 && key !== 'crm' && key !== 'dupTeam' && key !== 'meetings') {
+      out[key] = JSON.parse(JSON.stringify(def));
+    }
+    if (cur === undefined || cur === null) {
+      out[key] = Array.isArray(def) ? JSON.parse(JSON.stringify(def)) : def;
+    }
+  }
+  return out;
+}
+
+export function loadFromStorage() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return mergeWithDefaults(raw ? JSON.parse(raw) : null);
+  } catch (e) {
+    console.error('خطا در بارگذاری داده:', e);
+    return mergeWithDefaults(null);
+  }
+}
+
 export function saveToStorage(state) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -50,57 +64,58 @@ export function saveToStorage(state) {
 }
 
 /**
- * ذخیره در Supabase (اگر تنظیم شده باشد)
+ * ذخیره در Supabase
  */
 export async function saveToCloud(state) {
-  if (!SUPABASE_CONFIG.url || SUPABASE_CONFIG.url.includes('YOUR_PROJECT_ID')) {
-    console.warn('Supabase تنظیم نشده است. داده فقط به صورت محلی ذخیره می‌شود.');
-    return false;
-  }
+  if (!isSupabaseConfigured()) return { ok: false, reason: 'not-configured' };
+
+  const userId = state.user?.id;
+  if (!userId) return { ok: false, reason: 'no-user' };
 
   try {
-    const userId = state.user?.id;
-    if (!userId) return false;
-
-    const response = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/user_state`, {
+    const res = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/user_state?on_conflict=user_id`, {
       method: 'POST',
-      headers: {
-        'apikey': SUPABASE_CONFIG.key,
-        'Authorization': `Bearer ${SUPABASE_CONFIG.key}`,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=minimal'
-      },
+      headers: { ...headers(), 'Prefer': 'resolution=merge-duplicates,return=minimal' },
       body: JSON.stringify({
         user_id: userId,
         state_data: state,
         updated_at: new Date().toISOString()
       })
     });
-
-    if (!response.ok) {
-      console.warn('خطا در ذخیره ابری:', response.statusText);
-    }
-    return response.ok;
+    return res.ok ? { ok: true } : { ok: false, reason: res.statusText, status: res.status };
   } catch (e) {
     console.error('خطا در اتصال به Supabase:', e);
-    return false;
+    return { ok: false, reason: 'network' };
   }
 }
 
 /**
- * همگام‌سازی کامل
+ * خواندن از Supabase
  */
+export async function loadFromCloud(userId) {
+  if (!isSupabaseConfigured() || !userId) return null;
+  try {
+    const res = await fetch(
+      `${SUPABASE_CONFIG.url}/rest/v1/user_state?user_id=eq.${encodeURIComponent(userId)}&select=state_data`,
+      { headers: headers() }
+    );
+    if (!res.ok) return null;
+    const rows = await res.json();
+    return rows?.[0]?.state_data ? mergeWithDefaults(rows[0].state_data) : null;
+  } catch (e) {
+    console.error('خطا در خواندن از Supabase:', e);
+    return null;
+  }
+}
+
 export async function syncState(state) {
-  const savedLocally = saveToStorage(state);
-  if (savedLocally) {
-    await saveToCloud(state);
-  }
-  return savedLocally;
+  const local = saveToStorage(state);
+  const cloud = await saveToCloud(state);
+  return { local, cloud };
 }
 
-/**
- * خواندنه پیش‌فرض
- */
 export function getDefaultData() {
-  return { ...DEFAULT_DATA };
+  return mergeWithDefaults(null);
 }
+
+export { isSupabaseConfigured };

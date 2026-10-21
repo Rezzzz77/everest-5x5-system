@@ -1,63 +1,106 @@
 # سیستم ۵×۵ تیم اورست | نیوشانیک
 
-یک اپلیکیشن PWA برای مدیریت رشد فروش و تیم بر اساس سیستم ۵ مرحله‌ای اورست.
+اپلیکیشن PWA مدیریت رشد فروش و تیم بر پایه سیستم ۵ مرحله‌ای اورست.
+
+`Offline-first` · `PWA` · `Supabase` · `فارسی / RTL`
+
+---
 
 ## 📖 ساختار سیستم
 
 | مرحله | عنوان | دوره | معیار عبور |
 |-------|-------|------|-------------|
-| ۱ | شروع | ۷۲ ساعت | ۵ اقدام اولیه تکمیل |
-| ۲ | حرکت | ۷ روز | ۷ روز زنجیره‌ای |
+| ۱ | شروع | ۷۲ ساعت | ۵ اقدام اولیه تکمیل شود |
+| ۲ | حرکت | ۷ روز | ۷ روز اجرای زنجیره‌ای |
 | ۳ | ساخت | ۳۰ روز | ۱۰۰+ مخاطب + ۵ معیار |
 | ۴ | تکثیر | ۹۰ روز | ساخت اعضای مستقل |
-| ۵ | راهبری | مستمر | داشبورد سازمانی |
-
-## 🚀 راه‌اندازی
-
-```bash
-# clone کردن پروژه
-git clone https://github.com/USERNAME/everest-5x5-system.git
-cd everest-5x5-system
-
-# راه‌اندازی لوکال
-python -m http.server 8000
-```
-
-## 🔧 تنظیمات
-
-### Supabase (برای ذخیره‌سازی ابری)
-```javascript
-const SUPABASE_URL = 'https://YOUR_PROJECT_ID.supabase.co';
-const SUPABASE_KEY = 'YOUR_PUBLIC_ANON_KEY';
-```
-
-### n8n Webhook (برای گزارش‌ها)
-```javascript
-const N8N_WEBHOOK_URL = 'https://YOUR_N8N_DOMAIN.com/webhook/everest-daily-report';
-```
-
-## 📱 ویژگی‌ها
-
-- ✅ تایپ صوتی فارسی
-- ✅ CRM داخلی با لینک مستقیم
-- ✅ مدیریت تیم و تکثیر
-- ✅ گزارش‌دهی روزانه
-- ✅ داشبورد مدیریتی
-- ✅ ذخیره‌سازی محلی (localStorage)
-
-## 📚 مراحل توسعه
-
-1. ✅ ساختار اولیه و HTML
-2. ⏳ پیاده‌سازی Supabase
-3. ⏳ اضافه کردن ایجنت Coach
-4. ⏳ API و Backend
-5. ⏳ تست و دیپلوی
-
-## 📄 لایسنس
-
-MIT License - برای استفاده داخلی تیم اورست
+| ۵ | راهبری | مستمر | داشبورد عددی سازمان |
 
 ---
 
-**توسعه‌دهنده:** تیم نیوشانیک  
-**تاریخ شروع:** ۱۴۰۳
+## 🚀 راه‌اندازی سریع (لوکال)
+
+```bash
+git clone https://github.com/Rezzzz77/everest-5x5-system.git
+cd everest-5x5-system
+python3 -m http.server 8080
+# سپس http://localhost:8080
+```
+
+> نیاز به سرور محلی دارد (چون `app.js` از ES Modules استفاده می‌کند و `file://` کار نمی‌کند).
+
+---
+
+## ☁️ اتصال به Supabase
+
+### ۱. ساخت جدول
+در داشبورد Supabase → **SQL Editor** → محتوای [`supabase/schema.sql`](supabase/schema.sql) را اجرا کن.
+
+### ۲. گرفتن کلیدها
+**Project Settings → API**:
+- `Project URL`
+- `anon public key`
+
+### ۳. قرار دادن در کد
+فایل `src/config.js`:
+
+```js
+export const SUPABASE_CONFIG = {
+  url: 'https://xxxxx.supabase.co',
+  key: 'eyJhbGciOi...'
+};
+```
+
+بدون این مقادیر، اپ کاملاً آفلاین با `localStorage` کار می‌کند.
+
+---
+
+## 📁 ساختار پروژه
+
+```
+everest-5x5-system/
+├── index.html              # رابط کاربری (RTL)
+├── app.js                  # منطق اپلیکیشن (ES Module)
+├── sw.js                   # Service Worker (PWA + آفلاین)
+├── manifest.json           # تنظیمات PWA
+├── src/
+│   ├── config.js           # کلیدهای Supabase / n8n
+│   ├── db.js               # لایه داده (local + cloud)
+│   └── defaults.js         # داده‌های پیش‌فرض
+├── supabase/
+│   └── schema.sql          # جدول user_state + RLS
+└── docs/
+    └── SECURITY.md         # نکات امنیتی و مسیر ارتقا
+```
+
+---
+
+## 📱 ویژگی‌ها
+
+- ✅ تایپ صوتی فارسی (Web Speech API)
+- ✅ CRM داخلی با لینک تماس/واتساپ/پیامک
+- ✅ ماتریس تکثیر اعضای تیم
+- ✅ گزارش شبانه و زنجیره ۷ روزه
+- ✅ داشبورد مدیریتی (KPI)
+- ✅ لینک مستقیم تماس برای هر مخاطب در CRM
+- ✅ حالت آفلاین کامل
+- ✅ همگام‌سازی ابری اختیاری
+
+---
+
+## 🗺 نقشه راه
+
+| # | مرحله | وضعیت |
+|---|-------|-------|
+| ۱ | ساختار پایه + UI | ✅ |
+| ۲ | لایه داده و Supabase | ✅ |
+| ۳ | PWA + Service Worker | ✅ |
+| ۴ | ایجنت Coach (پیشنهاددهنده) | ⏳ |
+| ۵ | امنیت: Supabase Auth + RLS سخت‌گیرانه | ⏳ |
+| ۶ | بکاپ خودکار (n8n) | ⏳ |
+
+---
+
+## 📄 لایسنس
+
+MIT — استفاده داخلی تیم اورست

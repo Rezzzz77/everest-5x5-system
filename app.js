@@ -3,7 +3,7 @@
  * از db.js برای ذخیره‌سازی استفاده می‌کند
  */
 
-import { loadFromStorage, saveToStorage } from './src/db.js';
+import { loadFromStorage, saveToStorage, syncState, loadFromCloud, isSupabaseConfigured } from './src/db.js';
 
 // وضعیت اپلیکیشن
 let appState = loadFromStorage();
@@ -50,9 +50,11 @@ const newshaProducts = [
   }
 ];
 
-// ذخیره‌سازی
+// ذخیره‌سازی (محلی + ابری در پس‌زمینه)
 function saveAll() {
+  appState.lastModified = Date.now();
   saveToStorage(appState);
+  syncState(appState).catch(() => {});
 }
 
 // ثبت نام و ورود
@@ -531,7 +533,60 @@ function initApp() {
   renderStage5();
   update72HourTimer();
   setInterval(update72HourTimer, 1000);
+
+  // همگام‌سازی با ابر (اگر Supabase تنظیم شده باشد)
+  if (isSupabaseConfigured()) {
+    loadFromCloud(appState.user.id).then(remote => {
+      if (!remote) return;
+      const remoteTouched = remote.lastModified || 0;
+      const localTouched = appState.lastModified || 0;
+      if (remoteTouched > localTouched) {
+        appState = remote;
+        saveToStorage(appState);
+        document.getElementById('user-display-name').innerText = appState.user.name;
+        document.getElementById('upline-display').innerText = appState.user.upline;
+        renderTabs();
+        renderStage1();
+        renderStage2();
+        renderStage3();
+        renderStage4();
+        renderStage5();
+      }
+    }).catch(() => {});
+  }
 }
+
+// ثبت Service Worker برای PWA
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
+}
+
+// ===== دسترسی توابع از طریق onclick در HTML =====
+// (چون app.js یک ES Module است، توابع به‌صورت پیش‌فرض global نیستند)
+Object.assign(window, {
+  handleRegister,
+  resetDemo,
+  switchStage,
+  toggleS1Step,
+  setS2Streak,
+  changeCounter,
+  addCRMContact,
+  cycleCRMStatus,
+  togglePassCriterion,
+  addDuplicationMember,
+  setMemberDup,
+  addLeaderMeeting,
+  submitDailyReport,
+  startVoiceInput,
+  toggleGoalModal,
+  saveGoalAndStory,
+  openHelperModal,
+  stepProd,
+  closeHelperModal,
+  saveAll
+});
 
 // راه‌اندازی
 initApp();
