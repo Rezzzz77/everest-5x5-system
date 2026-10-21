@@ -4,6 +4,7 @@
 
 import { getSupabaseConfig, isConfigured as cfgValid, normalizeConfig } from './config.js';
 import { DEFAULT_DATA } from './defaults.js';
+import { authHeaders, currentUser } from './auth.js';
 
 const STORAGE_KEY = 'everest_5x5_full_v2';
 
@@ -11,13 +12,12 @@ export function isSupabaseConfigured(cfg = getSupabaseConfig()) {
   return cfgValid(cfg);
 }
 
-function headers(cfg) {
-  const c = normalizeConfig(cfg);
-  return {
-    'apikey': c.key,
-    'Authorization': `Bearer ${c.key}`,
-    'Content-Type': 'application/json'
-  };
+/**
+ * سربرگ‌های احراز هویت‌شده (JWT کاربر)
+ * اگر کاربر وارد نشده باشد، null برمی‌گردد → داده‌ای خوانده/نوشته نمی‌شود
+ */
+async function headers() {
+  return authHeaders();
 }
 
 /**
@@ -38,9 +38,19 @@ export function mergeWithDefaults(stored) {
   return out;
 }
 
+function ls() {
+  try {
+    return typeof localStorage !== 'undefined' ? localStorage : null;
+  } catch (_) {
+    return null;
+  }
+}
+
 export function loadFromStorage() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const s = ls();
+    if (!s) return mergeWithDefaults(null);
+    const raw = s.getItem(STORAGE_KEY);
     return mergeWithDefaults(raw ? JSON.parse(raw) : null);
   } catch (e) {
     console.error('خطا در بارگذاری داده:', e);
@@ -50,7 +60,9 @@ export function loadFromStorage() {
 
 export function saveToStorage(state) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    const s = ls();
+    if (!s) return false;
+    s.setItem(STORAGE_KEY, JSON.stringify(state));
     return true;
   } catch (e) {
     console.error('خطا در ذخیره داده:', e);
@@ -66,16 +78,29 @@ export async function testConnection(rawCfg = getSupabaseConfig()) {
   const cfg = normalizeConfig(rawCfg);
   if (!cfgValid(cfg)) return { ok: false, reason: 'not-configured' };
 
+  const h = await headers();
+
+  // بدون نشست: فقط سلامت Auth را می‌سنجیم (بدون نیاز به دسترسی جدول)
+  if (!h) {
+    try {
+      const res = await fetch(`${cfg.url}/auth/v1/health`, { cache: 'no-store' });
+      if (res.ok) return { ok: true, status: res.status, scope: 'auth-only' };
+      return { ok: false, reason: 'http', status: res.status };
+    } catch (e) {
+      return { ok: false, reason: 'network', detail: String(e?.message || e) };
+    }
+  }
+
   try {
     const res = await fetch(
       `${cfg.url}/rest/v1/user_state?select=user_id&limit=1`,
-      { headers: headers(cfg), cache: 'no-store' }
+      { headers: h, cache: 'no-store' }
     );
 
-    if (res.ok) return { ok: true, status: res.status };
+    if (res.ok) return { ok: true, status: res.status, scope: 'full' };
 
     const text = (await res.text()).slice(0, 400);
-    if (res.status === 404 || /42P01|does not exist|Could not find the table/i.test(text))
+    if (res.status === 404 || /PGRST205|42P01|does not exist|Could not find the table/i.test(text))
       return { ok: false, reason: 'table-missing', status: res.status, detail: text };
     if (res.status === 401 || res.status === 403)
       return { ok: false, reason: 'auth', status: res.status, detail: text };
@@ -92,13 +117,17 @@ export async function saveToCloud(state, rawCfg = getSupabaseConfig()) {
   const cfg = normalizeConfig(rawCfg);
   if (!cfgValid(cfg)) return { ok: false, reason: 'not-configured' };
 
-  const userId = state.user?.id;
-  if (!userId) return { ok: false, reason: 'no-user' };
+  const h = await headers();
+  if (!h) return { ok: false, reason: 'no-session' };
+
+  const user = currentUser();
+  const userId = user?.id;
+  if (!userId) return { ok: false, reason: 'no-session' };
 
   try {
     const res = await fetch(`${cfg.url}/rest/v1/user_state?on_conflict=user_id`, {
       method: 'POST',
-      headers: { ...headers(cfg), 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+      headers: { ...h, 'Prefer': 'resolution=merge-duplicates,return=minimal' },
       body: JSON.stringify({
         user_id: userId,
         state_data: state,
@@ -117,13 +146,20 @@ export async function saveToCloud(state, rawCfg = getSupabaseConfig()) {
 /**
  * خواندن از Supabase
  */
-export async function loadFromCloud(userId, rawCfg = getSupabaseConfig()) {
+export async function loadFromCloud(_ignoredUserId, rawCfg = getSupabaseConfig()) {
   const cfg = normalizeConfig(rawCfg);
-  if (!cfgValid(cfg) || !userId) return null;
+  if (!cfgValid(cfg)) return null;
+
+  const h = await headers();
+  if (!h) return null;
+
+  const userId = currentUser()?.id;
+  if (!userId) return null;
+
   try {
     const res = await fetch(
       `${cfg.url}/rest/v1/user_state?user_id=eq.${encodeURIComponent(userId)}&select=state_data`,
-      { headers: headers(cfg), cache: 'no-store' }
+      { headers: h, cache: 'no-store' }
     );
     if (!res.ok) return null;
     const rows = await res.json();

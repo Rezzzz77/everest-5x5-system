@@ -3,7 +3,7 @@
 > این فایل «حافظه پایدار» پروژه است. هر نشست جدید با خواندن همین فایل می‌تواند
 > بدون خواندن کل کد، وضعیت را بازیابی کند. با هر تصمیم مهم به‌روزرسانی شود.
 
-**آخرین به‌روزرسانی:** گام ۳ — پروژه Supabase شناسایی و در کد ثبت شد (منتظر ساخت جدول)
+**آخرین به‌روزرسانی:** گام ۴ — احراز هویت OTP + RLS سخت‌گیرانه (منتظر اجرای SQL)
 
 ---
 
@@ -55,6 +55,15 @@
 ⚠️ **بدهی فنی شناخته‌شده** — جزئیات در `docs/SECURITY.md`.
 هیچ داده حساس (کد ملی، شماره تماس) نباید تا فعال‌سازی Auth به‌صورت عمومی بماند.
 
+### D6 — ورود با OTP ایمیل، نه رمز
+رمز نگهداری نمی‌کنیم؛ کد یک‌بارمصرف ایمیل + نشست JWT.
+دلیل: کاربران میدانی رمز را فراموش می‌کنند و بازیابی رمز = پشتیبانی بیشتر.
+حالت «بدون حساب» برای تست آفلاین نگه داشته شد (بدون ذخیره ابری).
+
+### D7 — کد ملی در جدول جدا (`profiles`)
+`user_state.state_data` یک JSON بزرگ است؛ داده حساس نباید داخلش باشد.
+`profiles` ستون‌محور است و RLS مخصوص خودش را دارد.
+
 ### D3 — تفکیک ماژول‌ها
 `app.js` = رفتار · `src/db.js` = داده · `src/defaults.js` = محتوا · `src/config.js` = کلیدها.
 محتوا (مراحل، ویژگی‌ها، محصولات) باید بدون دست‌زدن به منطق قابل ویرایش باشد.
@@ -80,6 +89,8 @@
 | B6 | خطر تکرار B1 در آینده | هیچ تستی قرارداد HTML↔JS را نمی‌سنجید | `tools/check_contracts.py` + اجرا در CI |
 | B7 | URL با اسلش انتهایی «پیکربندی ناقص» می‌داد | `isConfigured` نرمال‌سازی نمی‌کرد | `normalizeConfig()` در config.js + استفاده در db.js (تست واحد دارد) |
 | B8 | CI به‌خاطر timestamp گراف همیشه قرمز بود | فیلد `generated` غیرقطعی | حذف فیلد، `schema:1`، خروجی بایت‌به‌بایت قطعی |
+| B10 | `clearSession` در محیط بدون DOM خطا می‌داد | دسترسی مستقیم به `localStorage` | `store()` امن در auth.js و db.js |
+| B11 | SQL پیشنهادی اولم `)` اضافه داشت و `to anon using(true)` ناامن بود | عجله در «سریع راه افتادن» | بازنویسی کامل: uuid + auth.uid + revoke anon + تریگر + idempotent |
 | B9 | کاربران قبلی نسخه قدیمی اپ را می‌دیدند | استراتژی cache-first + ثابت‌بودن نام کش | با هر انتشار مهم، `CACHE` در `sw.js` را bump کن (الان v3) |
 
 ## ۶. وضعیت فعلی
@@ -96,12 +107,22 @@
 | ۵ | امنیت: Supabase Auth + RLS سخت‌گیرانه | ⏳ |
 | ۶ | بکاپ خودکار (n8n) | ⏳ |
 
+## ۶.۶ مسیر ورود (چطور کار می‌کند)
+
+1. کاربر ایمیل می‌زند → `sendOtp()` → `POST /auth/v1/otp`
+2. کد ۶ رقمی می‌آید → `verifyOtp()` → `POST /auth/v1/verify` → نشست با `access_token`
+3. `saveSession()` در `localStorage` (با `expires_at`)
+4. هر درخواست داده: `authHeaders()` → `Bearer <access_token>`
+5. RLS سمت دیتابیس: `user_id = auth.uid()` → کاربر فقط ردیف خودش
+6. انقضا: `getAccessToken()` خودکار `refresh_token` می‌زند
+7. خروج: `signOut()` → `POST /auth/v1/logout` + `clearSession()`
+
 ## ۶.۵ تست و کیفیت
 
 ```bash
-npm test                          # ۱۲ تست واحد (node --test)
-python3 tools/check_contracts.py  # قرارداد HTML ↔ JS (۲۵ هندلر، ۴۲ id)
-python3 tools/build_graph.py      # گراف قطعی: ۵۵ گره / ۸۸ یال
+npm test                          # ۲۹ تست واحد (node --test)
+python3 tools/check_contracts.py  # قرارداد HTML ↔ JS (۲۹ هندلر، ۴۷ id)
+python3 tools/build_graph.py      # گراف قطعی: ۶۲ گره / ۱۰۱ یال
 ```
 
 ## ۷. نکات محیطی (Termux)
@@ -124,6 +145,13 @@ python3 tools/build_graph.py      # گراف قطعی: ۵۵ گره / ۸۸ یال
 | — کلید جدید روی REST | ✅ 200 روی `/rest/v1/` |
 | — جدول `user_state` | ❌ 404 `PGRST205` → **ساخته نشده** |
 
+### مدل دسترسی (نسخه ۰.۴)
+```
+anon  ──(فقط /auth/v1)──► OTP ایمیل ──► JWT
+authenticated ──RLS (user_id = auth.uid())──► user_state, profiles
+anon  ──✖──► user_state, profiles   (revoke + no policy)
+```
+
 ### کلیدهای جدید Supabase (مهم برای آینده)
 - `sb_publishable_*` → عمومی، برای کلاینت. تست شد: روی `/rest/v1/` کار می‌کند.
 - `sb_secret_*` → **فقط سرور**. هرگز در کلاینت نگذار (کد با پیام صریح رد می‌کند).
@@ -131,9 +159,14 @@ python3 tools/build_graph.py      # گراف قطعی: ۵۵ گره / ۸۸ یال
 
 ## ۸. قدم بعدی مشخص
 
-**بلوکه‌ی فعلی: جدول `user_state` در پروژه وجود ندارد (خطای PGRST205).**
-صاحب پروژه باید یک‌بار `supabase/schema.sql` را در SQL Editor اجرا کند؛
-از این پس کد نیازی به هیچ تغییری ندارد (URL و کلید در `src/config.js` هستند).
+**بلوکه‌ی فعلی: جدول‌ها ساخته نشده‌اند و Auth Email/OTP باید در داشبورد فعال شود.**
+
+دو کار صاحب پروژه (بدون تغییر کد):
+1. **Authentication → Providers → Email**: فعال‌سازی *Email OTP / Magic Link*
+2. **SQL Editor**: اجرای `supabase/schema.sql` (idempotent) و بعد `supabase/verify.sql`
+
+هشدار: SMTP پیش‌فرض رایگان Supabase محدودیت ارسال دارد؛ برای تیم واقعی
+یک SMTP اختصاصی (Resend/SendGrid) وصل شود، وگرنه OTP به بعضی ایمیل‌ها نمی‌رسد.
 
 پس از اجرای SQL:
 1. تست: `curl -H "apikey: <key>" "https://cupcijeqqiyhqaifjzbl.supabase.co/rest/v1/user_state?select=user_id&limit=1"` → باید `[]` بدهد نه 404.

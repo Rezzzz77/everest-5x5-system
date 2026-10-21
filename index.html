@@ -28,22 +28,51 @@
         <h1 class="text-xl font-extrabold text-white">سیستم ۵×۵ تیم اورست</h1>
         <p class="text-xs text-slate-400">تکرار کارهای ساده = ساخت عادت‌های قدرتمند</p>
       </div>
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-inner">
+      <!-- مرحله ۱: ورود با ایمیل -->
+      <div id="auth-step-email" class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-inner">
+        <div>
+          <label class="text-xs text-slate-300 font-bold">ایمیل شما *</label>
+          <input id="reg-email" type="email" dir="ltr" autocomplete="email" placeholder="you@example.com" class="w-full mt-1 bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-white text-left focus:border-blue-500 focus:outline-none" />
+          <p class="text-[10px] text-slate-400 mt-1">کد ورود به همین ایمیل ارسال می‌شود؛ رمز عبوری لازم نیست.</p>
+        </div>
+        <button onclick="requestOtp(event)" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-extrabold py-3 rounded-xl text-xs shadow-lg transition">
+          ارسال کد ورود 📧
+        </button>
+        <button onclick="toggleLocalMode()" class="w-full text-[11px] text-slate-400 hover:text-slate-200 py-1">
+          فعلاً بدون حساب (ذخیره فقط روی همین گوشی)
+        </button>
+        <div id="auth-msg-1" class="text-[11px] leading-relaxed"></div>
+      </div>
+
+      <!-- مرحله ۲: کد و مشخصات -->
+      <div id="auth-step-code" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-inner">
+        <div class="flex justify-between items-center">
+          <span class="text-[11px] text-slate-300">کد به <b id="auth-email-show" dir="ltr" class="text-blue-300"></b> ارسال شد</span>
+          <button onclick="backToEmailStep()" class="text-[10px] text-slate-400 hover:text-white">تغییر ایمیل</button>
+        </div>
+        <div>
+          <label class="text-xs text-slate-300 font-bold">کد ۶ رقمی *</label>
+          <input id="reg-code" type="tel" inputmode="numeric" maxlength="6" dir="ltr" autocomplete="one-time-code" placeholder="123456"
+            class="w-full mt-1 bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-center tracking-[0.4em] font-mono text-base text-white focus:border-blue-500 focus:outline-none" />
+        </div>
         <div>
           <label class="text-xs text-slate-300 font-bold">نام و نام خانوادگی *</label>
           <input id="reg-name" type="text" placeholder="مثال: سارا محمدی" class="w-full mt-1 bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-white focus:border-blue-500 focus:outline-none" />
         </div>
         <div>
-          <label class="text-xs text-slate-300 font-bold">کد ملی / کد واحد بازاریابی نیوشانیک *</label>
-          <input id="reg-id" type="text" placeholder="کد ۱۰ رقمی" class="w-full mt-1 bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-white focus:border-blue-500 focus:outline-none" />
+          <label class="text-xs text-slate-300 font-bold">کد ملی / کد واحد بازاریابی نیوشانیک</label>
+          <input id="reg-id" type="text" inputmode="numeric" placeholder="کد ۱۰ رقمی" class="w-full mt-1 bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-white focus:border-blue-500 focus:outline-none" />
+          <p class="text-[10px] text-slate-400 mt-1">فقط برای پروفایل شخصی؛ در سرور با سطح دسترسی خودت ذخیره می‌شود.</p>
         </div>
         <div>
           <label class="text-xs text-slate-300 font-bold">نام حامی / راهبر شما</label>
           <input id="reg-upline" type="text" placeholder="نام معرف یا راهبر تیم" class="w-full mt-1 bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-white focus:border-blue-500 focus:outline-none" />
         </div>
-        <button onclick="handleRegister()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-extrabold py-3 rounded-xl text-xs shadow-lg transition mt-2">
+        <button onclick="verifyOtpAndStart()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold py-3 rounded-xl text-xs shadow-lg transition">
           ورود و استارت ۷۲ ساعت اول 🚀
         </button>
+        <button onclick="requestOtp(event)" class="w-full text-[11px] text-slate-400 hover:text-slate-200 py-1">ارسال دوباره کد</button>
+        <div id="auth-msg-2" class="text-[11px] leading-relaxed"></div>
       </div>
     </div>
 
@@ -340,6 +369,7 @@
           <button onclick="saveCloudConfigAndSync()" class="bg-sky-600 hover:bg-sky-500 text-white font-extrabold py-2.5 rounded-xl text-xs">ذخیره و همگام‌سازی</button>
         </div>
         <button onclick="disconnectCloud()" class="w-full text-[11px] text-red-400 hover:text-red-300 py-1">قطع اتصال و برگشت به حالت آفلاین</button>
+        <button onclick="signOutUser()" class="w-full text-[11px] bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 rounded-xl">خروج از حساب</button>
 
         <p class="text-[10px] text-slate-500 leading-relaxed border-t border-slate-700 pt-2">
           اگر خطای «جدول user_state وجود ندارد» گرفتی، فایل

@@ -5,6 +5,7 @@
 
 import { loadFromStorage, saveToStorage, syncState, loadFromCloud, isSupabaseConfigured, testConnection } from './src/db.js';
 import { getSupabaseConfig, saveSupabaseConfig, clearSupabaseConfig, validateConfig } from './src/config.js';
+import { sendOtp, verifyOtp, signOut, loadSession, currentUser, isValidEmail, authErrorText } from './src/auth.js';
 
 // وضعیت اپلیکیشن
 let appState = loadFromStorage();
@@ -177,17 +178,121 @@ function disconnectCloud() {
   cloudBox('info', 'اتصال قطع شد. اپ به‌صورت آفلاین با حافظه دستگاه کار می‌کند.');
 }
 
-// ثبت نام و ورود
-function handleRegister() {
-  const name = document.getElementById('reg-name').value.trim();
-  const id = document.getElementById('reg-id').value.trim();
-  const upline = document.getElementById('reg-upline').value.trim();
-  if (!name || !id) return alert('لطفاً نام و کد ملی خود را وارد کنید.');
+/* ---------------- ورود (OTP) ---------------- */
+let pendingEmail = '';
 
-  appState.user = { name, id, upline: upline || 'راهبر تیم اورست' };
+function authMsg(step, kind, html) {
+  const colors = {
+    ok: 'text-emerald-300',
+    err: 'text-red-300',
+    info: 'text-slate-300'
+  };
+  const el = document.getElementById(`auth-msg-${step}`);
+  if (el) el.innerHTML = `<span class="${colors[kind] || colors.info}">${html}</span>`;
+}
+
+function showAuthStep(step) {
+  const a = document.getElementById('auth-step-email');
+  const b = document.getElementById('auth-step-code');
+  if (!a || !b) return;
+  a.classList.toggle('hidden', step !== 1);
+  b.classList.toggle('hidden', step !== 2);
+  if (step === 2) document.getElementById('reg-code')?.focus();
+}
+
+function backToEmailStep() {
+  showAuthStep(1);
+}
+
+async function requestOtp(ev) {
+  const email = document.getElementById('reg-email').value.trim();
+  if (!isValidEmail(email)) return authMsg(1, 'err', 'ایمیل معتبر نیست.');
+
+  const btn = ev?.currentTarget || ev?.target;
+  if (btn) { btn.disabled = true; btn.textContent = 'در حال ارسال…'; }
+  authMsg(1, 'info', 'در حال ارسال کد… ⏳');
+
+  const r = await sendOtp(email);
+  if (btn) { btn.disabled = false; btn.textContent = 'ارسال کد ورود 📧'; }
+
+  if (!r.ok) return authMsg(1, 'err', authErrorText(r));
+
+  pendingEmail = email;
+  document.getElementById('auth-email-show').innerText = email;
+  authMsg(2, 'ok', 'کد ارسال شد ✅ ایمیل خود را (و پوشه اسپم را) ببین.');
+  showAuthStep(2);
+}
+
+async function verifyOtpAndStart() {
+  const code = document.getElementById('reg-code').value.trim();
+  const name = document.getElementById('reg-name').value.trim();
+  const nationalId = document.getElementById('reg-id').value.trim();
+  const upline = document.getElementById('reg-upline').value.trim();
+
+  if (!/^\d{6}$/.test(code)) return authMsg(2, 'err', 'کد ۶ رقمی را وارد کن.');
+  if (!name) return authMsg(2, 'err', 'نام و نام خانوادگی را وارد کن.');
+
+  authMsg(2, 'info', 'در حال بررسی کد… ⏳');
+  const r = await verifyOtp(pendingEmail, code, { full_name: name, upline: upline || '' });
+  if (!r.ok) return authMsg(2, 'err', authErrorText(r));
+
+  const u = currentUser(r.session);
+  appState.user = {
+    id: u.id,
+    email: u.email,
+    name: (u.name || name).trim(),
+    upline: upline || u.upline || 'راهبر تیم اورست',
+    nationalId
+  };
+  if (!appState.startTime) appState.startTime = Date.now();
+
+  saveAll();
+  await pullCloudAfterLogin();
+  initApp();
+}
+
+/** پس از ورود: اگر داده ابری جدیدتر بود، جایگزین کن */
+async function pullCloudAfterLogin() {
+  try {
+    const remote = await loadFromCloud();
+    if (!remote) return;
+    const remoteTouched = remote.lastModified || 0;
+    const localTouched = appState.lastModified || 0;
+    if (remoteTouched > localTouched) {
+      const keepUser = appState.user;
+      appState = remote;
+      appState.user = { ...remote.user, ...keepUser, nationalId: keepUser.nationalId || remote.user?.nationalId };
+      saveToStorage(appState);
+    }
+  } catch (_) { /* آفلاین */ }
+}
+
+/** حالت بدون حساب: فقط روی همین دستگاه */
+function toggleLocalMode() {
+  const name = prompt('نام و نام خانوادگی را وارد کن:', 'عضو تیم اورست');
+  if (!name || !name.trim()) return;
+  appState.user = {
+    id: `local-${Date.now()}`,
+    email: '',
+    name: name.trim(),
+    upline: 'راهبر تیم اورست',
+    nationalId: '',
+    local: true
+  };
   if (!appState.startTime) appState.startTime = Date.now();
   saveAll();
   initApp();
+}
+
+async function signOutUser() {
+  if (!confirm('از حساب خارج می‌شوی؟ داده‌های روی این دستگاه پاک نمی‌شود.')) return;
+  await signOut();
+  closeCloudModal();
+  cloudLabel('off');
+  appState.user = null;
+  saveToStorage(appState);
+  showAuthStep(1);
+  document.getElementById('auth-screen').classList.remove('hidden');
 }
 
 // ریست
@@ -637,13 +742,26 @@ function closeHelperModal() {
 }
 
 function initApp() {
+  // بازیابی نشست: اگر نشست داریم و کاربر ذخیره‌شده local نیست، شناسه را sync کن
+  const session = loadSession();
+  if (session?.user?.id && appState.user && !appState.user.local) {
+    appState.user.id = session.user.id;
+    appState.user.email = session.user.email || appState.user.email || '';
+  }
+  if (appState.user && !appState.user.local && !loadSession() && isSupabaseConfigured()) {
+    // کاربر قبلاً با حساب وارد شده ولی نشست منقضی شده → دوباره ورود
+    appState.user = null;
+  }
+
   if (!appState.user) {
     document.getElementById('auth-screen').classList.remove('hidden');
+    showAuthStep(1);
     return;
   }
   document.getElementById('auth-screen').classList.add('hidden');
   document.getElementById('user-display-name').innerText = appState.user.name;
-  document.getElementById('upline-display').innerText = appState.user.upline;
+  document.getElementById('upline-display').innerText =
+    (appState.user.local ? 'حالت محلی: ' : '') + appState.user.upline;
 
   renderTabs();
   renderStage1();
@@ -656,7 +774,7 @@ function initApp() {
   setInterval(update72HourTimer, 1000);
 
   // همگام‌سازی با ابر (اگر Supabase تنظیم شده باشد)
-  if (isSupabaseConfigured()) {
+  if (isSupabaseConfigured() && loadSession() && !appState.user.local) {
     loadFromCloud(appState.user.id).then(remote => {
       if (!remote) return;
       const remoteTouched = remote.lastModified || 0;
@@ -687,7 +805,11 @@ if ('serviceWorker' in navigator) {
 // ===== دسترسی توابع از طریق onclick در HTML =====
 // (چون app.js یک ES Module است، توابع به‌صورت پیش‌فرض global نیستند)
 Object.assign(window, {
-  handleRegister,
+  requestOtp,
+  verifyOtpAndStart,
+  backToEmailStep,
+  toggleLocalMode,
+  signOutUser,
   resetDemo,
   switchStage,
   toggleS1Step,
