@@ -7,6 +7,7 @@ import { DEFAULT_DATA } from '../src/defaults.js';
 
 const URL_OK = 'https://abcdefghijkl.supabase.co';
 const KEY_OK = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiJ9.signature_part_here';
+const KEY_PUBLISHABLE = 'sb_publishable_veUWJ1FuR3qaBMQCJ0oh3w_HxtUGSeJ';
 
 test('validateConfig: پیکربندی معتبر خطا ندارد', () => {
   assert.deepEqual(validateConfig({ url: URL_OK, key: KEY_OK }), []);
@@ -68,4 +69,23 @@ test('mergeWithDefaults: ورودی null امن است', () => {
   const merged = mergeWithDefaults(null);
   assert.equal(merged.s3Pass.length, DEFAULT_DATA.s3Pass.length);
   assert.deepEqual(merged.dupTeam, []);
+});
+
+test('validateConfig: کلید publishable پذیرفته می‌شود', () => {
+  assert.deepEqual(validateConfig({ url: URL_OK, key: KEY_PUBLISHABLE }), []);
+});
+
+test('validateConfig: کلید secret پذیرفته نمی‌شود', () => {
+  const errors = validateConfig({ url: URL_OK, key: 'sb_secret_abcdefghijklmnopqrstuvwxyz' });
+  assert.equal(errors.length, 1);
+  assert.match(errors[0], /secret/);
+});
+
+test('isConfigured: کلید publishable کافی است', () => {
+  assert.equal(isConfigured({ url: URL_OK, key: KEY_PUBLISHABLE }), true);
+});
+
+test('validateConfig: آدرس غیر سوپابیس رد می‌شود', () => {
+  const errors = validateConfig({ url: 'https://example.co', key: KEY_PUBLISHABLE });
+  assert.equal(errors.length, 1);
 });
