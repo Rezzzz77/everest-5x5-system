@@ -2,7 +2,7 @@
   "meta": {
     "project": "everest-5x5-system",
     "title": "سیستم ۵×۵ تیم اورست",
-    "generated": "2026-10-21T14:45:29+00:00",
+    "generated": "2026-10-21T14:49:03+00:00",
     "generator": "tools/build_graph.py",
     "counts": {
       "nodes": 55,

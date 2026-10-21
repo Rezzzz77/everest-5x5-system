@@ -73,7 +73,11 @@ everest-5x5-system/
 ├── supabase/
 │   └── schema.sql          # جدول user_state + RLS
 ├── tools/
-│   └── build_graph.py      # تولید گراف دانش از سورس
+│   ├── build_graph.py      # تولید گراف دانش از سورس
+│   ├── make_icons.py       # تولید آیکون‌های PWA
+│   └── check_contracts.py  # تست قرارداد HTML ↔ JS
+├── .github/workflows/
+│   └── check.yml           # CI: سینتکس، قرارداد، همگامی گراف
 └── docs/
     ├── MEMORY.md           # 🧠 حافظه پروژه — از اینجا ادامه بده
     ├── graph.html          # نمایش تعاملی گراف
@@ -85,6 +89,15 @@ everest-5x5-system/
 
 هر نشست جدید (انسان یا ایجنت) باید ابتدا [`docs/MEMORY.md`](docs/MEMORY.md) را بخواند:
 تصمیم‌های ثبت‌شده، باگ‌های حل‌شده، وضعیت فعلی و قدم بعدی آنجاست.
+
+### ✅ بررسی سلامت قبل از هر کامیت
+
+```bash
+python3 tools/check_contracts.py   # هر onclick باید به window متصل باشد
+python3 tools/build_graph.py       # گراف باید با سورس همگام باشد
+```
+
+هر دو در GitHub Actions (`.github/workflows/check.yml`) هم خودکار اجرا می‌شوند.
 
 ### 🕸 گراف دانش
 
@@ -118,6 +131,7 @@ python3 tools/build_graph.py   # بازتولید docs/graph.json
 | ۲ | لایه داده و Supabase | ✅ |
 | ۳ | PWA + Service Worker | ✅ |
 | ۴ | گراف دانش + حافظه پروژه | ✅ |
+| ۴.۱ | CI + تست قرارداد HTML ↔ JS | ✅ |
 | ۵ | اتصال واقعی Supabase (کلیدها) | ⏳ |
 | ۶ | ایجنت Coach (پیشنهاددهنده) | ⏳ |
 | ۷ | امنیت: Supabase Auth + RLS سخت‌گیرانه | ⏳ |

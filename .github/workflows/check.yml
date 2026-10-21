@@ -1,0 +1,66 @@
+name: check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Syntax — app.js
+        run: node --input-type=module --check < app.js
+
+      - name: Syntax — sw.js
+        run: node --check sw.js
+
+      - name: Syntax — inline script of docs/graph.html
+        run: |
+          python3 - <<'PY'
+          import re
+          h = open('docs/graph.html', encoding='utf-8').read()
+          m = re.search(r'<script>(.*?)</script>', h, re.S)
+          open('graph_inline.js', 'w', encoding='utf-8').write(m.group(1))
+          PY
+          node --check graph_inline.js
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Contract test — HTML ↔ JS
+        run: python3 tools/check_contracts.py
+
+      - name: Graph is up to date
+        run: |
+          python3 tools/build_graph.py
+          git diff --exit-code docs/graph.json || {
+            echo "::error::docs/graph.json با سورس همگام نیست — tools/build_graph.py را اجرا و کامیت کن"
+            exit 1
+          }
+
+      - name: Broken links in README
+        run: |
+          python3 - <<'PY'
+          import os, re, sys
+          s = open('README.md', encoding='utf-8').read()
+          bad = []
+          for path in re.findall(r'\]\((?!https?:)([^)#]+)\)', s):
+              if not os.path.exists(path):
+                  bad.append(path)
+          if bad:
+              print('لینک‌های شکسته:', bad)
+              sys.exit(1)
+          print('همه لینک‌های نسبی README سالم‌اند')
+          PY
