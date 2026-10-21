@@ -2,31 +2,26 @@
  * لایه داده: ذخیره‌سازی محلی (Offline-first) + همگام‌سازی با Supabase
  */
 
-import { SUPABASE_CONFIG } from './config.js';
+import { getSupabaseConfig, isConfigured as cfgValid, normalizeConfig } from './config.js';
 import { DEFAULT_DATA } from './defaults.js';
 
 const STORAGE_KEY = 'everest_5x5_full_v2';
 
-function isSupabaseConfigured() {
-  return Boolean(
-    SUPABASE_CONFIG.url &&
-    SUPABASE_CONFIG.key &&
-    !SUPABASE_CONFIG.url.includes('YOUR_PROJECT_ID') &&
-    !SUPABASE_CONFIG.key.includes('YOUR_PUBLIC_ANON_KEY')
-  );
+export function isSupabaseConfigured(cfg = getSupabaseConfig()) {
+  return cfgValid(cfg);
 }
 
-function headers() {
+function headers(cfg) {
+  const c = normalizeConfig(cfg);
   return {
-    'apikey': SUPABASE_CONFIG.key,
-    'Authorization': `Bearer ${SUPABASE_CONFIG.key}`,
+    'apikey': c.key,
+    'Authorization': `Bearer ${c.key}`,
     'Content-Type': 'application/json'
   };
 }
 
 /**
  * ادغام داده ذخیره‌شده با پیش‌فرض‌ها
- * (کلیدهای ناقص یا آرایه‌های خالی با مقدار پیش‌فرض پر می‌شوند)
  */
 export function mergeWithDefaults(stored) {
   const out = { ...DEFAULT_DATA, ...(stored || {}) };
@@ -64,40 +59,71 @@ export function saveToStorage(state) {
 }
 
 /**
- * ذخیره در Supabase
+ * تست اتصال — بدون نوشتن داده
+ * خروجی: { ok, reason?, status?, detail? }
  */
-export async function saveToCloud(state) {
-  if (!isSupabaseConfigured()) return { ok: false, reason: 'not-configured' };
+export async function testConnection(rawCfg = getSupabaseConfig()) {
+  const cfg = normalizeConfig(rawCfg);
+  if (!cfgValid(cfg)) return { ok: false, reason: 'not-configured' };
+
+  try {
+    const res = await fetch(
+      `${cfg.url}/rest/v1/user_state?select=user_id&limit=1`,
+      { headers: headers(cfg), cache: 'no-store' }
+    );
+
+    if (res.ok) return { ok: true, status: res.status };
+
+    const text = (await res.text()).slice(0, 400);
+    if (res.status === 404 || /42P01|does not exist|Could not find the table/i.test(text))
+      return { ok: false, reason: 'table-missing', status: res.status, detail: text };
+    if (res.status === 401 || res.status === 403)
+      return { ok: false, reason: 'auth', status: res.status, detail: text };
+    return { ok: false, reason: 'http', status: res.status, detail: text };
+  } catch (e) {
+    return { ok: false, reason: 'network', detail: String(e && e.message || e) };
+  }
+}
+
+/**
+ * ذخیره در Supabase (upsert روی user_id)
+ */
+export async function saveToCloud(state, rawCfg = getSupabaseConfig()) {
+  const cfg = normalizeConfig(rawCfg);
+  if (!cfgValid(cfg)) return { ok: false, reason: 'not-configured' };
 
   const userId = state.user?.id;
   if (!userId) return { ok: false, reason: 'no-user' };
 
   try {
-    const res = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/user_state?on_conflict=user_id`, {
+    const res = await fetch(`${cfg.url}/rest/v1/user_state?on_conflict=user_id`, {
       method: 'POST',
-      headers: { ...headers(), 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+      headers: { ...headers(cfg), 'Prefer': 'resolution=merge-duplicates,return=minimal' },
       body: JSON.stringify({
         user_id: userId,
         state_data: state,
         updated_at: new Date().toISOString()
       })
     });
-    return res.ok ? { ok: true } : { ok: false, reason: res.statusText, status: res.status };
+    if (res.ok) return { ok: true };
+    const text = (await res.text()).slice(0, 300);
+    return { ok: false, reason: res.status === 401 || res.status === 403 ? 'auth' : 'http', status: res.status, detail: text };
   } catch (e) {
     console.error('خطا در اتصال به Supabase:', e);
-    return { ok: false, reason: 'network' };
+    return { ok: false, reason: 'network', detail: String(e && e.message || e) };
   }
 }
 
 /**
  * خواندن از Supabase
  */
-export async function loadFromCloud(userId) {
-  if (!isSupabaseConfigured() || !userId) return null;
+export async function loadFromCloud(userId, rawCfg = getSupabaseConfig()) {
+  const cfg = normalizeConfig(rawCfg);
+  if (!cfgValid(cfg) || !userId) return null;
   try {
     const res = await fetch(
-      `${SUPABASE_CONFIG.url}/rest/v1/user_state?user_id=eq.${encodeURIComponent(userId)}&select=state_data`,
-      { headers: headers() }
+      `${cfg.url}/rest/v1/user_state?user_id=eq.${encodeURIComponent(userId)}&select=state_data`,
+      { headers: headers(cfg), cache: 'no-store' }
     );
     if (!res.ok) return null;
     const rows = await res.json();
@@ -108,14 +134,12 @@ export async function loadFromCloud(userId) {
   }
 }
 
-export async function syncState(state) {
+export async function syncState(state, cfg = getSupabaseConfig()) {
   const local = saveToStorage(state);
-  const cloud = await saveToCloud(state);
+  const cloud = await saveToCloud(state, cfg);
   return { local, cloud };
 }
 
 export function getDefaultData() {
   return mergeWithDefaults(null);
 }
-
-export { isSupabaseConfigured };

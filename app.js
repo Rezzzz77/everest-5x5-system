@@ -3,7 +3,8 @@
  * از db.js برای ذخیره‌سازی استفاده می‌کند
  */
 
-import { loadFromStorage, saveToStorage, syncState, loadFromCloud, isSupabaseConfigured } from './src/db.js';
+import { loadFromStorage, saveToStorage, syncState, loadFromCloud, isSupabaseConfigured, testConnection } from './src/db.js';
+import { getSupabaseConfig, saveSupabaseConfig, clearSupabaseConfig, validateConfig } from './src/config.js';
 
 // وضعیت اپلیکیشن
 let appState = loadFromStorage();
@@ -56,9 +57,124 @@ function saveAll() {
   appState.lastModified = Date.now();
   saveToStorage(appState);
   clearTimeout(cloudTimer);
-  cloudTimer = setTimeout(() => {
-    syncState(appState).catch(() => {});
+  cloudTimer = setTimeout(async () => {
+    try {
+      const r = await syncState(appState);
+      if (r.cloud?.ok) cloudLabel('ok');
+      else if (r.cloud && r.cloud.reason !== 'not-configured') cloudLabel('err');
+    } catch (_) { /* آفلاین */ }
   }, 400);
+}
+
+/* ---------------- وضعیت اتصال ابری ---------------- */
+const CLOUD_STYLE = {
+  off: { text: 'آفلاین', cls: 'bg-slate-700/60 text-slate-300' },
+  ok:  { text: 'ابر ✓',  cls: 'bg-emerald-600/30 text-emerald-300' },
+  err: { text: 'ابر ✖',  cls: 'bg-red-600/30 text-red-300' }
+};
+
+function cloudLabel(state) {
+  const el = document.getElementById('cloud-badge');
+  if (!el) return;
+  const m = CLOUD_STYLE[state] || CLOUD_STYLE.off;
+  el.innerText = m.text;
+  el.className = `text-[10px] px-2 py-0.5 rounded-full font-bold ${m.cls}`;
+}
+
+function updateCloudBadge() {
+  cloudLabel(isSupabaseConfigured() ? 'ok' : 'off');
+}
+
+function cloudBox(kind, html) {
+  const colors = {
+    ok: 'bg-emerald-950/60 border-emerald-700/40 text-emerald-200',
+    err: 'bg-red-950/60 border-red-700/40 text-red-200',
+    info: 'bg-slate-900 border-slate-700 text-slate-300'
+  };
+  document.getElementById('cloud-result').innerHTML =
+    `<div class="border rounded-xl p-2.5 ${colors[kind] || colors.info}">${html}</div>`;
+}
+
+function readCloudInputs() {
+  return {
+    url: document.getElementById('cloud-url').value.trim(),
+    key: document.getElementById('cloud-key').value.trim()
+  };
+}
+
+function openCloudModal() {
+  const cfg = getSupabaseConfig();
+  document.getElementById('cloud-url').value = cfg.url || '';
+  document.getElementById('cloud-key').value = cfg.key || '';
+  document.getElementById('cloud-result').innerHTML = '';
+  document.getElementById('cloud-modal').classList.remove('hidden');
+}
+
+function closeCloudModal() {
+  document.getElementById('cloud-modal').classList.add('hidden');
+}
+
+function cloudErrorText(r) {
+  const map = {
+    'not-configured': 'آدرس یا کلید کامل نیست.',
+    'table-missing': 'اتصال برقرار شد، اما جدول <code dir="ltr">user_state</code> وجود ندارد. فایل <code dir="ltr">supabase/schema.sql</code> را در SQL Editor اجرا کن.',
+    'auth': 'کلید anon معتبر نیست (۴۰۱/۴۰۳). مقدار را از Project Settings → API دوباره کپی کن.',
+    'network': 'شبکه در دسترس نیست یا دامنه اشتباه است.',
+    'security-blocked': 'درخواست توسط قوانین امنیتی شبکه مسدود شد (CSP/CORS).'
+  };
+  return map[r.reason] || `خطای HTTP ${r.status || ''}${r.detail ? ': ' + String(r.detail).slice(0, 120) : ''}`;
+}
+
+async function testCloudConnection() {
+  const cfg = readCloudInputs();
+  const errors = validateConfig(cfg);
+  if (errors.length) return cloudBox('err', errors.join('<br>'));
+
+  cloudBox('info', 'در حال تست اتصال… ⏳');
+  const r = await testConnection(cfg);
+
+  if (r.ok) {
+    cloudLabel('ok');
+    cloudBox('ok', 'اتصال برقرار است و جدول <code dir="ltr">user_state</code> در دسترس است ✅');
+  } else {
+    cloudLabel('err');
+    cloudBox('err', cloudErrorText(r));
+  }
+}
+
+async function saveCloudConfigAndSync() {
+  const cfg = readCloudInputs();
+  const errors = validateConfig(cfg);
+  if (errors.length) return cloudBox('err', errors.join('<br>'));
+
+  saveSupabaseConfig(cfg);
+  cloudBox('info', 'ذخیره شد. در حال بررسی اتصال… ⏳');
+
+  const ping = await testConnection(cfg);
+  if (!ping.ok) {
+    cloudLabel('err');
+    return cloudBox('err', cloudErrorText(ping));
+  }
+
+  if (!appState.user) {
+    cloudLabel('ok');
+    return cloudBox('ok', 'ذخیره شد ✅ — پس از ثبت‌نام، داده‌ها به‌صورت خودکار همگام می‌شوند.');
+  }
+
+  const r = await syncState(appState, cfg);
+  if (r.cloud?.ok) {
+    cloudLabel('ok');
+    cloudBox('ok', 'اتصال و همگام‌سازی با موفقیت انجام شد ✅');
+  } else {
+    cloudLabel('err');
+    cloudBox('err', cloudErrorText(r.cloud || {}));
+  }
+}
+
+function disconnectCloud() {
+  clearSupabaseConfig();
+  cloudLabel('off');
+  cloudBox('info', 'اتصال قطع شد. اپ به‌صورت آفلاین با حافظه دستگاه کار می‌کند.');
 }
 
 // ثبت نام و ورود
@@ -535,6 +651,7 @@ function initApp() {
   renderStage3();
   renderStage4();
   renderStage5();
+  updateCloudBadge();
   update72HourTimer();
   setInterval(update72HourTimer, 1000);
 
@@ -589,6 +706,11 @@ Object.assign(window, {
   openHelperModal,
   stepProd,
   closeHelperModal,
+  openCloudModal,
+  closeCloudModal,
+  testCloudConnection,
+  saveCloudConfigAndSync,
+  disconnectCloud,
   saveAll
 });
 

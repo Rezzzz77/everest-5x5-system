@@ -44,17 +44,14 @@ python3 -m http.server 8080
 - `Project URL`
 - `anon public key`
 
-### ۳. قرار دادن در کد
-فایل `src/config.js`:
+### ۳. وارد کردن در اپ (بدون دست‌زدن به کد)
+در اپ دکمه **☁️** بالای صفحه را بزن و دو مقدار را وارد کن:
 
-```js
-export const SUPABASE_CONFIG = {
-  url: 'https://xxxxx.supabase.co',
-  key: 'eyJhbGciOi...'
-};
-```
+1. **تست اتصال** — اگر جدول نبود، پیام دقیق می‌دهد.
+2. **ذخیره و همگام‌سازی** — کلیدها در `localStorage` همان دستگاه می‌مانند.
 
-بدون این مقادیر، اپ کاملاً آفلاین با `localStorage` کار می‌کند.
+> جایگزین: می‌توانی مقادیر را در `src/config.js` هم بگذاری (برای انتشار ثابت).
+> بدون این مقادیر، اپ کاملاً آفلاین با `localStorage` کار می‌کند و هیچ خطایی نمی‌دهد.
 
 ---
 
@@ -76,6 +73,9 @@ everest-5x5-system/
 │   ├── build_graph.py      # تولید گراف دانش از سورس
 │   ├── make_icons.py       # تولید آیکون‌های PWA
 │   └── check_contracts.py  # تست قرارداد HTML ↔ JS
+├── tests/
+│   └── core.test.mjs       # تست واحد (node --test)
+├── package.json            # اسکریپت‌های test / check / graph / serve
 ├── .github/workflows/
 │   └── check.yml           # CI: سینتکس، قرارداد، همگامی گراف
 └── docs/
@@ -93,11 +93,12 @@ everest-5x5-system/
 ### ✅ بررسی سلامت قبل از هر کامیت
 
 ```bash
-python3 tools/check_contracts.py   # هر onclick باید به window متصل باشد
-python3 tools/build_graph.py       # گراف باید با سورس همگام باشد
+npm test                          # تست‌های واحد (config / db / defaults)
+python3 tools/check_contracts.py  # هر onclick باید به window متصل باشد
+python3 tools/build_graph.py      # گراف باید با سورس همگام باشد
 ```
 
-هر دو در GitHub Actions (`.github/workflows/check.yml`) هم خودکار اجرا می‌شوند.
+همه در GitHub Actions (`.github/workflows/check.yml`) خودکار اجرا می‌شوند.
 
 ### 🕸 گراف دانش
 
@@ -119,7 +120,8 @@ python3 tools/build_graph.py   # بازتولید docs/graph.json
 - ✅ داشبورد مدیریتی (KPI)
 - ✅ لینک مستقیم تماس برای هر مخاطب در CRM
 - ✅ حالت آفلاین کامل
-- ✅ همگام‌سازی ابری اختیاری
+- ✅ همگام‌سازی ابری اختیاری + تنظیم کلید از داخل اپ (با تست اتصال)
+- ✅ تست واحد و CI
 
 ---
 
@@ -132,7 +134,8 @@ python3 tools/build_graph.py   # بازتولید docs/graph.json
 | ۳ | PWA + Service Worker | ✅ |
 | ۴ | گراف دانش + حافظه پروژه | ✅ |
 | ۴.۱ | CI + تست قرارداد HTML ↔ JS | ✅ |
-| ۵ | اتصال واقعی Supabase (کلیدها) | ⏳ |
+| ۵ | ابزار اتصال Supabase درون‌برنامه | ✅ |
+| ۵.۱ | وارد کردن کلید واقعی توسط ادمین | ⏳ |
 | ۶ | ایجنت Coach (پیشنهاددهنده) | ⏳ |
 | ۷ | امنیت: Supabase Auth + RLS سخت‌گیرانه | ⏳ |
 | ۸ | بکاپ خودکار (n8n) | ⏳ |

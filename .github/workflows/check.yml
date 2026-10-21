@@ -42,6 +42,9 @@ jobs:
       - name: Contract test — HTML ↔ JS
         run: python3 tools/check_contracts.py
 
+      - name: Unit tests
+        run: node --test tests/*.test.mjs
+
       - name: Graph is up to date
         run: |
           python3 tools/build_graph.py
