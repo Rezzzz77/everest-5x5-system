@@ -1,4 +1,4 @@
-const CACHE = 'everest-5x5-v6';
+const CACHE = 'everest-5x5-v7';
 
 const PRECACHE = [
   './',
@@ -36,6 +36,22 @@ self.addEventListener('fetch', (event) => {
 
   // درخواست‌های Supabase همیشه آنلاین
   if (req.url.includes('supabase.co')) return;
+
+  // صفحه‌ها: شبکه اول. اگر نسخه قدیمی HTML/JS از کش بیاید، لینک ورود
+  // (که توکن را در hash دارد) با کد قدیمی پردازش می‌شود و کاربر وارد نمی‌شود.
+  const isHTML = req.mode === 'navigate' || (req.headers.get('accept') || '').includes('text/html');
+  if (isHTML) {
+    event.respondWith(
+      fetch(req, { cache: 'no-cache' })
+        .then(res => {
+          const copy = res.clone();
+          caches.open(CACHE).then(cache => cache.put(req, copy)).catch(() => {});
+          return res;
+        })
+        .catch(() => caches.match(req).then(c => c || caches.match('./index.html')))
+    );
+    return;
+  }
 
   event.respondWith(
     caches.match(req).then(cached => {
