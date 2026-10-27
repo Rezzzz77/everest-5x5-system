@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { validateConfig, isConfigured, getSupabaseConfig, SUPABASE_CONFIG } from '../src/config.js';
-import { testConnection, mergeWithDefaults } from '../src/db.js';
+import { testConnection, mergeWithDefaults, stripNationalId } from '../src/db.js';
 import { DEFAULT_DATA } from '../src/defaults.js';
 
 const URL_OK = 'https://abcdefghijkl.supabase.co';
@@ -100,4 +100,32 @@ test('isConfigured: کلید publishable کافی است', () => {
 test('validateConfig: آدرس غیر سوپابیس رد می‌شود', () => {
   const errors = validateConfig({ url: 'https://example.co', key: KEY_PUBLISHABLE });
   assert.equal(errors.length, 1);
+});
+
+test('mergeWithDefaults: کلیدهای KPI با پیش‌فرض پر می‌شوند', () => {
+  const merged = mergeWithDefaults({ kpi: { sales: 12 } });
+  assert.equal(merged.kpi.sales, 12);
+  assert.equal(merged.kpi.entries, 0);
+  assert.equal(merged.kpi.active, 0);
+});
+
+test('mergeWithDefaults: KPI نامعتبر به صفر تبدیل می‌شود', () => {
+  const merged = mergeWithDefaults({ kpi: { sales: 'abc', entries: -5, active: '7' } });
+  assert.equal(merged.kpi.sales, 0);
+  assert.equal(merged.kpi.entries, 0);
+  assert.equal(merged.kpi.active, 7);
+});
+
+test('stripNationalId: کد ملی از وضعیت حذف می‌شود و ورودی تغییر نمی‌کند', () => {
+  const original = { user: { name: 'سارا', nationalId: '0012345678' }, crm: [] };
+  const clean = stripNationalId(original);
+  assert.equal(clean.user.nationalId, undefined);
+  assert.equal(clean.user.name, 'سارا');
+  assert.equal(original.user.nationalId, '0012345678');
+});
+
+test('stripNationalId: وضعیت بدون کاربر یا بدون کد ملی امن است', () => {
+  assert.deepEqual(stripNationalId({ crm: [] }), { crm: [] });
+  assert.equal(stripNationalId(null), null);
+  assert.deepEqual(stripNationalId({ user: { name: 'a' } }).user, { name: 'a' });
 });

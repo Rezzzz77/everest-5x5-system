@@ -40,7 +40,7 @@ python3 -m http.server 8080
 > تنها قدم باقی‌مانده: اجرای `supabase/schema.sql` در SQL Editor.
 
 ### ۰. ورود امن (Supabase Auth — OTP ایمیل)
-اپ با **کد یک‌بارمصرف ایمیل** وارد می‌شود؛ رمزی ذخیره نمی‌شود.
+اپ با **لینک/کد یک‌بارمصرف ایمیل** وارد می‌شود؛ رمزی ذخیره نمی‌شود.
 اولین کار پس از اجرای SQL: در Supabase → **Authentication → Providers → Email**
 گزینه *Enable email OTP / Magic Link* فعال باشد. برای تیم واقعی یک SMTP اختصاصی وصل کن
 (SMTP پیش‌فرض رایگان محدودیت ارسال دارد).
@@ -78,9 +78,12 @@ everest-5x5-system/
 ├── manifest.json           # تنظیمات PWA
 ├── src/
 │   ├── config.js           # کلیدهای Supabase / n8n
-│   ├── auth.js             # ورود OTP ایمیل (Supabase Auth)
-│   ├── db.js               # لایه داده (local + cloud)
-│   └── defaults.js         # داده‌های پیش‌فرض
+│   ├── auth.js             # ورود OTP ایمیل + تمدید نشست
+│   ├── db.js               # لایه داده (local + cloud + profiles)
+│   ├── defaults.js         # داده‌های پیش‌فرض
+│   ├── coach.js            # ایجنت Coach (اقدام بعدی + انگیزه)
+│   ├── stages.js           # منطق خالص باز شدن مراحل
+│   └── utils.js            # escapeHtml / phoneDigits / ریست روزانه
 ├── supabase/
 │   ├── schema.sql          # user_state + profiles + RLS سخت‌گیرانه
 │   └── verify.sql          # بررسی RLS / grants / triggers
@@ -89,7 +92,10 @@ everest-5x5-system/
 │   ├── make_icons.py       # تولید آیکون‌های PWA
 │   └── check_contracts.py  # تست قرارداد HTML ↔ JS
 ├── tests/
-│   └── core.test.mjs       # تست واحد (node --test)
+│   ├── core.test.mjs       # تست config / db / defaults
+│   ├── auth.test.mjs       # تست نشست و خطاهای ورود
+│   ├── stages.test.mjs     # تست باز شدن مراحل
+│   └── utils.test.mjs      # تست escape / تلفن / ریست روزانه
 ├── package.json            # اسکریپت‌های test / check / graph / serve
 ├── .github/workflows/
 │   └── check.yml           # CI: سینتکس، قرارداد، همگامی گراف
@@ -108,7 +114,7 @@ everest-5x5-system/
 ### ✅ بررسی سلامت قبل از هر کامیت
 
 ```bash
-npm test                          # تست‌های واحد (config / db / defaults)
+npm test                          # تست‌های واحد (config / db / auth / stages / utils)
 python3 tools/check_contracts.py  # هر onclick باید به window متصل باشد
 python3 tools/build_graph.py      # گراف باید با سورس همگام باشد
 ```
@@ -134,7 +140,9 @@ python3 tools/build_graph.py   # بازتولید docs/graph.json
 - ✅ گزارش شبانه و زنجیره ۷ روزه
 - ✅ داشبورد مدیریتی (KPI)
 - ✅ لینک مستقیم تماس برای هر مخاطب در CRM
+- ✅ کارت Coach با اقدام بعدی، انگیزه و پیشرفت مرحله
 - ✅ ورود بدون رمز با کد ایمیل + حالت «بدون حساب» برای تست
+- ✅ ذخیره کد ملی در جدول جدا `profiles` (نه در JSON وضعیت)
 - ✅ حالت آفلاین کامل
 - ✅ همگام‌سازی ابری اختیاری + تنظیم کلید از داخل اپ (با تست اتصال)
 - ✅ تست واحد و CI
@@ -153,7 +161,8 @@ python3 tools/build_graph.py   # بازتولید docs/graph.json
 | ۵ | ابزار اتصال Supabase درون‌برنامه | ✅ |
 | ۵.۱ | امنیت: Auth + RLS سخت‌گیرانه | ✅ کد آماده — نیاز به اجرای SQL |
 | ۵.۲ | اجرای `schema.sql` در داشبورد | ⏳ کار صاحب پروژه |
-| ۶ | ایجنت Coach (پیشنهاددهنده) | ⏳ |
+| ۵.۳ | رفع باگ‌های عملکردی/امنیتی (KPI، مرحله ۵، نشست، `profiles`) | ✅ |
+| ۶ | ایجنت Coach (پیشنهاددهنده) | ✅ |
 | ۸ | بکاپ خودکار (n8n) | ⏳ |
 
 ---

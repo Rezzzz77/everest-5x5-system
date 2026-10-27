@@ -3,15 +3,23 @@
  * از db.js برای ذخیره‌سازی استفاده می‌کند
  */
 
-import { loadFromStorage, saveToStorage, syncState, loadFromCloud, isSupabaseConfigured, testConnection } from './src/db.js';
+import {
+  loadFromStorage, saveToStorage, syncState, loadFromCloud, isSupabaseConfigured, testConnection,
+  clearStorage, getDefaultData, saveProfile
+} from './src/db.js';
 import { getSupabaseConfig, saveSupabaseConfig, clearSupabaseConfig, validateConfig } from './src/config.js';
-import { sendOtp, verifyOtp, signOut, loadSession, currentUser, isValidEmail, authErrorText } from './src/auth.js';
-import { getNextAction, getMotivation, getOverallProgress, generateCoachCard, getStageTheme } from './src/coach.js';
+import { sendOtp, verifyOtp, signOut, loadSession, currentUser, isValidEmail, authErrorText, consumeAuthRedirect } from './src/auth.js';
+import { generateCoachCard, getStageTheme } from './src/coach.js';
+import { getHighestUnlockedStage, isStageUnlocked } from './src/stages.js';
+import { escapeHtml, phoneDigits, resetDailyCounters } from './src/utils.js';
+
+export { getHighestUnlockedStage };
 
 // وضعیت اپلیکیشن
 let appState = loadFromStorage();
 let currentProdIdx = 0;
 let activeStageView = 1;
+let timerId = null;
 
 // کاتالوگ محصولات نیوشانیک
 const newshaProducts = [
@@ -60,20 +68,28 @@ function saveAll() {
   saveToStorage(appState);
   renderCoachCard();
   clearTimeout(cloudTimer);
+
+  if (!isSupabaseConfigured()) return cloudLabel('off');
+  if (!appState.user) return cloudLabel('idle');
+  if (appState.user.local) return cloudLabel('off');
+  if (!loadSession()) return cloudLabel('idle');
+
   cloudTimer = setTimeout(async () => {
     try {
       const r = await syncState(appState);
       if (r.cloud?.ok) cloudLabel('ok');
-      else if (r.cloud && r.cloud.reason !== 'not-configured') cloudLabel('err');
-    } catch (_) { /* آفلاین */ }
+      else if (r.cloud?.reason === 'no-session' || r.cloud?.reason === 'not-configured') cloudLabel('idle');
+      else cloudLabel('err');
+    } catch (_) { cloudLabel('err'); }
   }, 400);
 }
 
 /* ---------------- وضعیت اتصال ابری ---------------- */
 const CLOUD_STYLE = {
-  off: { text: 'آفلاین', cls: 'bg-slate-700/60 text-slate-300' },
-  ok:  { text: 'ابر ✓',  cls: 'bg-emerald-600/30 text-emerald-300' },
-  err: { text: 'ابر ✖',  cls: 'bg-red-600/30 text-red-300' }
+  off:  { text: 'آفلاین', cls: 'bg-slate-700/60 text-slate-300' },
+  idle: { text: 'ابر',    cls: 'bg-slate-700/60 text-slate-300' },
+  ok:   { text: 'ابر ✓',  cls: 'bg-emerald-600/30 text-emerald-300' },
+  err:  { text: 'ابر ✖',  cls: 'bg-red-600/30 text-red-300' }
 };
 
 function cloudLabel(state) {
@@ -85,7 +101,11 @@ function cloudLabel(state) {
 }
 
 function updateCloudBadge() {
-  cloudLabel(isSupabaseConfigured() ? 'ok' : 'off');
+  if (!isSupabaseConfigured()) return cloudLabel('off');
+  if (appState.user?.local) return cloudLabel('off');
+  if (!appState.user || !loadSession()) return cloudLabel('idle');
+  // تا اولین همگام‌سازی موفق، وضعیت را «ابر» (بدون تیک) نشان می‌دهیم.
+  cloudLabel('idle');
 }
 
 function cloudBox(kind, html) {
@@ -122,10 +142,11 @@ function cloudErrorText(r) {
     'not-configured': 'آدرس یا کلید کامل نیست.',
     'table-missing': 'اتصال برقرار شد، اما جدول <code dir="ltr">user_state</code> وجود ندارد. فایل <code dir="ltr">supabase/schema.sql</code> را در SQL Editor اجرا کن.',
     'auth': 'کلید anon معتبر نیست (۴۰۱/۴۰۳). مقدار را از Project Settings → API دوباره کپی کن.',
+    'no-session': 'برای همگام‌سازی، ابتدا با ایمیل وارد شو.',
     'network': 'شبکه در دسترس نیست یا دامنه اشتباه است.',
     'security-blocked': 'درخواست توسط قوانین امنیتی شبکه مسدود شد (CSP/CORS).'
   };
-  return map[r.reason] || `خطای HTTP ${r.status || ''}${r.detail ? ': ' + String(r.detail).slice(0, 120) : ''}`;
+  return map[r.reason] || `خطای HTTP ${escapeHtml(r.status || '')}${r.detail ? ': ' + escapeHtml(String(r.detail).slice(0, 120)) : ''}`;
 }
 
 async function testCloudConnection() {
@@ -137,8 +158,13 @@ async function testCloudConnection() {
   const r = await testConnection(cfg);
 
   if (r.ok) {
-    cloudLabel('ok');
-    cloudBox('ok', 'اتصال برقرار است و جدول <code dir="ltr">user_state</code> در دسترس است ✅');
+    if (r.scope === 'auth-only') {
+      cloudLabel('idle');
+      cloudBox('ok', 'اتصال پایه به Supabase برقرار است ✅ برای بررسی جدول و همگام‌سازی، ابتدا با ایمیل وارد شو.');
+    } else {
+      cloudLabel('ok');
+      cloudBox('ok', 'اتصال برقرار است و جدول <code dir="ltr">user_state</code> در دسترس است ✅');
+    }
   } else {
     cloudLabel('err');
     cloudBox('err', cloudErrorText(r));
@@ -160,14 +186,22 @@ async function saveCloudConfigAndSync() {
   }
 
   if (!appState.user) {
-    cloudLabel('ok');
+    cloudLabel('idle');
     return cloudBox('ok', 'ذخیره شد ✅ — پس از ثبت‌نام، داده‌ها به‌صورت خودکار همگام می‌شوند.');
+  }
+
+  if (appState.user.local) {
+    cloudLabel('idle');
+    return cloudBox('ok', 'ذخیره شد ✅ — در حالت «بدون حساب» همگام‌سازی ابری انجام نمی‌شود.');
   }
 
   const r = await syncState(appState, cfg);
   if (r.cloud?.ok) {
     cloudLabel('ok');
     cloudBox('ok', 'اتصال و همگام‌سازی با موفقیت انجام شد ✅');
+  } else if (r.cloud?.reason === 'no-session') {
+    cloudLabel('idle');
+    cloudBox('err', cloudErrorText(r.cloud));
   } else {
     cloudLabel('err');
     cloudBox('err', cloudErrorText(r.cloud || {}));
@@ -217,12 +251,12 @@ function renderCoachCard() {
         <div class="flex items-center gap-2 mb-1.5">
           <span class="text-[10px] font-bold ${theme.text}">🎯 اقدام بعدی:</span>
         </div>
-        <p class="text-[11px] text-slate-200 leading-relaxed">${card.nextAction}</p>
+        <p class="text-[11px] text-slate-200 leading-relaxed">${escapeHtml(card.nextAction)}</p>
       </div>
 
       <!-- Motivation -->
       <div class="bg-gradient-to-r ${theme.bg} border ${theme.border} rounded-xl p-3">
-        <p class="text-[11px] ${theme.text} leading-relaxed font-medium">"${card.motivation}"</p>
+        <p class="text-[11px] ${theme.text} leading-relaxed font-medium">"${escapeHtml(card.motivation)}"</p>
       </div>
     </div>
   `;
@@ -254,6 +288,16 @@ function backToEmailStep() {
   showAuthStep(1);
 }
 
+/** پاک‌کردن ورودی‌های حساس صفحه ورود هنگام خروج */
+function clearAuthFields() {
+  for (const id of ['reg-email', 'reg-code', 'reg-name', 'reg-id', 'reg-upline']) {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  }
+  const emailShow = document.getElementById('auth-email-show');
+  if (emailShow) emailShow.innerText = '';
+}
+
 async function requestOtp(ev) {
   const email = document.getElementById('reg-email').value.trim();
   if (!isValidEmail(email)) return authMsg(1, 'err', 'ایمیل معتبر نیست.');
@@ -269,7 +313,7 @@ async function requestOtp(ev) {
 
   pendingEmail = email;
   document.getElementById('auth-email-show').innerText = email;
-  authMsg(2, 'ok', 'کد ارسال شد ✅ ایمیل خود را (و پوشه اسپم را) ببین.');
+  authMsg(2, 'ok', 'ایمیل ورود ارسال شد ✅ اگر کد داشت همان را وارد کن؛ اگر فقط لینک داشت روی لینک بزن تا خودکار وارد شوی.');
   showAuthStep(2);
 }
 
@@ -279,7 +323,7 @@ async function verifyOtpAndStart() {
   const nationalId = document.getElementById('reg-id').value.trim();
   const upline = document.getElementById('reg-upline').value.trim();
 
-  if (!/^\d{6}$/.test(code)) return authMsg(2, 'err', 'کد ۶ رقمی را وارد کن.');
+  if (!/^\d{6,10}$/.test(code)) return authMsg(2, 'err', 'کد ورود (۶ تا ۱۰ رقم) را وارد کن.');
   if (!name) return authMsg(2, 'err', 'نام و نام خانوادگی را وارد کن.');
 
   authMsg(2, 'info', 'در حال بررسی کد… ⏳');
@@ -287,17 +331,39 @@ async function verifyOtpAndStart() {
   if (!r.ok) return authMsg(2, 'err', authErrorText(r));
 
   const u = currentUser(r.session);
+  if (!u) return authMsg(2, 'err', 'نشست ساخته نشد. دوباره تلاش کن.');
+  const previousOwner = appState.user?.id || appState.ownerId || '';
+  const sameUser = Boolean(previousOwner && previousOwner === u.id && !appState.user?.local);
+  // کد ملی قدیمی فقط وقتی قابل انتقال است که همان کاربر باشد.
+  const legacyNationalId = sameUser ? appState.user?.nationalId || '' : '';
+
+  // اگر حساب عوض شده، داده حساب قبلی روی این دستگاه نباید بماند.
+  if (previousOwner && !sameUser) appState = getDefaultData();
+  appState.ownerId = u.id;
+
   appState.user = {
     id: u.id,
     email: u.email,
     name: (u.name || name).trim(),
-    upline: upline || u.upline || 'راهبر تیم اورست',
-    nationalId
+    upline: upline || u.upline || 'راهبر تیم اورست'
   };
+  delete appState.user.nationalId;
   if (!appState.startTime) appState.startTime = Date.now();
+
+  // کد ملی فقط در جدول `profiles` ذخیره می‌شود (نه در state_data).
+  const nationalIdToSave = nationalId || legacyNationalId;
+  const profileResult = await saveProfile({
+    full_name: appState.user.name,
+    upline: appState.user.upline,
+    national_id: nationalIdToSave
+  });
+  // اگر جدول/شبکه در دسترس نبود، کد ملی به‌صورت موقت فقط محلی می‌ماند؛
+  // `stripNationalId` تضمین می‌کند این مقدار هیچ‌وقت به state_data ابری نرود.
+  if (!profileResult.ok && nationalIdToSave) appState.user.nationalId = nationalIdToSave;
 
   saveAll();
   await pullCloudAfterLogin();
+  clearAuthFields();
   initApp();
 }
 
@@ -310,9 +376,20 @@ async function pullCloudAfterLogin() {
     const localTouched = appState.lastModified || 0;
     if (remoteTouched > localTouched) {
       const keepUser = appState.user;
+      const remoteNationalId = remote.user?.nationalId || '';
       appState = remote;
-      appState.user = { ...remote.user, ...keepUser, nationalId: keepUser.nationalId || remote.user?.nationalId };
+      appState.user = { ...(remote.user || {}), ...keepUser };
+      delete appState.user.nationalId;
+      appState.ownerId = appState.user.id || appState.ownerId;
       saveToStorage(appState);
+      // انتقال داده قدیمی از state_data به profiles (اگر باقی مانده باشد)
+      if (remoteNationalId) {
+        const profile = await saveProfile({ national_id: remoteNationalId });
+        if (!profile.ok) {
+          appState.user.nationalId = remoteNationalId;
+          saveToStorage(appState);
+        }
+      }
     }
   } catch (_) { /* آفلاین */ }
 }
@@ -321,53 +398,50 @@ async function pullCloudAfterLogin() {
 function toggleLocalMode() {
   const name = prompt('نام و نام خانوادگی را وارد کن:', 'عضو تیم اورست');
   if (!name || !name.trim()) return;
+  // ورود به حالت محلی نباید داده حساب قبلی را با خود ببرد.
+  if (appState.user || appState.ownerId) appState = getDefaultData();
+  const localId = `local-${Date.now()}`;
+  appState.ownerId = localId;
   appState.user = {
-    id: `local-${Date.now()}`,
+    id: localId,
     email: '',
     name: name.trim(),
     upline: 'راهبر تیم اورست',
-    nationalId: '',
     local: true
   };
   if (!appState.startTime) appState.startTime = Date.now();
   saveAll();
+  clearAuthFields();
   initApp();
 }
 
 async function signOutUser() {
-  if (!confirm('از حساب خارج می‌شوی؟ داده‌های روی این دستگاه پاک نمی‌شود.')) return;
+  if (!confirm('از حساب خارج می‌شوی؟ داده‌های محلی این دستگاه پاک می‌شود (داده ابری‌ات می‌ماند).')) return;
   await signOut();
-  closeCloudModal();
-  cloudLabel('off');
-  appState.user = null;
+  clearStorage();
+  appState = getDefaultData();
   saveToStorage(appState);
+  pendingEmail = '';
+  clearAuthFields();
+  closeCloudModal();
+  cloudLabel(isSupabaseConfigured() ? 'idle' : 'off');
   showAuthStep(1);
   document.getElementById('auth-screen').classList.remove('hidden');
 }
 
 // ریست
-function resetDemo() {
-  if (confirm('آیا مایل به خروج و بازنشانی اطلاعات دمو هستید؟')) {
-    localStorage.removeItem('everest_5x5_full_v2');
-    location.reload();
-  }
+async function resetDemo() {
+  if (!confirm('آیا مایل به خروج و بازنشانی اطلاعات این دستگاه هستید؟')) return;
+  try { await signOut(); } catch (_) { /* آفلاین */ }
+  clearStorage();
+  location.reload();
 }
 
-// محاسبه بالاترین مرحله باز — export برای Coach
-export function getHighestUnlockedStage(state = appState) { 
-  if (!appState.s1Steps || appState.s1Steps.length === 0) return 1;
-  const s1Done = appState.s1Steps.every(s => s.done);
-  if (!s1Done) return 1;
-  if (appState.s2Streak < 7) return 2;
-  if (!appState.s3Pass || !appState.s3Pass.every(s => s.done)) return 3;
-  if (!appState.s4Pass || !appState.s4Pass.every(s => s.done)) return 4;
-  return 5;
-}
 
 // رندر تب‌ها
 function renderTabs() {
   const bar = document.getElementById('stage-tabs-bar');
-  const unlocked = getHighestUnlockedStage();
+  const unlocked = getHighestUnlockedStage(appState);
   document.getElementById('user-stage-badge').innerText = `سطح فعلی: مرحله ${unlocked}`;
 
   const labels = [
@@ -392,6 +466,10 @@ function renderTabs() {
 
 // تغییر مرحله
 function switchStage(stageNum) {
+  if (!isStageUnlocked(stageNum, appState)) {
+    alert('این مرحله هنوز باز نشده است. اول معیار عبور مرحله قبل را کامل کن.');
+    return;
+  }
   activeStageView = stageNum;
   document.querySelectorAll('.stage-content').forEach(el => el.classList.add('hidden'));
   document.getElementById(`stage-${stageNum}`).classList.remove('hidden');
@@ -431,9 +509,9 @@ function renderStage1() {
       <div onclick="toggleS1Step(${idx})" class="cursor-pointer p-3 rounded-2xl border transition ${s.done ? 'bg-blue-950/50 border-blue-500/70' : 'bg-slate-800/90 border-slate-700'}">
         <div class="flex justify-between items-start gap-2">
           <div>
-            <div class="text-xs font-extrabold ${s.done ? 'text-blue-300' : 'text-white'}">${s.title}</div>
-            <p class="text-[11px] text-slate-300 mt-0.5">${s.desc}</p>
-            <span class="inline-block mt-1.5 text-[10px] bg-slate-900 text-blue-300 px-2 py-0.5 rounded-lg border border-blue-800/40">★ ${s.tip}</span>
+            <div class="text-xs font-extrabold ${s.done ? 'text-blue-300' : 'text-white'}">${escapeHtml(s.title)}</div>
+            <p class="text-[11px] text-slate-300 mt-0.5">${escapeHtml(s.desc)}</p>
+            <span class="inline-block mt-1.5 text-[10px] bg-slate-900 text-blue-300 px-2 py-0.5 rounded-lg border border-blue-800/40">★ ${escapeHtml(s.tip)}</span>
           </div>
           <div class="w-6 h-6 rounded-lg flex items-center justify-center border font-bold text-xs ${s.done ? 'bg-blue-600 border-blue-400 text-white' : 'border-slate-600 text-transparent'}">✓</div>
         </div>
@@ -470,8 +548,8 @@ function renderStage2() {
     return `
       <div class="bg-slate-800/90 border ${ok ? 'border-emerald-500/60' : 'border-slate-700'} rounded-2xl p-3 flex justify-between items-center">
         <div>
-          <div class="text-xs font-bold ${ok ? 'text-emerald-300' : 'text-white'}">${item.title}</div>
-          <div class="text-[10px] text-slate-400 mt-0.5">${item.sub}</div>
+          <div class="text-xs font-bold ${ok ? 'text-emerald-300' : 'text-white'}">${escapeHtml(item.title)}</div>
+          <div class="text-[10px] text-slate-400 mt-0.5">${escapeHtml(item.sub)}</div>
         </div>
         <div class="flex items-center gap-1.5 bg-slate-900 px-2 py-1 rounded-xl border border-slate-700">
           <button onclick="changeCounter('s2', ${idx}, -1)" class="w-6 h-6 rounded bg-slate-800 font-bold text-xs">-</button>
@@ -507,8 +585,8 @@ function renderStage3() {
     return `
       <div class="bg-slate-800/90 border ${ok ? 'border-orange-500/60' : 'border-slate-700'} rounded-2xl p-3 flex justify-between items-center">
         <div>
-          <div class="text-xs font-bold ${ok ? 'text-orange-300' : 'text-white'}">${item.title}</div>
-          <div class="text-[10px] text-slate-400 mt-0.5">${item.sub}</div>
+          <div class="text-xs font-bold ${ok ? 'text-orange-300' : 'text-white'}">${escapeHtml(item.title)}</div>
+          <div class="text-[10px] text-slate-400 mt-0.5">${escapeHtml(item.sub)}</div>
         </div>
         <div class="flex items-center gap-1.5 bg-slate-900 px-2 py-1 rounded-xl border border-slate-700">
           <button onclick="changeCounter('s3', ${idx}, -1)" class="w-6 h-6 rounded bg-slate-800 font-bold text-xs">-</button>
@@ -523,22 +601,23 @@ function renderStage3() {
   const crmBox = document.getElementById('crm-contacts-container');
   document.getElementById('crm-total-badge').innerText = `${(appState.crm || []).length} / ۱۰۰ نفر`;
   crmBox.innerHTML = (appState.crm || []).map((c, idx) => {
-    const cleanPhone = (c.phone || '').replace(/^0/, '98');
+    const phone = phoneDigits(c.phone);
+    const waPhone = phone.replace(/^0/, '98');
     return `
       <div class="bg-slate-900 p-2.5 rounded-xl border border-slate-800 space-y-2">
         <div class="flex justify-between items-center text-xs">
           <div>
-            <span class="font-bold text-white">${c.name}</span>
-            <span class="text-[10px] text-slate-400 mr-1">(${c.source})</span>
+            <span class="font-bold text-white">${escapeHtml(c.name)}</span>
+            <span class="text-[10px] text-slate-400 mr-1">(${escapeHtml(c.source)})</span>
           </div>
           <button onclick="cycleCRMStatus(${idx})" class="text-[10px] bg-orange-950 text-orange-300 border border-orange-700/40 px-2 py-0.5 rounded-full">
-            ${c.status} ↻
+            ${escapeHtml(c.status)} ↻
           </button>
         </div>
         <div class="grid grid-cols-3 gap-1.5 text-[10px]">
-          <a href="tel:${c.phone}" class="bg-slate-800 hover:bg-slate-700 text-emerald-400 text-center py-1 rounded-lg border border-slate-700">📞 تماس</a>
-          <a href="https://wa.me/${cleanPhone}" target="_blank" class="bg-slate-800 hover:bg-slate-700 text-green-400 text-center py-1 rounded-lg border border-slate-700">💬 واتساپ</a>
-          <a href="sms:${c.phone}" class="bg-slate-800 hover:bg-slate-700 text-blue-400 text-center py-1 rounded-lg border border-slate-700">✉️ پیامک</a>
+          <a href="tel:${phone}" class="bg-slate-800 hover:bg-slate-700 text-emerald-400 text-center py-1 rounded-lg border border-slate-700">📞 تماس</a>
+          <a href="https://wa.me/${waPhone}" target="_blank" rel="noopener" class="bg-slate-800 hover:bg-slate-700 text-green-400 text-center py-1 rounded-lg border border-slate-700">💬 واتساپ</a>
+          <a href="sms:${phone}" class="bg-slate-800 hover:bg-slate-700 text-blue-400 text-center py-1 rounded-lg border border-slate-700">✉️ پیامک</a>
         </div>
       </div>
     `;
@@ -550,7 +629,7 @@ function renderStage3() {
     criteriaContainer.innerHTML = appState.s3Pass.map((item, idx) => `
       <label class="flex items-center gap-2 cursor-pointer">
         <input type="checkbox" ${item.done ? 'checked' : ''} onchange="togglePassCriterion('s3', ${idx})" class="accent-orange-500 rounded" />
-        <span class="${item.done ? 'text-orange-200 font-bold' : 'text-slate-400'}">${item.text}</span>
+        <span class="${item.done ? 'text-orange-200 font-bold' : 'text-slate-400'}">${escapeHtml(item.text)}</span>
       </label>
     `).join('');
   }
@@ -594,7 +673,7 @@ function renderStage4() {
   box.innerHTML = (appState.dupTeam || []).map((m, idx) => `
     <div class="bg-slate-900 p-3 rounded-xl border border-slate-700 space-y-2">
       <div class="flex justify-between items-center text-xs">
-        <span class="font-bold text-white">${m.name}</span>
+        <span class="font-bold text-white">${escapeHtml(m.name)}</span>
         <span class="text-[10px] bg-purple-900/80 text-purple-200 px-2 py-0.5 rounded-full font-bold">${stepNames[m.step - 1]}</span>
       </div>
       <div class="grid grid-cols-5 gap-1">
@@ -610,7 +689,7 @@ function renderStage4() {
     criteriaContainer.innerHTML = appState.s4Pass.map((item, idx) => `
       <label class="flex items-center gap-2 cursor-pointer">
         <input type="checkbox" ${item.done ? 'checked' : ''} onchange="togglePassCriterion('s4', ${idx})" class="accent-purple-500 rounded" />
-        <span class="${item.done ? 'text-purple-200 font-bold' : 'text-slate-400'}">${item.text}</span>
+        <span class="${item.done ? 'text-purple-200 font-bold' : 'text-slate-400'}">${escapeHtml(item.text)}</span>
       </label>
     `).join('');
   }
@@ -638,8 +717,8 @@ function renderStage5() {
   if (appState.meetings) {
     mList.innerHTML = appState.meetings.map(m => `
       <div class="flex justify-between items-center bg-slate-900 px-3 py-2 rounded-xl border border-slate-800 text-xs">
-        <span class="font-bold text-white">${m.title}</span>
-        <span class="text-[10px] bg-amber-950 text-amber-300 border border-amber-700/40 px-2 py-0.5 rounded-full">هدف: ${m.goal}</span>
+        <span class="font-bold text-white">${escapeHtml(m.title)}</span>
+        <span class="text-[10px] bg-amber-950 text-amber-300 border border-amber-700/40 px-2 py-0.5 rounded-full">هدف: ${escapeHtml(m.goal)}</span>
       </div>
     `).join('');
   }
@@ -648,11 +727,59 @@ function renderStage5() {
   if (s5Container && appState.s5Standards) {
     s5Container.innerHTML = appState.s5Standards.map((st, idx) => `
       <label class="flex items-center gap-2 cursor-pointer">
-        <input type="checkbox" ${st.done ? 'checked' : ''} onchange="appState.s5Standards[${idx}].done = !appState.s5Standards[${idx}].done; saveAll();" class="accent-amber-500 rounded" />
-        <span class="text-slate-200">${st.text}</span>
+        <input type="checkbox" ${st.done ? 'checked' : ''} onchange="toggleS5Standard(${idx})" class="accent-amber-500 rounded" />
+        <span class="${st.done ? 'text-amber-200 font-bold' : 'text-slate-200'}">${escapeHtml(st.text)}</span>
       </label>
     `).join('');
   }
+}
+
+function toggleS5Standard(idx) {
+  const item = appState.s5Standards?.[idx];
+  if (!item) return;
+  item.done = !item.done;
+  saveAll();
+  renderStage5();
+}
+
+/* ---------------- داشبورد عددی (KPI) ---------------- */
+
+const KPI_FIELDS = [
+  ['kpi-sales', 'sales'],
+  ['kpi-entries', 'entries'],
+  ['kpi-active', 'active'],
+  ['kpi-leaders', 'leaders'],
+  ['kpi-depth', 'depth']
+];
+
+function kpiNumber(inputId) {
+  const value = Number(document.getElementById(inputId)?.value);
+  return Number.isFinite(value) && value >= 0 ? Math.floor(value) : 0;
+}
+
+function renderKpi() {
+  const kpi = appState.kpi || {};
+  for (const [inputId, key] of KPI_FIELDS) {
+    const el = document.getElementById(inputId);
+    if (el) el.value = String(Number(kpi[key]) || 0);
+  }
+  const active = Number(kpi.active) || 0;
+  const leaders = Number(kpi.leaders) || 0;
+  const rate = active > 0 ? Math.round((leaders / active) * 100) : 0;
+  const rateEl = document.getElementById('kpi-rate');
+  if (rateEl) rateEl.innerText = `${rate}٪`;
+}
+
+function saveKpi() {
+  appState.kpi = {
+    sales: kpiNumber('kpi-sales'),
+    entries: kpiNumber('kpi-entries'),
+    active: kpiNumber('kpi-active'),
+    leaders: kpiNumber('kpi-leaders'),
+    depth: kpiNumber('kpi-depth')
+  };
+  saveAll();
+  renderKpi();
 }
 
 function addLeaderMeeting() {
@@ -671,6 +798,11 @@ async function submitDailyReport(stageNum) {
   const note = document.getElementById('s2-note').value.trim();
   if (stageNum === 2 && (appState.s2Streak || 0) < 7) {
     appState.s2Streak++;
+  }
+  if (!appState.reports) appState.reports = [];
+  if (note) {
+    appState.reports.unshift({ at: new Date().toISOString(), note: note.slice(0, 2000) });
+    if (appState.reports.length > 100) appState.reports.length = 100;
   }
   saveAll();
   renderStage2();
@@ -792,26 +924,47 @@ function closeHelperModal() {
 }
 
 function initApp() {
-  // بازیابی نشست: اگر نشست داریم و کاربر ذخیره‌شده local نیست، شناسه را sync کن
   const session = loadSession();
-  if (session?.user?.id && appState.user && !appState.user.local) {
-    appState.user.id = session.user.id;
-    appState.user.email = session.user.email || appState.user.email || '';
+  const sessionUser = currentUser(session);
+
+  // نشست متعلق به حساب دیگری است → داده محلی قبلی نمایش داده نشود.
+  if (sessionUser && !appState.user?.local) {
+    if (appState.ownerId && appState.ownerId !== sessionUser.id) appState = getDefaultData();
+    else if (appState.user && appState.user.id !== sessionUser.id) appState = getDefaultData();
   }
-  if (appState.user && !appState.user.local && !loadSession() && isSupabaseConfigured()) {
-    // کاربر قبلاً با حساب وارد شده ولی نشست منقضی شده → دوباره ورود
+  if (!appState.user && sessionUser) {
+    appState.ownerId = sessionUser.id;
+    appState.user = {
+      id: sessionUser.id,
+      email: sessionUser.email,
+      name: sessionUser.name || 'عضو تیم اورست',
+      upline: sessionUser.upline || 'راهبر تیم اورست'
+    };
+  }
+  if (sessionUser && appState.user && !appState.user.local) {
+    appState.user.id = sessionUser.id;
+    appState.user.email = sessionUser.email || appState.user.email || '';
+    appState.ownerId = sessionUser.id;
+  }
+  if (appState.user && !appState.user.local && isSupabaseConfigured() && !loadSession()) {
+    // کاربر قبلاً با حساب وارد شده ولی نشستی وجود ندارد → دوباره ورود
     appState.user = null;
   }
 
   if (!appState.user) {
+    clearAuthFields();
     document.getElementById('auth-screen').classList.remove('hidden');
     showAuthStep(1);
     return;
   }
   document.getElementById('auth-screen').classList.add('hidden');
-  document.getElementById('user-display-name').innerText = appState.user.name;
+  document.getElementById('user-display-name').innerText = appState.user.name || 'عضو تیم اورست';
   document.getElementById('upline-display').innerText =
-    (appState.user.local ? 'حالت محلی: ' : '') + appState.user.upline;
+    (appState.user.local ? 'حالت محلی: ' : '') + (appState.user.upline || 'راهبر تیم اورست');
+
+  // شمارنده‌های «روزانه» با تغییر روز از صفر شروع می‌شوند.
+  // فقط محلی ذخیره می‌شود تا با همگام‌سازی ابری هم‌زمان با loadFromCloud تداخل نکند.
+  if (resetDailyCounters(appState)) saveToStorage(appState);
 
   renderTabs();
   renderStage1();
@@ -819,31 +972,50 @@ function initApp() {
   renderStage3();
   renderStage4();
   renderStage5();
+  renderKpi();
   renderCoachCard();
   updateCloudBadge();
   update72HourTimer();
-  setInterval(update72HourTimer, 1000);
+  if (!timerId) timerId = setInterval(update72HourTimer, 1000);
 
   // همگام‌سازی با ابر (اگر Supabase تنظیم شده باشد)
   if (isSupabaseConfigured() && loadSession() && !appState.user.local) {
     loadFromCloud(appState.user.id).then(remote => {
       if (!remote) return;
+      cloudLabel('ok');
       const remoteTouched = remote.lastModified || 0;
       const localTouched = appState.lastModified || 0;
       if (remoteTouched > localTouched) {
+        const keepUser = appState.user;
+        const remoteNationalId = remote.user?.nationalId || '';
         appState = remote;
+        appState.user = { ...(remote.user || {}), ...keepUser };
+        delete appState.user.nationalId;
+        appState.ownerId = appState.user.id || appState.ownerId;
+        // ممکن است نسخه ابری هنوز شمارنده‌های دیروز را داشته باشد.
+        resetDailyCounters(appState);
         saveToStorage(appState);
-        document.getElementById('user-display-name').innerText = appState.user.name;
-        document.getElementById('upline-display').innerText = appState.user.upline;
+        if (remoteNationalId) {
+          saveProfile({ national_id: remoteNationalId }).then(r => {
+            if (!r.ok && appState.user) {
+              appState.user.nationalId = remoteNationalId;
+              saveToStorage(appState);
+            }
+          });
+        }
+        document.getElementById('user-display-name').innerText = appState.user.name || 'عضو تیم اورست';
+        document.getElementById('upline-display').innerText =
+          (appState.user.local ? 'حالت محلی: ' : '') + (appState.user.upline || 'راهبر تیم اورست');
         renderTabs();
         renderStage1();
         renderStage2();
         renderStage3();
         renderStage4();
         renderStage5();
+        renderKpi();
         renderCoachCard();
       }
-    }).catch(() => {});
+    }).catch(() => cloudLabel('err'));
   }
 }
 
@@ -872,6 +1044,8 @@ Object.assign(window, {
   togglePassCriterion,
   addDuplicationMember,
   setMemberDup,
+  toggleS5Standard,
+  saveKpi,
   addLeaderMeeting,
   submitDailyReport,
   startVoiceInput,
@@ -889,5 +1063,10 @@ Object.assign(window, {
   renderCoachCard
 });
 
-// راه‌اندازی
-initApp();
+// راه‌اندازی — اگر کاربر از لینک ایمیل برگشته باشد، اول نشست را بساز.
+(async () => {
+  let redirect = null;
+  try { redirect = await consumeAuthRedirect(); } catch (_) { /* بی‌اهمیت */ }
+  initApp();
+  if (redirect && redirect.ok === false) authMsg(1, 'err', authErrorText(redirect));
+})();

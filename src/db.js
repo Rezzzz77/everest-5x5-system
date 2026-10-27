@@ -8,6 +8,29 @@ import { authHeaders, currentUser } from './auth.js';
 
 const STORAGE_KEY = 'everest_5x5_full_v2';
 
+/** حذف کامل داده محلی (مثلاً هنگام خروج یا تغییر حساب) */
+export function clearStorage() {
+  try {
+    const s = ls();
+    if (s) s.removeItem(STORAGE_KEY);
+  } catch (_) { /* بدون دسترسی */ }
+}
+
+/**
+ * کد ملی نباید در JSON وضعیت (`state_data`) برود؛ حتی اگر در داده قدیمی باشد.
+ * خروجی جدید است و ورودی را تغییر نمی‌دهد.
+ */
+export function stripNationalId(state) {
+  if (!state || typeof state !== 'object') return state;
+  const user = state.user;
+  if (!user || typeof user !== 'object' || !Object.prototype.hasOwnProperty.call(user, 'nationalId')) {
+    return state;
+  }
+  const clean = { ...state, user: { ...user } };
+  delete clean.user.nationalId;
+  return clean;
+}
+
 export function isSupabaseConfigured(cfg = getSupabaseConfig()) {
   return cfgValid(cfg);
 }
@@ -35,6 +58,15 @@ export function mergeWithDefaults(stored) {
       out[key] = Array.isArray(def) ? JSON.parse(JSON.stringify(def)) : def;
     }
   }
+
+  // KPI یک شیء تودرتوست؛ کلیدهای جاافتاده باید از پیش‌فرض پر شوند.
+  const kpi = out.kpi && typeof out.kpi === 'object' && !Array.isArray(out.kpi) ? out.kpi : {};
+  out.kpi = { ...DEFAULT_DATA.kpi };
+  for (const key of Object.keys(DEFAULT_DATA.kpi)) {
+    const n = Number(kpi[key]);
+    out.kpi[key] = Number.isFinite(n) && n >= 0 ? n : 0;
+  }
+
   return out;
 }
 
@@ -130,7 +162,7 @@ export async function saveToCloud(state, rawCfg = getSupabaseConfig()) {
       headers: { ...h, 'Prefer': 'resolution=merge-duplicates,return=minimal' },
       body: JSON.stringify({
         user_id: userId,
-        state_data: state,
+        state_data: stripNationalId(state),
         updated_at: new Date().toISOString()
       })
     });
@@ -167,6 +199,42 @@ export async function loadFromCloud(_ignoredUserId, rawCfg = getSupabaseConfig()
   } catch (e) {
     console.error('خطا در خواندن از Supabase:', e);
     return null;
+  }
+}
+
+/**
+ * ذخیره پروفایل در جدول جدا (`profiles`).
+ * کد ملی هرگز داخل `state_data` نمی‌رود و فقط با RLS خود کاربر ذخیره می‌شود.
+ * کلید این جدول `id` است (همان شناسه کاربر در Auth)؛ با جدول موجود سازگاریم.
+ */
+export async function saveProfile(profile = {}, rawCfg = getSupabaseConfig()) {
+  const cfg = normalizeConfig(rawCfg);
+  if (!cfgValid(cfg)) return { ok: false, reason: 'not-configured' };
+
+  const h = await headers();
+  if (!h) return { ok: false, reason: 'no-session' };
+  const userId = currentUser()?.id;
+  if (!userId) return { ok: false, reason: 'no-session' };
+
+  const row = { id: userId };
+  if (profile.full_name != null) row.full_name = String(profile.full_name).slice(0, 200);
+  if (profile.upline != null) row.upline = String(profile.upline).slice(0, 200);
+  // فقط اگر مقدار واقعی آمده باشد؛ در غیر این صورت مقدار قبلی پاک نمی‌شود.
+  if (profile.national_id) row.national_id = String(profile.national_id).slice(0, 40);
+
+  try {
+    const res = await fetch(`${cfg.url}/rest/v1/profiles?on_conflict=id`, {
+      method: 'POST',
+      headers: { ...h, 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify(row)
+    });
+    if (res.ok) return { ok: true };
+    const text = (await res.text()).slice(0, 300);
+    if (res.status === 404 || /PGRST205|42P01|does not exist|Could not find the table/i.test(text))
+      return { ok: false, reason: 'table-missing', status: res.status, detail: text };
+    return { ok: false, reason: res.status === 401 || res.status === 403 ? 'auth' : 'http', status: res.status, detail: text };
+  } catch (e) {
+    return { ok: false, reason: 'network', detail: String(e && e.message || e) };
   }
 }
 

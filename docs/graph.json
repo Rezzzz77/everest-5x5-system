@@ -5,8 +5,8 @@
     "schema": 1,
     "generator": "tools/build_graph.py",
     "counts": {
-      "nodes": 62,
-      "edges": 101
+      "nodes": 68,
+      "edges": 110
     }
   },
   "nodes": [
@@ -177,6 +177,12 @@
       "desc": "URL + anon key + تست اتصال"
     },
     {
+      "id": "f:coach",
+      "label": "ایجنت Coach",
+      "type": "feature",
+      "desc": "اقدام بعدی + انگیزه + پیشرفت"
+    },
+    {
       "id": "f:crm",
       "label": "CRM مخاطبین",
       "type": "feature",
@@ -208,9 +214,9 @@
     },
     {
       "id": "f:otp",
-      "label": "ورود با کد یک‌بارمصرف",
+      "label": "ورود با لینک/کد یک‌بارمصرف",
       "type": "feature",
-      "desc": "ایمیل → کد ۶ رقمی → نشست"
+      "desc": "ایمیل → لینک یا کد → نشست"
     },
     {
       "id": "f:streak",
@@ -249,6 +255,12 @@
       "desc": "احراز هویت OTP ایمیل (Supabase Auth)"
     },
     {
+      "id": "file:src/coach.js",
+      "label": "src/coach.js",
+      "type": "module",
+      "desc": "ایجنت Coach — اقدام بعدی، انگیزه و پیشرفت"
+    },
+    {
       "id": "file:src/db.js",
       "label": "src/db.js",
       "type": "module",
@@ -259,6 +271,18 @@
       "label": "src/defaults.js",
       "type": "module",
       "desc": "داده‌های پیش‌فرض و دمو"
+    },
+    {
+      "id": "file:src/stages.js",
+      "label": "src/stages.js",
+      "type": "module",
+      "desc": "منطق خالص باز شدن مراحل"
+    },
+    {
+      "id": "file:src/utils.js",
+      "label": "src/utils.js",
+      "type": "module",
+      "desc": "escapeHtml / phoneDigits / ریست روزانه"
     },
     {
       "id": "file:sw.js",
@@ -277,6 +301,18 @@
       "label": "tests/core.test.mjs",
       "type": "module",
       "desc": "تست‌های واحد (config / db / defaults)"
+    },
+    {
+      "id": "file:tests/stages.test.mjs",
+      "label": "tests/stages.test.mjs",
+      "type": "module",
+      "desc": "تست‌های باز شدن مراحل"
+    },
+    {
+      "id": "file:tests/utils.test.mjs",
+      "label": "tests/utils.test.mjs",
+      "type": "module",
+      "desc": "تست‌های فرار HTML و شماره تلفن"
     },
     {
       "id": "file:tools/build_graph.py",
@@ -348,13 +384,13 @@
       "id": "table:profiles",
       "label": "profiles",
       "type": "table",
-      "desc": "full_name / national_id / upline — RLS per-user"
+      "desc": "id = auth.uid() / full_name / national_id / upline — RLS per-user"
     },
     {
       "id": "table:rls",
       "label": "RLS policy",
       "type": "table",
-      "desc": "to authenticated + user_id = auth.uid()"
+      "desc": "to authenticated + user_id/id = auth.uid()"
     },
     {
       "id": "table:user_state",
@@ -385,6 +421,26 @@
       "type": "imports"
     },
     {
+      "source": "file:app.js",
+      "target": "file:src/coach.js",
+      "type": "imports"
+    },
+    {
+      "source": "file:app.js",
+      "target": "file:src/stages.js",
+      "type": "imports"
+    },
+    {
+      "source": "file:app.js",
+      "target": "file:src/utils.js",
+      "type": "imports"
+    },
+    {
+      "source": "file:src/coach.js",
+      "target": "file:src/stages.js",
+      "type": "imports"
+    },
+    {
       "source": "file:src/db.js",
       "target": "file:src/config.js",
       "type": "imports"
@@ -397,6 +453,11 @@
     {
       "source": "file:src/db.js",
       "target": "table:user_state",
+      "type": "writes"
+    },
+    {
+      "source": "file:src/db.js",
+      "target": "table:profiles",
       "type": "writes"
     },
     {
@@ -745,6 +806,11 @@
       "type": "implemented_in"
     },
     {
+      "source": "f:coach",
+      "target": "file:app.js",
+      "type": "implemented_in"
+    },
+    {
       "source": "f:auth",
       "target": "stage:s1",
       "type": "uses"
@@ -818,6 +884,21 @@
       "source": "file:tests/auth.test.mjs",
       "target": "file:src/auth.js",
       "type": "tests"
+    },
+    {
+      "source": "file:tests/stages.test.mjs",
+      "target": "file:src/stages.js",
+      "type": "tests"
+    },
+    {
+      "source": "file:tests/utils.test.mjs",
+      "target": "file:src/utils.js",
+      "type": "tests"
+    },
+    {
+      "source": "f:coach",
+      "target": "file:src/coach.js",
+      "type": "implemented_in"
     },
     {
       "source": "file:src/db.js",

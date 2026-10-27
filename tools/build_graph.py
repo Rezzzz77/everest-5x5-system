@@ -42,7 +42,12 @@ FILES = [
     ("supabase/schema.sql", "sql", "user_state + profiles + RLS سخت‌گیرانه + تریگر"),
     ("supabase/verify.sql", "sql", "بررسی RLS/grants/triggers پس از نصب"),
     ("src/auth.js", "module", "احراز هویت OTP ایمیل (Supabase Auth)"),
+    ("src/coach.js", "module", "ایجنت Coach — اقدام بعدی، انگیزه و پیشرفت"),
+    ("src/stages.js", "module", "منطق خالص باز شدن مراحل"),
+    ("src/utils.js", "module", "escapeHtml / phoneDigits / ریست روزانه"),
     ("tests/auth.test.mjs", "module", "تست‌های auth (اگرایر/نشست/خطاها)"),
+    ("tests/stages.test.mjs", "module", "تست‌های باز شدن مراحل"),
+    ("tests/utils.test.mjs", "module", "تست‌های فرار HTML و شماره تلفن"),
     ("docs/SECURITY.md", "doc", "ریسک‌ها و مسیر ارتقای امنیت"),
     ("README.md", "doc", "مستندات پروژه"),
     ("docs/MEMORY.md", "doc", "حافظه پایدار پروژه — تصمیم‌ها، باگ‌ها، وضعیت"),
@@ -92,17 +97,18 @@ FEATURES = [
     ("f:offline", "حالت آفلاین", "Service Worker"),
     ("f:sync", "همگام‌سازی ابری", "Supabase (اختیاری)"),
     ("f:cloud-setup", "تنظیم اتصال درون‌برنامه", "URL + anon key + تست اتصال"),
-    ("f:otp", "ورود با کد یک‌بارمصرف", "ایمیل → کد ۶ رقمی → نشست"),
+    ("f:otp", "ورود با لینک/کد یک‌بارمصرف", "ایمیل → لینک یا کد → نشست"),
     ("f:local-mode", "حالت بدون حساب", "ذخیره فقط روی همین دستگاه"),
+    ("f:coach", "ایجنت Coach", "اقدام بعدی + انگیزه + پیشرفت"),
 ]
 for fid, label, desc in FEATURES:
     node(fid, label, "feature", desc=desc)
 
 # ---------------------------------------------------------------- جدول‌ها
 node("table:user_state", "user_state", "table", desc="user_id uuid → auth.users / state_data / updated_at")
-node("table:profiles", "profiles", "table", desc="full_name / national_id / upline — RLS per-user")
+node("table:profiles", "profiles", "table", desc="id = auth.uid() / full_name / national_id / upline — RLS per-user")
 node("table:auth", "auth.users", "table", desc="Supabase Auth — منبع حقیقت هویت")
-node("table:rls", "RLS policy", "table", desc="to authenticated + user_id = auth.uid()")
+node("table:rls", "RLS policy", "table", desc="to authenticated + user_id/id = auth.uid()")
 
 EDGES = []
 seen = set()
@@ -122,9 +128,14 @@ edge("file:index.html", "file:manifest.json", "declares")
 edge("file:index.html", "file:sw.js", "registers")
 edge("file:app.js", "file:src/db.js", "imports")
 edge("file:app.js", "file:src/db.js", "imports")
+edge("file:app.js", "file:src/coach.js", "imports")
+edge("file:app.js", "file:src/stages.js", "imports")
+edge("file:app.js", "file:src/utils.js", "imports")
+edge("file:src/coach.js", "file:src/stages.js", "imports")
 edge("file:src/db.js", "file:src/config.js", "imports")
 edge("file:src/db.js", "file:src/defaults.js", "imports")
 edge("file:src/db.js", "table:user_state", "writes")
+edge("file:src/db.js", "table:profiles", "writes")
 edge("file:supabase/schema.sql", "table:user_state", "defines")
 edge("file:supabase/schema.sql", "table:rls", "defines")
 edge("file:docs/SECURITY.md", "table:rls", "documents")
@@ -166,6 +177,10 @@ edge("f:cloud-setup", "file:src/config.js")
 edge("f:cloud-setup", "f:sync")
 edge("file:app.js", "file:src/auth.js", "imports")
 edge("file:tests/auth.test.mjs", "file:src/auth.js", "tests")
+edge("file:tests/stages.test.mjs", "file:src/stages.js", "tests")
+edge("file:tests/utils.test.mjs", "file:src/utils.js", "tests")
+edge("f:coach", "file:src/coach.js", "implemented_in")
+edge("f:coach", "file:app.js", "implemented_in")
 edge("file:src/db.js", "file:src/auth.js", "imports")
 edge("file:src/auth.js", "table:auth", "authenticates")
 edge("table:user_state", "table:auth", "references")

@@ -3,7 +3,7 @@
 > این فایل «حافظه پایدار» پروژه است. هر نشست جدید با خواندن همین فایل می‌تواند
 > بدون خواندن کل کد، وضعیت را بازیابی کند. با هر تصمیم مهم به‌روزرسانی شود.
 
-**آخرین به‌روزرسانی:** گام ۴ — احراز هویت OTP + RLS سخت‌گیرانه (منتظر اجرای SQL)
+**آخرین به‌روزرسانی:** گام ۵.۳ — رفع باگ‌های عملکردی/امنیتی + Coach (منتظر اجرای SQL)
 
 ---
 
@@ -50,7 +50,7 @@
 → `localStorage` منبع حقیقت محلی؛ Supabase فقط آینه (mirror).
 → اگر Supabase تنظیم نشده باشد، اپ باید **بی‌صدا** آفلاین کار کند.
 
-### D2 — Supabase بدون Auth در MVP
+### D2 — Supabase بدون Auth در MVP ❌ منسوخ شد (جایگزین: D6)
 برای رسیدن سریع به نسخه قابل استفاده، `anon key` + RLS سهل‌گیرانه.
 ⚠️ **بدهی فنی شناخته‌شده** — جزئیات در `docs/SECURITY.md`.
 هیچ داده حساس (کد ملی، شماره تماس) نباید تا فعال‌سازی Auth به‌صورت عمومی بماند.
@@ -63,6 +63,9 @@
 ### D7 — کد ملی در جدول جدا (`profiles`)
 `user_state.state_data` یک JSON بزرگ است؛ داده حساس نباید داخلش باشد.
 `profiles` ستون‌محور است و RLS مخصوص خودش را دارد.
+پیاده‌سازی: `saveProfile()` در `src/db.js` هنگام ورود، و `stripNationalId()`
+قبل از هر نوشتن ابری. اگر جدول `profiles` در دسترس نباشد، کد ملی فقط
+به‌صورت موقت محلی می‌ماند و هیچ‌وقت داخل `state_data` ابری نمی‌رود.
 
 ### D3 — تفکیک ماژول‌ها
 `app.js` = رفتار · `src/db.js` = داده · `src/defaults.js` = محتوا · `src/config.js` = کلیدها.
@@ -71,7 +74,8 @@
 ### D5 — کلیدهای Supabase در `localStorage`، نه در کد
 ادمین باید بتواند بدون build/کامیت وصل شود → مودال ☁️ + `saveSupabaseConfig`.
 `getSupabaseConfig()` اول `localStorage` را می‌خواند، بعد `src/config.js`.
-هیچ کلیدی در گیت نیست؛ پس ریپوی عمومی امن می‌ماند.
+کلید `sb_publishable_*` عمومی است و در `src/config.js` ثبت شده؛ کلید `sb_secret_*`
+هرگز در گیت یا کلاینت نیست (تست خودکار دارد).
 
 ### D4 — گراف دانش به‌عنوان ابزار توسعه
 `tools/build_graph.py` گراف را از منبع تولید می‌کند (نه دستی).
@@ -91,7 +95,15 @@
 | B8 | CI به‌خاطر timestamp گراف همیشه قرمز بود | فیلد `generated` غیرقطعی | حذف فیلد، `schema:1`، خروجی بایت‌به‌بایت قطعی |
 | B10 | `clearSession` در محیط بدون DOM خطا می‌داد | دسترسی مستقیم به `localStorage` | `store()` امن در auth.js و db.js |
 | B11 | SQL پیشنهادی اولم `)` اضافه داشت و `to anon using(true)` ناامن بود | عجله در «سریع راه افتادن» | بازنویسی کامل: uuid + auth.uid + revoke anon + تریگر + idempotent |
-| B9 | کاربران قبلی نسخه قدیمی اپ را می‌دیدند | استراتژی cache-first + ثابت‌بودن نام کش | با هر انتشار مهم، `CACHE` در `sw.js` را bump کن (الان v3) |
+| B9 | کاربران قبلی نسخه قدیمی اپ را می‌دیدند | استراتژی cache-first + ثابت‌بودن نام کش | با هر انتشار مهم، `CACHE` در `sw.js` را bump کن (الان v5) |
+| B12 | KPIهای مرحله ۵ ذخیره نمی‌شدند | مقدار hardcode + `onchange="saveAll()"` بدون خواندن input | `appState.kpi` + `saveKpi()` و `renderKpi()` |
+| B13 | چک‌باکس استانداردهای مرحله ۵ خطا می‌داد | `onchange` به `appState` اشاره می‌کرد که global نیست | تابع `toggleS5Standard()` و اتصال به window |
+| B14 | تمدید نشست عملاً هرگز اجرا نمی‌شد | `loadSession` زیر ۳۰ ثانیه نشست را دور می‌ریخت | حذف آن شرط + `needsRefresh()` با حاشیه ۶۰ ثانیه |
+| B15 | داده دو حساب روی یک دستگاه قاطی می‌شد | state تک‌کلیدی و خروج بدون پاک‌سازی | `clearStorage()` در خروج + `ownerId` برای تشخیص همان حساب و ریست هنگام تغییر حساب |
+| B16 | ادعای `escapeHtml` در SECURITY ولی تابع وجود نداشت | ورودی کاربر با `innerHTML` درج می‌شد | `src/utils.js` + escape در CRM، تکثیر، جلسات و Coach |
+| B17 | نشان «ابر ✓» فقط با تنظیم بودن کلید نمایش داده می‌شد | `updateCloudBadge` وضعیت واقعی را نمی‌سنجید | وضعیت `idle` + بررسی نشست + پیام درست برای تست بدون ورود |
+| B18 | Coach متن‌های خراب و import حلقه‌ای داشت | خطای ویرایش + import از `app.js` | متن‌ها اصلاح و منطق مراحل به `src/stages.js` منتقل شد |
+| B19 | شمارنده‌های «روزانه» هرگز صفر نمی‌شدند | تاریخ روز ذخیره نمی‌شد | `counterDate` + `resetDailyCounters()` در `src/utils.js` |
 
 ## ۶. وضعیت فعلی
 
@@ -103,26 +115,31 @@
 | ۲.۶ | تست واحد (۱۲ تست) + CI سبز | ✅ کامل و پوش‌شده |
 | ۳ | ابزار اتصال Supabase درون‌برنامه (☁️) | ✅ با تست اتصال و پیام خطای دقیق |
 | ۳.۱ | وارد کردن کلید واقعی | ⏳ کار کاربر (کد لازم نیست) |
-| ۴ | ایجنت Coach | ⏳ بعدی |
-| ۵ | امنیت: Supabase Auth + RLS سخت‌گیرانه | ⏳ |
+| ۴ | ایجنت Coach | ✅ پیاده‌سازی و تست شد |
+| ۴.۱ | رفع باگ‌های عملکردی/امنیتی | ✅ ۵۲ تست سبز |
+| ۵ | امنیت: Supabase Auth + RLS سخت‌گیرانه | ✅ کد — ⏳ اجرای SQL |
 | ۶ | بکاپ خودکار (n8n) | ⏳ |
 
 ## ۶.۶ مسیر ورود (چطور کار می‌کند)
 
-1. کاربر ایمیل می‌زند → `sendOtp()` → `POST /auth/v1/otp`
-2. کد ۶ رقمی می‌آید → `verifyOtp()` → `POST /auth/v1/verify` → نشست با `access_token`
+1. کاربر ایمیل می‌زند → `sendOtp()` → `POST /auth/v1/otp?redirect_to=<آدرس اپ>`
+2. مسیر A (کد): اگر ایمیل کد داشت → `verifyOtp()` → `POST /auth/v1/verify` → نشست
+   مسیر B (لینک): کاربر روی لینک می‌زند → برگشت به اپ با `#access_token=…&refresh_token=…`
+   → `consumeAuthRedirect()` نشست را می‌سازد و hash را از آدرس پاک می‌کند
+   (روی پلن رایگان Supabase قالب ایمیل قابل ویرایش نیست و فقط لینک می‌آید)
 3. `saveSession()` در `localStorage` (با `expires_at`)
 4. هر درخواست داده: `authHeaders()` → `Bearer <access_token>`
 5. RLS سمت دیتابیس: `user_id = auth.uid()` → کاربر فقط ردیف خودش
-6. انقضا: `getAccessToken()` خودکار `refresh_token` می‌زند
+6. انقضا: `getAccessToken()` در ۶۰ ثانیه آخر خودکار `refresh_token` می‌زند؛
+   `loadSession` نشست منقضی را دور نمی‌ریزد تا تمدید ممکن باشد.
 7. خروج: `signOut()` → `POST /auth/v1/logout` + `clearSession()`
 
 ## ۶.۵ تست و کیفیت
 
 ```bash
-npm test                          # ۲۹ تست واحد (node --test)
-python3 tools/check_contracts.py  # قرارداد HTML ↔ JS (۲۹ هندلر، ۴۷ id)
-python3 tools/build_graph.py      # گراف قطعی: ۶۲ گره / ۱۰۱ یال
+npm test                          # ۵۲ تست واحد (node --test)
+python3 tools/check_contracts.py  # قرارداد HTML ↔ JS (۳۰ هندلر، ۴۹ id)
+python3 tools/build_graph.py      # گراف قطعی: ۶۸ گره / ۱۱۰ یال
 ```
 
 ## ۷. نکات محیطی (Termux)
@@ -138,43 +155,64 @@ python3 tools/build_graph.py      # گراف قطعی: ۶۲ گره / ۱۰۱ یا
 | مورد | مقدار |
 |------|-------|
 | Project URL | `https://cupcijeqqiyhqaifjzbl.supabase.co` |
-| کلید کلاینت | `sb_publishable_Xw62TkMlB2hOplAeA2bbTA_luHNTEns` (در `src/config.js`) |
-| نوع کلید | سبک جدید Supabase (publishable) — نه JWT |
-| نتایج تست شبکه (۱۴۰۴/…): | |
-| — کلید قدیمی `sb_publishable_veUW…` | ❌ 401 «Invalid API key» → متعلق به پروژه دیگر |
-| — کلید جدید روی REST | ✅ 200 روی `/rest/v1/` |
-| — جدول `user_state` | ❌ 404 `PGRST205` → **ساخته نشده** |
+| کلید کلاینت | `sb_publishable_*` با نام `everest_web` (در `src/config.js`) |
+| نوع کلید | publishable — سبک جدید Supabase |
+| کلیدهای legacy | `anon`/`service_role` (JWT) هنوز فعال‌اند؛ تا پایان ۲۰۲۶ منسوخ می‌شوند |
+| جدول‌ها | `user_state` (کلید `user_id`)، `profiles` (کلید `id`) — هر دو خالی و آماده |
 
-### مدل دسترسی (نسخه ۰.۴)
+### وضعیت واقعی پس از اجرای schema (۱۴۰۵/۰۸/۰۵)
+| بررسی | نتیجه |
+|-------|-------|
+| اجرای `supabase/schema.sql` با Management API | ✅ 201 — اجرای دوباره هم بدون خطا (idempotent) |
+| `supabase/verify.sql` | ✅ هر ۵ بررسی ok (RLS، grants، policy، trigger) |
+| `/auth/v1/health` | ✅ 200 |
+| `/auth/v1/settings` | ✅ `external.email=true`، `disable_signup=false`، `mailer_autoconfirm=false` |
+| anon → `/rest/v1/user_state` و `profiles` | ✅ 401 `42501 permission denied` (نه 404) |
+| authenticated → ردیف خودش | ✅ 1 ردیف |
+| authenticated → ردیف کاربر دیگر | ✅ 0 ردیف؛ INSERT برای دیگری → `42501 new row violates RLS`؛ UPDATE → 0 ردیف |
+| upsert اپ: `POST ...?on_conflict=user_id` / `?on_conflict=id` | ✅ کار می‌کند و تریگر `updated_at` به‌روز می‌شود |
+
+> **دو ناسازگاری که حین اجرا پیدا و رفع شد:**
+> ۱) کلید `sb_publishable_*` قبلی روی این پروژه ثبت نبود («Unregistered API key»).
+>    کلید publishable جدید با نام `everest_web` ساخته و در `src/config.js` گذاشته شد.
+> ۲) `db_schema` پروژه `graphql_public,public` بود؛ PostgREST اولین اسکیما را پیش‌فرض
+>    می‌گیرد، پس همه‌ی درخواست‌ها ۴۰۴ `PGRST205` می‌دادند. به `public,graphql_public` تغییر کرد.
+
+> `schema.sql` برای اجرا از بیرون به `SUPABASE_ACCESS_TOKEN` (PAT) نیاز دارد؛
+> این متغیر حالا در Secrets پروژه هست و مقدارش نه در فایل نوشته می‌شود نه در چت.
+
+### مدل دسترسی (نسخه ۰.۵)
 ```
 anon  ──(فقط /auth/v1)──► OTP ایمیل ──► JWT
-authenticated ──RLS (user_id = auth.uid())──► user_state, profiles
+authenticated ──RLS──► user_state (user_id = auth.uid())
+                     └► profiles   (id      = auth.uid())
 anon  ──✖──► user_state, profiles   (revoke + no policy)
 ```
 
-### کلیدهای جدید Supabase (مهم برای آینده)
-- `sb_publishable_*` → عمومی، برای کلاینت. تست شد: روی `/rest/v1/` کار می‌کند.
+### نکته درباره کلیدها
+- `sb_publishable_*` → عمومی، برای کلاینت. کلید `everest_web` تست شده است.
 - `sb_secret_*` → **فقط سرور**. هرگز در کلاینت نگذار (کد با پیام صریح رد می‌کند).
-- `anon`/`service_role` (JWT) تا پایان ۲۰۲۶ منسوخ می‌شوند → کد از ابتدا با کلید جدید نوشته شد.
+- `sbp_*` → توکن مدیریتی؛ فقط در Secrets، هرگز در چت/فایل/کامیت.
 
 ## ۸. قدم بعدی مشخص
 
-**بلوکه‌ی فعلی: جدول‌ها ساخته نشده‌اند و Auth Email/OTP باید در داشبورد فعال شود.**
+**بلوکه‌ی دیتابیس رفع شد:** جدول‌ها ساخته شدند، RLS و grants تست شدند.
 
-دو کار صاحب پروژه (بدون تغییر کد):
-1. **Authentication → Providers → Email**: فعال‌سازی *Email OTP / Magic Link*
-2. **SQL Editor**: اجرای `supabase/schema.sql` (idempotent) و بعد `supabase/verify.sql`
+باقی‌مانده (نیاز به مرورگر/تأیید انسانی):
+1. در اپ: ثبت‌نام با ایمیل → دریافت ایمیل → کلیک روی لینک (یا ورود کد اگر SMTP اختصاصی داری) → تغییر یک چک‌باکس → دیدن رکورد در `user_state`.
+2. نشانگر بالای صفحه باید «ابر ✓» شود.
+3. **ورود با کد ۶ رقمی روی پلن رایگان کار نمی‌کند**: Supabase اجازه ویرایش قالب ایمیل
+   را روی پلن رایگان با SMTP پیش‌فرض نمی‌دهد (خطای ۴۰۰). فقط لینک می‌آید. برای فعال‌شدن
+   کد در ایمیل، یک SMTP اختصاصی (Resend/SendGrid) در Authentication → SMTP وصل کن و
+   سپس `{{ .Token }}` را در قالب Magic Link بگذار. لینک ورود الان کار می‌کند.
+4. URL‌های مجاز ورود: `uri_allow_list` پروژه شامل آدرس GitHub Pages و `localhost:8080/3000` است.
 
-هشدار: SMTP پیش‌فرض رایگان Supabase محدودیت ارسال دارد؛ برای تیم واقعی
-یک SMTP اختصاصی (Resend/SendGrid) وصل شود، وگرنه OTP به بعضی ایمیل‌ها نمی‌رسد.
+ریسک باقی‌مانده: جدول `profiles` با اپ دیگری در همین پروژه مشترک است و ستون `role` دارد.
+هر کاربر واردشده می‌تواند در ردیف خودش `role` را عوض کند. اگر اپ دیگر روی این ستون
+تصمیم مدیریتی می‌گیرد، با تریگر باید تغییر `role` را فقط برای `service_role` مجاز کرد.
 
-پس از اجرای SQL:
-1. تست: `curl -H "apikey: <key>" "https://cupcijeqqiyhqaifjzbl.supabase.co/rest/v1/user_state?select=user_id&limit=1"` → باید `[]` بدهد نه 404.
-2. در اپ: ثبت‌نام → تغییر یک چک‌باکس → بررسی رکورد در جدول.
-3. نشانگر بالای صفحه باید «ابر ✓» شود.
-
-اگر همه سبز شد، قدم بعدی: **ایجنت Coach** (پیشنهاد اقدام بعدی بر اساس وضعیت مراحل).
+قدم بعد از آن: **بکاپ خودکار (n8n)**؛ Coach در گام ۴.۱ پیاده‌سازی شده است.
 
 ## ۹. جمله بازیابی برای نشست بعدی
 
-> «پروژه everest-5x5-system را از `docs/MEMORY.md` بازیابی کن و از گام ۳ ادامه بده.»
+> «پروژه everest-5x5-system را از `docs/MEMORY.md` بازیابی کن و از گام ۵.۳ / ۶ ادامه بده.»

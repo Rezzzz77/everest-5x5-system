@@ -1,11 +1,17 @@
 -- ============================================================
 --  سیستم ۵×۵ تیم اورست — شمای امن Supabase (با Supabase Auth)
 --  اجرا در: Supabase Dashboard → SQL Editor → New query → Run
---  این فایل idempotent است؛ اجرای دوباره خطا نمی‌دهد.
+--  این فایل idempotent است؛ اجرای دوباره خطا نمی‌دهد و با
+--  جدول‌های موجود (حتی ساخته‌شده توسط اپ دیگر) سازگار می‌شود.
+--
+--  نکته مهم: در این پروژه جدول profiles از قبل وجود داشته و کلید
+--  یکتای کاربر در ستون `id` است (FK به auth.users). ما همان را
+--  حفظ می‌کنیم تا اپ‌های دیگرِ همین پروژه نشکنند. `user_state`
+--  از ستون `user_id` استفاده می‌کند.
 -- ============================================================
 
 -- ------------------------------------------------------------
--- ۰) پاک‌سازی نسخه ناامن قبلی (اگر ساخته شده بود)
+-- ۰) پاک‌سازی سیاست‌های ناامن نسخه‌های قبلی
 -- ------------------------------------------------------------
 do $$
 begin
@@ -41,15 +47,43 @@ end $$;
 
 -- ------------------------------------------------------------
 -- ۲) پروفایل (کد ملی و نام حامی) — جدا از state عمومی
+--    کلید یکتا = همان شناسه کاربر در Auth.
 -- ------------------------------------------------------------
 create table if not exists public.profiles (
-  user_id     uuid primary key references auth.users(id) on delete cascade,
+  id          uuid primary key default auth.uid() references auth.users(id) on delete cascade,
   full_name   text,
   national_id text,
   upline      text,
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now()
 );
+
+-- سازگاری: اگر نسخه قدیمی این فایل جدول را با user_id ساخته باشد
+do $$
+begin
+  if to_regclass('public.profiles') is not null
+     and not exists (
+       select 1 from information_schema.columns
+       where table_schema = 'public' and table_name = 'profiles' and column_name = 'id'
+     )
+     and exists (
+       select 1 from information_schema.columns
+       where table_schema = 'public' and table_name = 'profiles' and column_name = 'user_id'
+     )
+  then
+    alter table public.profiles rename column user_id to id;
+  end if;
+end $$;
+
+-- ستون‌هایی که اپ لازم دارد (جدول موجود ممکن است آن‌ها را نداشته باشد)
+alter table public.profiles add column if not exists full_name   text;
+alter table public.profiles add column if not exists national_id text;
+alter table public.profiles add column if not exists upline      text;
+alter table public.profiles add column if not exists created_at  timestamptz not null default now();
+alter table public.profiles add column if not exists updated_at  timestamptz not null default now();
+
+-- اجازه درج بدون فرستادن id؛ مقدار همیشه از JWT گرفته می‌شود
+alter table public.profiles alter column id set default auth.uid();
 
 -- ------------------------------------------------------------
 -- ۳) تریگر updated_at (DEFAULT now() فقط هنگام INSERT کار می‌کند)
@@ -93,14 +127,18 @@ create policy "users own their profile"
   on public.profiles
   for all
   to authenticated
-  using (user_id = (select auth.uid()))
-  with check (user_id = (select auth.uid()));
+  using (id = (select auth.uid()))
+  with check (id = (select auth.uid()));
 
 -- ------------------------------------------------------------
--- ۵) دسترسی‌ها: anon هیچ دسترسی ندارد
+-- ۵) دسترسی‌ها
+--    anon: هیچ. authenticated: فقط CRUD (بدون TRUNCATE/TRIGGER/REFERENCES)
 -- ------------------------------------------------------------
 revoke all on public.user_state from anon;
 revoke all on public.profiles   from anon;
+
+revoke truncate, references, trigger on public.user_state from authenticated;
+revoke truncate, references, trigger on public.profiles   from authenticated;
 
 grant select, insert, update, delete on public.user_state to authenticated;
 grant select, insert, update, delete on public.profiles   to authenticated;

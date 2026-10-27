@@ -56,11 +56,22 @@ export function loadSession() {
     if (!raw) return null;
     const s = JSON.parse(raw);
     if (!s?.access_token) return null;
-    if (s.expires_at && Date.now() / 1000 > s.expires_at - 30) return null; // منقضی
     return s;
   } catch (_) {
     return null;
   }
+}
+
+/** آیا توکن دسترسی منقضی شده است؟ */
+export function isSessionExpired(session, nowMs = Date.now()) {
+  if (!session?.expires_at) return false;
+  return nowMs / 1000 > session.expires_at;
+}
+
+/** آیا باید پیش از استفاده، توکن را تازه کنیم؟ (۶۰ ثانیه حاشیه) */
+export function needsRefresh(session, nowMs = Date.now()) {
+  if (!session?.access_token || !session.expires_at) return false;
+  return nowMs / 1000 > session.expires_at - 60;
 }
 
 export function clearSession() {
@@ -80,8 +91,17 @@ export function currentUser(session = loadSession()) {
 
 /* ---------------- OTP ---------------- */
 
+/** آدرس بازگشتی که لینک ایمیل باید به آن برگردد (همان صفحه اپ) */
+function redirectTarget() {
+  if (typeof location === 'undefined') return '';
+  if (!/^https?:$/.test(location.protocol)) return '';
+  return location.origin + location.pathname;
+}
+
 /**
- * ارسال کد یک‌بارمصرف به ایمیل
+ * ارسال کد یک‌بارمصرف / لینک ورود به ایمیل
+ * روی پلن رایگان Supabase قالب ایمیل قابل تغییر نیست و فقط لینک می‌آید؛
+ * پس redirect_to را می‌فرستیم تا لینک به همین صفحه برگردد.
  */
 export async function sendOtp(email) {
   const cfg = getSupabaseConfig();
@@ -89,8 +109,11 @@ export async function sendOtp(email) {
   const mail = normalizeEmail(email);
   if (!isValidEmail(mail)) return { ok: false, reason: 'invalid-email' };
 
+  const back = redirectTarget();
+  const endpoint = `${baseUrl(cfg)}/auth/v1/otp${back ? `?redirect_to=${encodeURIComponent(back)}` : ''}`;
+
   try {
-    const res = await fetch(`${baseUrl(cfg)}/auth/v1/otp`, {
+    const res = await fetch(endpoint, {
       method: 'POST',
       headers: anonHeaders(cfg),
       body: JSON.stringify({ email: mail, create_user: true })
@@ -115,7 +138,8 @@ export async function verifyOtp(email, token, metadata = {}) {
   const mail = normalizeEmail(email);
   const code = String(token || '').trim();
   if (!isValidEmail(mail)) return { ok: false, reason: 'invalid-email' };
-  if (!/^\d{6}$/.test(code)) return { ok: false, reason: 'invalid-token' };
+  // طول OTP در Supabase قابل تنظیم است (پیش‌فرض ۶ تا ۱۰ رقم)
+  if (!/^\d{6,10}$/.test(code)) return { ok: false, reason: 'invalid-token' };
 
   try {
     const res = await fetch(`${baseUrl(cfg)}/auth/v1/verify`, {
@@ -146,6 +170,83 @@ export async function verifyOtp(email, token, metadata = {}) {
   } catch (e) {
     return { ok: false, reason: 'network', detail: String(e?.message || e) };
   }
+}
+
+/** خواندن payload یک JWT بدون verify (فقط برای استخراج sub/email) */
+function jwtPayload(token) {
+  try {
+    const part = String(token || '').split('.')[1];
+    if (!part || typeof atob === 'undefined') return null;
+    const b64 = part.replace(/-/g, '+').replace(/_/g, '/');
+    const bytes = Array.prototype.map.call(atob(b64), (c) =>
+      '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+    ).join('');
+    return JSON.parse(decodeURIComponent(bytes));
+  } catch (_) {
+    return null;
+  }
+}
+
+/**
+ * مصرف بازگشت از لینک ایمیل (magic link / signup confirmation).
+ * Supabase توکن‌ها را در hash می‌گذارد: #access_token=…&refresh_token=…
+ * خروجی: null اگر hash مربوط به ورود نبود.
+ */
+export async function consumeAuthRedirect(hash) {
+  const raw = typeof hash === 'string'
+    ? hash
+    : (typeof location !== 'undefined' ? location.hash : '');
+  if (!raw || raw.length < 2) return null;
+
+  const params = new URLSearchParams(raw.replace(/^#/, ''));
+  if (params.get('error')) {
+    return {
+      ok: false,
+      reason: 'link-expired',
+      detail: params.get('error_description') || params.get('error')
+    };
+  }
+
+  const access = params.get('access_token');
+  const refresh = params.get('refresh_token');
+  if (!access || !refresh) return null;
+
+  const expiresIn = Number(params.get('expires_in')) || 3600;
+  const session = {
+    access_token: access,
+    refresh_token: refresh,
+    token_type: params.get('token_type') || 'bearer',
+    expires_in: expiresIn,
+    expires_at: Math.floor(Date.now() / 1000) + expiresIn
+  };
+
+  // توکن نباید در نوار آدرس یا تاریخچه مرورگر بماند
+  if (typeof history !== 'undefined' && typeof location !== 'undefined') {
+    try { history.replaceState(null, '', location.pathname + location.search); } catch (_) { /* بی‌اهمیت */ }
+  }
+
+  // کاربر از روی خود توکن (JWT) قابل بازیابی است؛ بدون درخواست شبکه.
+  const payload = jwtPayload(access);
+  if (payload?.sub) {
+    session.user = {
+      id: payload.sub,
+      email: payload.email || '',
+      user_metadata: payload.user_metadata || {}
+    };
+  } else {
+    const cfg = getSupabaseConfig();
+    if (isConfigured(cfg)) {
+      try {
+        const res = await fetch(`${baseUrl(cfg)}/auth/v1/user`, {
+          headers: { apikey: cfg.key, 'Authorization': `Bearer ${access}` }
+        });
+        if (res.ok) session.user = await res.json();
+      } catch (_) { /* آفلاین */ }
+    }
+  }
+
+  saveSession(session);
+  return { ok: true, session };
 }
 
 /**
@@ -192,9 +293,11 @@ export async function signOut(session = loadSession()) {
 export async function getAccessToken() {
   let session = loadSession();
   if (!session) return null;
-  if (session.expires_at && Date.now() / 1000 > session.expires_at - 60) {
+  if (needsRefresh(session)) {
     session = (await refreshSession(session)) || session;
   }
+  // اگر تازه‌سازی ممکن نبود و توکن واقعاً منقضی است، نشست بی‌اعتبار است
+  if (isSessionExpired(session)) return null;
   return session.access_token || null;
 }
 
@@ -216,6 +319,7 @@ export function authErrorText(r) {
     'not-configured': 'اتصال ابری تنظیم نشده است.',
     'invalid-email': 'ایمیل معتبر نیست.',
     'invalid-token': 'کد وارد شده نامعتبر یا منقضی شده است. دوباره درخواست بده.',
+    'link-expired': 'لینک ورود منقضی یا نامعتبر است. دوباره درخواست بده.',
     'rate-limited': 'تعداد درخواست‌ها زیاد است؛ یک دقیقه بعد دوباره تلاش کن.',
     'smtp': 'ارسال ایمیل از سمت Supabase انجام نشد (تنظیمات SMTP پروژه).',
     'network': 'شبکه در دسترس نیست.',
