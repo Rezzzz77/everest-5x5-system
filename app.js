@@ -6,7 +6,7 @@
 import {
   loadFromStorage, saveToStorage, syncState, loadFromCloud, isSupabaseConfigured, testConnection,
   clearStorage, getDefaultData, saveProfile, sendBackupToN8n, exportStateAsJson, importStateFromJson,
-  loadTeamMembers
+  loadTeamMembers, approveMemberStage, requestStageApproval
 } from './src/db.js';
 import {
   getSupabaseConfig, saveSupabaseConfig, clearSupabaseConfig, validateConfig,
@@ -21,7 +21,7 @@ import {
   signInWithPassword, signUpWithPassword
 } from './src/auth.js';
 import { generateCoachCard, getStageTheme } from './src/coach.js';
-import { getHighestUnlockedStage, isStageUnlocked } from './src/stages.js';
+import { getHighestUnlockedStage, isStageUnlocked, getCriteriaStage, isWaitingForApproval } from './src/stages.js';
 import { escapeHtml, phoneDigits, resetDailyCounters, calculateMemberHealth, isEveningReportTime, contactsToCsv, teamToCsv, initialList30ToCsv } from './src/utils.js';
 
 export { getHighestUnlockedStage };
@@ -406,12 +406,30 @@ async function requestOtp(ev) {
   showAuthStep(2);
 }
 
+function toggleRoleUplineField() {
+  const roleSelect = document.getElementById('reg-role-select');
+  const uplineBox = document.getElementById('reg-upline-box');
+  if (!roleSelect || !uplineBox) return;
+  if (roleSelect.value === 'leader') {
+    uplineBox.classList.add('hidden');
+  } else {
+    uplineBox.classList.remove('hidden');
+  }
+}
+
 async function handlePasswordAuth() {
   const emailInput = document.getElementById('reg-email');
   const passwordInput = document.getElementById('reg-password');
+  const nameInput = document.getElementById('reg-name-input');
+  const roleSelect = document.getElementById('reg-role-select');
+  const uplineInput = document.getElementById('reg-upline-input');
   const btn = document.getElementById('btn-password-auth');
+
   const email = (emailInput?.value || '').trim();
   const password = (passwordInput?.value || '').trim();
+  const enteredName = (nameInput?.value || '').trim();
+  const enteredRole = roleSelect?.value || 'member';
+  const enteredUpline = (uplineInput?.value || '').trim();
 
   if (!isValidEmail(email)) return authMsg(1, 'err', 'ایمیل معتبر نیست.');
   if (!password || password.length < 6) return authMsg(1, 'err', 'رمز عبور باید حداقل ۶ کاراکتر باشد.');
@@ -427,7 +445,12 @@ async function handlePasswordAuth() {
   try {
     let r = await signInWithPassword(email, password);
     if (!r.ok) {
-      const upRes = await signUpWithPassword(email, password);
+      const metadata = {
+        full_name: enteredName || 'عضو تیم اورست',
+        role: enteredRole,
+        upline: enteredRole === 'leader' ? 'راهبر ارشد اورست' : (enteredUpline || 'راهبر تیم اورست')
+      };
+      const upRes = await signUpWithPassword(email, password, metadata);
       if (upRes.ok) {
         if (upRes.session?.access_token) {
           r = upRes;
@@ -467,20 +490,34 @@ async function handlePasswordAuth() {
     const sameUser = Boolean(previousOwner && previousOwner === u.id && !appState.user?.local);
     if (previousOwner && !sameUser) appState = getDefaultData();
 
+    const resolvedRole = enteredRole || u.role || 'member';
+    const resolvedName = enteredName || u.name || 'عضو تیم اورست';
+    const resolvedUpline = resolvedRole === 'leader' ? 'راهبر ارشد اورست' : (enteredUpline || u.upline || 'راهبر تیم اورست');
+
     appState.ownerId = u.id;
     appState.user = {
       id: u.id,
       email: u.email,
-      name: u.name || 'عضو تیم اورست',
-      upline: u.upline || 'راهبر تیم اورست'
+      name: resolvedName,
+      role: resolvedRole,
+      upline: resolvedUpline
     };
+    if (resolvedRole === 'leader') {
+      appState.approvedStage = 5;
+    } else {
+      appState.approvedStage = appState.approvedStage || 1;
+    }
     if (!appState.startTime) appState.startTime = Date.now();
 
     try {
       await saveProfile({
         full_name: appState.user.name,
+        role: appState.user.role,
         upline: appState.user.upline,
+        upline_email: appState.user.upline.includes('@') ? appState.user.upline : undefined,
         current_stage: getHighestUnlockedStage(appState),
+        approved_stage: appState.approvedStage || 1,
+        pending_stage: appState.pendingApprovalStage || null,
         s2_streak: Number(appState.s2Streak) || 0,
         crm_count: (appState.crm || []).length
       });
@@ -490,7 +527,14 @@ async function handlePasswordAuth() {
       const cloud = await loadFromCloud();
       if (cloud) {
         appState = mergeWithDefaults(cloud);
-        appState.user = { id: u.id, email: u.email, name: appState.user?.name || u.name, upline: appState.user?.upline || u.upline };
+        appState.user = {
+          id: u.id,
+          email: u.email,
+          name: appState.user?.name || resolvedName,
+          role: appState.user?.role || resolvedRole,
+          upline: appState.user?.upline || resolvedUpline
+        };
+        if (appState.user.role === 'leader') appState.approvedStage = 5;
       }
     } catch (_) {}
     saveToStorage(appState);
@@ -637,7 +681,21 @@ async function resetDemo() {
 function renderTabs() {
   const bar = document.getElementById('stage-tabs-bar');
   const unlocked = getHighestUnlockedStage(appState);
-  document.getElementById('user-stage-badge').innerText = `سطح فعلی: مرحله ${unlocked}`;
+  const isLeader = appState.user?.role === 'leader';
+
+  const stageBadge = document.getElementById('user-stage-badge');
+  if (stageBadge) stageBadge.innerText = `سطح مجاز: مرحله ${unlocked}`;
+
+  const roleBadge = document.getElementById('user-role-badge');
+  if (roleBadge) {
+    if (isLeader) {
+      roleBadge.innerText = '👑 راهبر تیم';
+      roleBadge.className = 'text-[10px] bg-amber-500 text-slate-950 font-black px-2 py-0.5 rounded-full border border-amber-300 shadow-sm';
+    } else {
+      roleBadge.innerText = '🎯 مشاور اورست';
+      roleBadge.className = 'text-[10px] bg-blue-600/70 border border-blue-400/50 text-blue-200 font-bold px-2 py-0.5 rounded-full';
+    }
+  }
 
   const labels = [
     { n: 1, t: 'م۱: شروع', sub: '۷۲ ساعت' },
@@ -650,19 +708,156 @@ function renderTabs() {
   bar.innerHTML = labels.map(item => {
     const isActive = activeStageView === item.n;
     const isLocked = item.n > unlocked;
+    const isWaiting = isWaitingForApproval(item.n, appState);
+    let lockIcon = '';
+    if (isWaiting) lockIcon = '⏳';
+    else if (isLocked) lockIcon = '🔒';
+
     return `
       <button onclick="switchStage(${item.n})" class="py-1.5 rounded-xl text-center transition ${isActive ? 'bg-white text-slate-950 font-extrabold shadow' : 'text-white/80 hover:bg-white/10'} text-[11px]">
-        <div>${item.t} ${isLocked ? '🔒' : ''}</div>
+        <div>${item.t} ${lockIcon}</div>
         <div class="text-[9px] opacity-75">${item.sub}</div>
       </button>
     `;
   }).join('');
+
+  renderApprovalBoxes();
+}
+
+function renderApprovalBoxes() {
+  const isLeader = appState.user?.role === 'leader';
+  const approved = Math.max(1, Number(appState.approvedStage) || (isLeader ? 5 : 1));
+
+  // مرحله ۱ به ۲
+  const s1Box = document.getElementById('s1-approval-box');
+  if (s1Box) {
+    const s1Done = Array.isArray(appState.s1Steps) && appState.s1Steps.length > 0 && appState.s1Steps.every(x => x && x.done);
+    if (!s1Done) {
+      s1Box.innerHTML = '';
+    } else if (isLeader || approved >= 2) {
+      s1Box.innerHTML = `
+        <div class="bg-emerald-950/70 border border-emerald-600/50 p-2.5 rounded-xl text-emerald-200 text-xs font-bold text-center mt-2 flex items-center justify-center gap-1.5">
+          <span>✅</span>
+          <span>ورود به مرحله ۲ تأیید شده است. می‌توانید به تب مرحله ۲ بروید.</span>
+        </div>
+      `;
+    } else {
+      s1Box.innerHTML = renderApprovalRequestBanner(2);
+    }
+  }
+
+  // مرحله ۲ به ۳
+  const s2Box = document.getElementById('s2-approval-box');
+  if (s2Box) {
+    const s2Done = (Number(appState.s2Streak) || 0) >= 7;
+    if (!s2Done) {
+      s2Box.innerHTML = '';
+    } else if (isLeader || approved >= 3) {
+      s2Box.innerHTML = `
+        <div class="bg-emerald-950/70 border border-emerald-600/50 p-2.5 rounded-xl text-emerald-200 text-xs font-bold text-center mt-2 flex items-center justify-center gap-1.5">
+          <span>✅</span>
+          <span>ورود به مرحله ۳ تأیید شده است. تب مرحله ۳ باز است.</span>
+        </div>
+      `;
+    } else {
+      s2Box.innerHTML = renderApprovalRequestBanner(3);
+    }
+  }
+
+  // مرحله ۳ به ۴
+  const s3Box = document.getElementById('s3-approval-box');
+  if (s3Box) {
+    const s3Done = Array.isArray(appState.s3Pass) && appState.s3Pass.length > 0 && appState.s3Pass.every(x => x && x.done);
+    if (!s3Done) {
+      s3Box.innerHTML = '';
+    } else if (isLeader || approved >= 4) {
+      s3Box.innerHTML = `
+        <div class="bg-emerald-950/70 border border-emerald-600/50 p-2.5 rounded-xl text-emerald-200 text-xs font-bold text-center mt-2 flex items-center justify-center gap-1.5">
+          <span>✅</span>
+          <span>ورود به مرحله ۴ تأیید شده است. تب مرحله ۴ باز است.</span>
+        </div>
+      `;
+    } else {
+      s3Box.innerHTML = renderApprovalRequestBanner(4);
+    }
+  }
+
+  // مرحله ۴ به ۵
+  const s4Box = document.getElementById('s4-approval-box');
+  if (s4Box) {
+    const s4Done = Array.isArray(appState.s4Pass) && appState.s4Pass.length > 0 && appState.s4Pass.every(x => x && x.done);
+    if (!s4Done) {
+      s4Box.innerHTML = '';
+    } else if (isLeader || approved >= 5) {
+      s4Box.innerHTML = `
+        <div class="bg-emerald-950/70 border border-emerald-600/50 p-2.5 rounded-xl text-emerald-200 text-xs font-bold text-center mt-2 flex items-center justify-center gap-1.5">
+          <span>✅</span>
+          <span>ورود به مرحله ۵ (راهبری) تأیید شده است. تب مرحله ۵ باز است.</span>
+        </div>
+      `;
+    } else {
+      s4Box.innerHTML = renderApprovalRequestBanner(5);
+    }
+  }
+}
+
+function renderApprovalRequestBanner(targetStage) {
+  const isPending = appState.pendingApprovalStage === targetStage;
+  const uplineName = appState.user?.upline || 'راهبر تیم اورست';
+  return `
+    <div class="bg-amber-950/80 border border-amber-600/60 p-3 rounded-xl space-y-2.5 text-center mt-2 shadow-inner">
+      <div class="text-xs text-amber-200 font-extrabold flex items-center justify-center gap-1.5">
+        <span>⏳</span>
+        <span>معیارهای این مرحله تکمیل شد! ورود به مرحله ${targetStage} منوط به تأیید راهبر است.</span>
+      </div>
+      <p class="text-[10px] text-slate-300">راهبر ناظر شما: <b class="text-amber-300 font-bold">${escapeHtml(uplineName)}</b></p>
+      <div class="flex flex-col sm:flex-row gap-2 justify-center pt-1">
+        <button onclick="requestLeaderApproval(${targetStage})" class="bg-blue-600 hover:bg-blue-500 text-white font-extrabold px-3.5 py-2 rounded-xl text-xs transition shadow flex items-center justify-center gap-1">
+          <span>${isPending ? '✓ درخواست ارسال شده (ارسال مجدد)' : '📩 ارسال درخواست تأیید در سامانه'}</span>
+        </button>
+        <button onclick="sendLeaderWhatsAppApprovalRequest(${targetStage})" class="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold px-3.5 py-2 rounded-xl text-xs transition shadow flex items-center justify-center gap-1">
+          <span>💬 ارسال پیام مستقیم در واتساپ</span>
+        </button>
+      </div>
+      ${isPending ? '<div class="text-[10px] text-emerald-300 font-bold">درخواست شما در سیستم ثبت شد؛ به محض تأیید توسط راهبر، مرحله باز خواهد شد.</div>' : ''}
+    </div>
+  `;
+}
+
+async function requestLeaderApproval(targetStage) {
+  appState.pendingApprovalStage = Number(targetStage) || 2;
+  saveAll();
+  renderTabs();
+
+  try {
+    const res = await requestStageApproval(targetStage);
+    if (res?.ok) {
+      alert(`درخواست تأیید ورود به مرحله ${targetStage} با موفقیت برای راهبر شما ثبت شد. ⏳`);
+    } else {
+      alert(`درخواست تأیید ثبت شد. در اتصال بعدی به راهبر منتقل خواهد شد.`);
+    }
+  } catch (_) {
+    alert(`درخواست تأیید ثبت شد.`);
+  }
+}
+
+function sendLeaderWhatsAppApprovalRequest(targetStage) {
+  const name = appState.user?.name || 'مشاور تیم';
+  const email = appState.user?.email || '';
+  const prevStage = targetStage - 1;
+  const text = `سلام راهبر عزیز،\nمن تمام الزامات و معیارهای مرحله ${prevStage} سیستم ۵×۵ تیم اورست را کامل کردم و آماده شروع مرحله ${targetStage} هستم. لطفاً ورود من به مرحله ${targetStage} را در پنل سامانه تأیید فرمایید. 🏔️✨\nنام: ${name}\nایمیل: ${email}`;
+  const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+  window.open(url, '_blank');
 }
 
 // تغییر مرحله
 function switchStage(stageNum) {
   if (!isStageUnlocked(stageNum, appState)) {
-    alert('این مرحله هنوز باز نشده است. اول معیار عبور مرحله قبل را کامل کن.');
+    if (isWaitingForApproval(stageNum, appState)) {
+      alert(`ورود به مرحله ${stageNum} نیازمند تأیید راهبر شماست. لطفاً از دکمه «ارسال درخواست تأیید» در انتهای مرحله قبل استفاده کنید.`);
+    } else {
+      alert('این مرحله هنوز باز نشده است. اول معیار عبور مرحله قبل را کامل کن.');
+    }
     return;
   }
   activeStageView = stageNum;
@@ -1221,11 +1416,17 @@ async function renderOnlineTeam() {
     const stg = stageLabels[m.current_stage] || stageLabels[1];
     const health = calculateMemberHealth(m);
     const updatedTime = m.updated_at ? new Date(m.updated_at).toLocaleDateString('fa-IR') : 'نامشخص';
+    const targetStageToApprove = m.pending_stage || (Number(m.approved_stage || m.current_stage || 1) + 1);
+    const hasPending = Boolean(m.pending_stage && Number(m.pending_stage) > (Number(m.approved_stage) || 1));
+
     return `
-      <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-700 space-y-2 shadow-sm">
+      <div class="bg-slate-900/90 p-3 rounded-xl border ${hasPending ? 'border-amber-500/80 shadow-amber-950/40 shadow-md' : 'border-slate-700'} space-y-2 shadow-sm">
         <div class="flex justify-between items-start">
           <div>
-            <div class="font-bold text-xs text-slate-100">${escapeHtml(m.full_name || 'عضو بدون نام')}</div>
+            <div class="font-bold text-xs text-slate-100 flex items-center gap-1.5">
+              <span>${escapeHtml(m.full_name || 'عضو بدون نام')}</span>
+              ${m.role === 'leader' ? '<span class="text-[9px] bg-amber-500/20 text-amber-300 border border-amber-400/30 px-1.5 py-0.5 rounded font-bold">👑 راهبر</span>' : '<span class="text-[9px] bg-blue-600/20 text-blue-300 border border-blue-400/30 px-1.5 py-0.5 rounded font-bold">🎯 مشاور</span>'}
+            </div>
             <div class="text-[10px] text-slate-400 font-mono mt-0.5" dir="ltr">${escapeHtml(m.email || '')}</div>
           </div>
           <div class="flex flex-col items-end gap-1">
@@ -1235,8 +1436,8 @@ async function renderOnlineTeam() {
         </div>
         <div class="grid grid-cols-3 gap-1.5 text-center text-[10px] bg-slate-950/60 p-2 rounded-lg border border-slate-800">
           <div>
-            <span class="text-slate-400 block text-[9px]">سطح فعلی</span>
-            <span class="font-bold text-slate-200">مرحله ${m.current_stage || 1}</span>
+            <span class="text-slate-400 block text-[9px]">سطح تأییدشده</span>
+            <span class="font-bold text-slate-200">مرحله ${m.approved_stage || m.current_stage || 1}</span>
           </div>
           <div>
             <span class="text-slate-400 block text-[9px]">زنجیره ۷ روزه</span>
@@ -1247,6 +1448,25 @@ async function renderOnlineTeam() {
             <span class="font-bold text-sky-400">👤 ${m.crm_count || 0} نفر</span>
           </div>
         </div>
+
+        ${hasPending ? `
+          <div class="bg-amber-950/70 border border-amber-600/60 p-2.5 rounded-xl flex justify-between items-center text-xs mt-1.5">
+            <div class="text-amber-200 font-bold flex items-center gap-1.5">
+              <span>🔔</span>
+              <span>درخواست تأیید ورود به مرحله ${m.pending_stage}</span>
+            </div>
+            <button onclick="approveDownlineMember('${m.id}', ${m.pending_stage})" class="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold px-3 py-1.5 rounded-lg text-xs shadow-md transition">
+              ✓ تأیید مرحله ${m.pending_stage}
+            </button>
+          </div>
+        ` : (targetStageToApprove <= 5 ? `
+          <div class="flex justify-end pt-1">
+            <button onclick="approveDownlineMember('${m.id}', ${targetStageToApprove})" class="text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white px-2.5 py-1 rounded-lg border border-slate-700 font-bold transition">
+              + تأیید و ارتقا به مرحله ${targetStageToApprove}
+            </button>
+          </div>
+        ` : '')}
+
         <div class="flex justify-between items-center text-[9px] text-slate-400 pt-0.5">
           <div>${escapeHtml(health.reason)}</div>
           <div dir="ltr" class="text-slate-500">آخرین فعالیت: ${escapeHtml(updatedTime)}</div>
@@ -1254,6 +1474,24 @@ async function renderOnlineTeam() {
       </div>
     `;
   }).join('');
+}
+
+async function approveDownlineMember(memberId, targetStage) {
+  if (!memberId) return;
+  const num = Number(targetStage) || 2;
+  const res = await approveMemberStage(memberId, num);
+  if (res?.ok) {
+    const mem = (onlineTeamCache || []).find(x => x.id === memberId);
+    if (mem) {
+      mem.approved_stage = num;
+      mem.current_stage = Math.max(Number(mem.current_stage || 1), num);
+      mem.pending_stage = null;
+    }
+    renderOnlineTeam();
+    alert(`ورود به مرحله ${num} با موفقیت برای عضو تیم تأیید شد. ✓`);
+  } else {
+    alert(res?.message || 'خطا در ثبت تأیید مرحله');
+  }
 }
 
 function filterTeamList() {
@@ -2012,7 +2250,11 @@ Object.assign(window, {
   renderInitialList30,
   addInitialList30Member,
   deleteInitialList30Member,
-  exportInitialList30Csv
+  exportInitialList30Csv,
+  toggleRoleUplineField,
+  requestLeaderApproval,
+  sendLeaderWhatsAppApprovalRequest,
+  approveDownlineMember
 });
 
 // راه‌اندازی — اگر کاربر از لینک ایمیل برگشته باشد، اول نشست را بساز.
