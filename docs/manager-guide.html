@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>راهنمای جامع مدیران و راهبران — سیستم ۵×۵ تیم اورست</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;600;700;800;900&display=swap');
+
+    @page {
+      size: A4;
+      margin: 14mm 16mm;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    body {
+      font-family: 'Vazirmatn', Tahoma, 'Segoe UI', sans-serif;
+      background: #ffffff;
+      color: #1e293b;
+      margin: 0;
+      padding: 0;
+      line-height: 1.65;
+      font-size: 11pt;
+    }
+
+    .header-banner {
+      background: linear-gradient(135deg, #4c1d95 0%, #7c3aed 100%);
+      color: #ffffff;
+      padding: 22px 26px;
+      border-radius: 14px;
+      margin-bottom: 22px;
+      box-shadow: 0 4px 12px rgba(124, 58, 237, 0.15);
+    }
+
+    .header-banner h1 {
+      margin: 0 0 6px 0;
+      font-size: 19pt;
+      font-weight: 900;
+    }
+
+    .header-banner p {
+      margin: 0;
+      font-size: 10.5pt;
+      opacity: 0.9;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 8.5pt;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .badge-primary { background: #ede9fe; color: #5b21b6; }
+    .badge-kpi { background: #fef3c7; color: #92400e; }
+    .badge-alert { background: #fee2e2; color: #991b1b; }
+    .badge-success { background: #dcfce7; color: #166534; }
+
+    .card {
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+      background: #f8fafc;
+      page-break-inside: avoid;
+    }
+
+    .card-title {
+      font-size: 12pt;
+      font-weight: 800;
+      color: #0f172a;
+      margin: 0 0 8px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .step-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .step-num {
+      background: #6d28d9;
+      color: #ffffff;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 8.5pt;
+      font-weight: 800;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0;
+      font-size: 9.5pt;
+    }
+
+    th, td {
+      border: 1px solid #cbd5e1;
+      padding: 8px 10px;
+      text-align: right;
+    }
+
+    th {
+      background: #f1f5f9;
+      font-weight: 800;
+      color: #0f172a;
+    }
+
+    .highlight-box {
+      background: #faf5ff;
+      border-right: 4px solid #7c3aed;
+      padding: 12px 14px;
+      border-radius: 6px;
+      margin: 12px 0;
+      font-size: 10pt;
+    }
+
+    .footer {
+      text-align: center;
+      font-size: 8.5pt;
+      color: #64748b;
+      margin-top: 20px;
+      border-top: 1px solid #e2e8f0;
+      padding-top: 8px;
+    }
+
+    .page-break {
+      page-break-before: always;
+    }
+
+    code {
+      font-family: Consolas, monospace;
+      background: #e2e8f0;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 9pt;
+      direction: ltr;
+      display: inline-block;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- هدر اصلی راهنمای مدیران -->
+  <div class="header-banner">
+    <span class="badge badge-primary">پنل دیده‌بانی و لیدرشیپ اورست</span>
+    <h1>👑 راهنمای اختصاصی مدیران و راهبران تیم</h1>
+    <p>دستورالعمل مانیتورینگ زنده اعضا، کوچینگ مرحله‌به‌مرحله و مدیریت شاخص‌های کلان سازمان</p>
+  </div>
+
+  <!-- قانون طلایی راهبر -->
+  <div class="card">
+    <div class="card-title">🎯 قانون طلایی راهبر اورست</div>
+    <div class="highlight-box">
+      «کاری را که نمی‌توانی منتقل کنی، هنوز تبدیل به سیستم نکرده‌ای. راهبری یعنی ساختن آدم‌هایی که حتی وقتی تو در جلسه نیستی، رشد و تکثیر را با استانداردهای ۵×۵ ادامه دهند.»
+    </div>
+  </div>
+
+  <!-- چگونگی عضوگیری و لینک اختصاصی -->
+  <div class="card">
+    <div class="card-title">🔗 گام اول: نحوه اتصال اعضای جدید به سازمان شما</div>
+    <p style="font-size: 10pt; margin: 0 0 10px 0;">برای اینکه اعضا مستقیماً زیرمجموعه شما شوند و وضعیتشان در داشبورد شما پایش شود:</p>
+    <div class="step-item">
+      <div class="step-num">۱</div>
+      <div>در اپلیکیشن به <b>مرحله ۴</b> بروید و در کادر بنفش «دیده‌بانی آنلاین»، دکمه <b>«کپی لینک»</b> را بزنید.</div>
+    </div>
+    <div class="step-item">
+      <div class="step-num">۲</div>
+      <div>لینک تولیدشده به صورت <code>https://.../?upline=ایمیل_شما</code> خواهد بود.</div>
+    </div>
+    <div class="step-item">
+      <div class="step-num">۳</div>
+      <div>این لینک را برای عضو جدید بفرستید. به محض اینکه او در سایت لاگین کند، سیستم به صورت خودکار او را به عنوان نفر مستقیم شما ثبت می‌کند.</div>
+    </div>
+  </div>
+
+  <!-- کار با پنل دیده‌بانی آنلاین -->
+  <div class="card">
+    <div class="card-title">👥 کار با پنل مانیتورینگ زنده اعضای تیم</div>
+    <p style="font-size: 10pt; margin-top: 0;">در پنل دیده‌بانی آنلاین، اطلاعات لحظه‌ای هر عضو نمایش داده می‌شود:</p>
+    <table>
+      <thead>
+        <tr>
+          <th>شاخص پایش</th>
+          <th>معنی در سیستم</th>
+          <th>اقدام نظارتی راهبر</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><b>برچسب سطح (مرحله ۱ تا ۵)</b></td>
+          <td>نشان می‌دهد عضو در کدام مرحله از سیستم قرار دارد.</td>
+          <td>بررسی موانع عبور و کمک به انجام معیارهای باز شدن مرحله بعد.</td>
+        </tr>
+        <tr>
+          <td><b>زنجیره ۷ روزه (🔥 Streak)</b></td>
+          <td>تداوم اجرای عادات روزانه (مطالعه، دعوت، پیگیری).</td>
+          <td>اگر زنجیره بیش از ۲ روز صفر بود، تماس انگیزشی و فالوآپ بگیرید.</td>
+        </tr>
+        <tr>
+          <td><b>مخاطبان CRM (👤)</b></td>
+          <td>تعداد سرنخ‌ها و مشتریان دمنوش ثبت‌شده توسط عضو.</td>
+          <td>بررسی کیفیت لیست و کمک به پرزنت مخاطبان گرم.</td>
+        </tr>
+        <tr>
+          <td><b>آخرین فعالیت</b></td>
+          <td>تاریخ آخرین ثبت گزارش یا ذخیره داده توسط عضو.</td>
+          <td>شناسایی اعضای فعال و مستعد ارتقا به لیدرشیپ.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- ماتریس کوچینگ مرحله به مرحله -->
+  <div class="card">
+    <div class="card-title">🧭 ماتریس مداخله و کوچینگ هوشمند بر اساس مرحله عضو</div>
+    <p style="font-size: 10pt; margin: 0 0 8px 0;">وقتی در پنل می‌بینید عضوی در یک مرحله خاص است، دقیقاً باید چه کمکی به او برسانید؟</p>
+    <table>
+      <thead>
+        <tr>
+          <th>مرحله عضو</th>
+          <th>چالش احتمالی عضو</th>
+          <th>وظیفه مداخله‌ای شما (راهبر)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="badge badge-primary">مرحله ۱: شروع</span></td>
+          <td>ترس از دعوت، ننوشتن هدف</td>
+          <td>کمک در تکمیل «داستان من»، شرکت در پرزنت‌های اول به‌عنوان همراه.</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-success">مرحله ۲: حرکت</span></td>
+          <td>قطع شدن زنجیره، عدم تداوم</td>
+          <td>پیگیری روزانه گزارش شبانه؛ تشویق به حفظ زنجیره تا روز ۷.</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-kpi">مرحله ۳: ساخت</span></td>
+          <td>نه شنیدن در پیگیری، کم شدن لیست</td>
+          <td>آموزش فنون پاسخ به اعتراضات و کار با پک‌های سلامت دمنوش‌ها.</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-alert">مرحله ۴: تکثیر</span></td>
+          <td>انجام کارها به جای دیگران</td>
+          <td>آموزش قانون «واگذار کن»؛ جلوگیری از وابستگی سازمان به یک نفر.</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-primary">مرحله ۵: راهبری</span></td>
+          <td>افت انگیزه پس از رسیدن به درآمد</td>
+          <td>تعیین تارگت‌های کلان فصلی، برگزاری جلسات هدفمند راهبری.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- داشبورد KPI و جلسات راهبری -->
+  <div class="card">
+    <div class="card-title">📊 داشبورد شاخص‌های کلیدی عملکرد (KPI) و جلسات</div>
+    <p style="font-size: 10pt; margin-top: 0;">در <b>مرحله ۵</b>، ابزار کنترل عددی سازمان قرار دارد:</p>
+    <ul style="margin: 0; padding-right: 20px; font-size: 10pt;">
+      <li><b>فروش سازمانی:</b> ثبت حجم کل فروش ماهیانه تیم به تومان.</li>
+      <li><b>ورودی‌های جدید:</b> تعداد نفراتی که در این ماه وارد سیستم شده‌اند.</li>
+      <li><b>اعضای فعال:</b> تعداد کسانی که در ماه جاری سفارش یا ورودی داشته‌اند.</li>
+      <li><b>تعداد راهبران مستقل:</b> تعداد اعضایی که مرحله ۴ را کامل کرده‌اند.</li>
+      <li><b>ثبت جلسات لیدرشیپ:</b> ثبت تاریخ، نوع جلسه (هفتگی/ماهانه) و خروجی تصمیمات.</li>
+    </ul>
+  </div>
+
+  <!-- ۵ استاندارد راهبر اورست -->
+  <div class="card">
+    <div class="card-title">⭐ ۵ استاندارد رفتاری راهبر اورست</div>
+    <div class="step-item"><div class="step-num">۱</div><div><b>الگوی عملی بودن:</b> اول خودت ۵ اقدام و زنجیره را انجام بده، بعد از تیم بخواه.</div></div>
+    <div class="step-item"><div class="step-num">۲</div><div><b>نظم در پایش:</b> حداقل هفته‌ای دو بار پنل دیده‌بانی را بررسی و با نفرات صحبت کن.</div></div>
+    <div class="step-item"><div class="step-num">۳</div><div><b>جلسات هدفمند:</b> هیچ جلسه‌ای بدون دستور جلسه و تارگت مشخص برگزار نشود.</div></div>
+    <div class="step-item"><div class="step-num">۴</div><div><b>حفظ حریم خصوصی:</b> اطلاعات شخصی اعضا امانت است؛ همیشه روی رشد تمرکز کن.</div></div>
+    <div class="step-item"><div class="step-num">۵</div><div><b>ثبت پشتیبان منظم:</b> از داده‌های سازمانی نسخه پشتیبان دوره‌ای (JSON / n8n) تهیه کن.</div></div>
+  </div>
+
+  <div class="footer">
+    سیستم ۵×۵ تیم اورست | پنل آنلاین: https://rezzzz77.github.io/everest-5x5-system/
+  </div>
+
+</body>
+</html>

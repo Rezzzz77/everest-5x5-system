@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>راهنمای جامع کاربری — سیستم ۵×۵ تیم اورست</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;600;700;800;900&display=swap');
+
+    @page {
+      size: A4;
+      margin: 14mm 16mm;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    body {
+      font-family: 'Vazirmatn', Tahoma, 'Segoe UI', sans-serif;
+      background: #ffffff;
+      color: #1e293b;
+      margin: 0;
+      padding: 0;
+      line-height: 1.65;
+      font-size: 11pt;
+    }
+
+    .header-banner {
+      background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 100%);
+      color: #ffffff;
+      padding: 22px 26px;
+      border-radius: 14px;
+      margin-bottom: 22px;
+      box-shadow: 0 4px 12px rgba(29, 78, 216, 0.15);
+    }
+
+    .header-banner h1 {
+      margin: 0 0 6px 0;
+      font-size: 19pt;
+      font-weight: 900;
+    }
+
+    .header-banner p {
+      margin: 0;
+      font-size: 10.5pt;
+      opacity: 0.9;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 8.5pt;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .badge-primary { background: #dbeafe; color: #1e40af; }
+    .badge-stage1 { background: #dbeafe; color: #1d4ed8; }
+    .badge-stage2 { background: #d1fae5; color: #047857; }
+    .badge-stage3 { background: #ffedd5; color: #c2410c; }
+    .badge-stage4 { background: #f3e8ff; color: #7e22ce; }
+    .badge-stage5 { background: #fef3c7; color: #b45309; }
+
+    .card {
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+      background: #f8fafc;
+      page-break-inside: avoid;
+    }
+
+    .card-title {
+      font-size: 12pt;
+      font-weight: 800;
+      color: #0f172a;
+      margin: 0 0 8px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .step-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .step-num {
+      background: #1e40af;
+      color: #ffffff;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 8.5pt;
+      font-weight: 800;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0;
+      font-size: 9.5pt;
+    }
+
+    th, td {
+      border: 1px solid #cbd5e1;
+      padding: 8px 10px;
+      text-align: right;
+    }
+
+    th {
+      background: #f1f5f9;
+      font-weight: 800;
+      color: #0f172a;
+    }
+
+    .highlight-box {
+      background: #f0fdf4;
+      border-right: 4px solid #16a34a;
+      padding: 10px 14px;
+      border-radius: 6px;
+      margin: 12px 0;
+      font-size: 10pt;
+    }
+
+    .footer {
+      text-align: center;
+      font-size: 8.5pt;
+      color: #64748b;
+      margin-top: 20px;
+      border-top: 1px solid #e2e8f0;
+      padding-top: 8px;
+    }
+
+    .page-break {
+      page-break-before: always;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- هدر اصلی -->
+  <div class="header-banner">
+    <span class="badge badge-primary">سیستم ۵×۵ تیم اورست | نیوشانیک</span>
+    <h1>📘 راهنمای جامع کاربری و چک‌لیست موفقیت</h1>
+    <p>برنامه گام‌به‌گام از ورود تا استقلال مالی و راهبری سازمان فروش</p>
+  </div>
+
+  <!-- مقدمه و فلسفه ۵×۵ -->
+  <div class="card">
+    <div class="card-title">🌟 فلسفه سیستم ۵×۵ اورست چیست؟</div>
+    <p style="margin: 0; font-size: 10pt; text-align: justify;">
+      سیستم ۵×۵ یک مسیر مهندسی‌شده و استاندارد برای اعضای شبکه فروش نیوشانیک است. این سیستم تضمین می‌کند که هر عضو جدید بدون سردرگمی، در ۵ مرحله دقیق با معیارهای عبور مشخص حرکت کند و مهارت‌های لازم را گام‌به‌گام یاد بگیرد، انجام دهد و در تیم خود تکثیر کند.
+    </p>
+  </div>
+
+  <!-- جدول ۵ مرحله در یک نگاه -->
+  <div class="card">
+    <div class="card-title">🗺 نقشه‌ی راه در یک نگاه</div>
+    <table>
+      <thead>
+        <tr>
+          <th>مرحله</th>
+          <th>عنوان</th>
+          <th>دوره زمانی</th>
+          <th>معیار طلایی عبور به مرحله بعد</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="badge badge-stage1">مرحله ۱</span></td>
+          <td><b>شروع</b></td>
+          <td>۷۲ ساعت اول</td>
+          <td>انجام ۵ اقدام اولیه + ثبت هدف و داستان شخصی</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-stage2">مرحله ۲</span></td>
+          <td><b>حرکت</b></td>
+          <td>۷ روز متوالی</td>
+          <td>تکمیل زنجیره ۷ روزه عادات + گزارش شبانه</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-stage3">مرحله ۳</span></td>
+          <td><b>ساخت</b></td>
+          <td>۳۰ روز</td>
+          <td>لیست ۱۰۰+ مخاطب، مدیریت CRM، ۵ معیار عبور</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-stage4">مرحله ۴</span></td>
+          <td><b>تکثیر</b></td>
+          <td>۹۰ روز</td>
+          <td>هدایت حداقل ۳ نفر در چرخه ۵ گامه تا استقلال</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-stage5">مرحله ۵</span></td>
+          <td><b>راهبری</b></td>
+          <td>مستمر</td>
+          <td>مدیریت شاخص‌های رشد تیمی (KPI) و سازمان‌سازی</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- راهنمای گام ۱ و ۲ -->
+  <div class="card">
+    <span class="badge badge-stage1">مرحله ۱: شروع | ۷۲ ساعت اول</span>
+    <div class="card-title">🚀 ۵ اقدام کلیدی ۷۲ ساعت اول</div>
+    <div class="step-item">
+      <div class="step-num">۱</div>
+      <div><b>تعیین «چرایی» و داستان من:</b> با زدن دکمه 🎯 در بالای برنامه، هدف مالی و داستان کوتاه شروع خود را تایپ یا صوتی ضبط کنید.</div>
+    </div>
+    <div class="step-item">
+      <div class="step-num">۲</div>
+      <div><b>نوشتن لیست ۳۰ نفره گرم:</b> اسامی ۳۰ نفر از اطرافیان و دوستان نزدیک را آماده کنید.</div>
+    </div>
+    <div class="step-item">
+      <div class="step-num">۳</div>
+      <div><b>انجام ۲۰ دعوت حرفه‌ای:</b> طبق اسکریپت استاندارد برنامه، ۲۰ نفر را به جلسه یا تماس معرفی دعوت کنید.</div>
+    </div>
+    <div class="step-item">
+      <div class="step-num">۴</div>
+      <div><b>برگزاری اولین جلسه پرزنت:</b> با همراهی و نظارت حامی (معرف) خود جلسه را برگزار کنید.</div>
+    </div>
+    <div class="step-item">
+      <div class="step-num">۵</div>
+      <div><b>آموزش نحوه سفارش و کاتالوگ:</b> فلش‌کارت‌های دمنوش‌های نیوشا را از نوار پایین مطالعه کنید.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="badge badge-stage2">مرحله ۲: حرکت | ۷ روز متوالی</span>
+    <div class="card-title">🔥 ۵ عادت روزانه و زنجیره ۷ روزه</div>
+    <p style="font-size: 10pt; margin-top: 0;">هر روز باید شمارنده‌های خود را در اپلیکیشن ثبت کنید و زنجیره را نشکنید:</p>
+    <ul style="margin: 0; padding-right: 20px; font-size: 10pt;">
+      <li><b>مطالعه / پادکست:</b> حداقل ۱۵ دقیقه آموزش روزانه در حوزه سلامت و فروش.</li>
+      <li><b>دعوت روزانه:</b> حداقل ۲ دعوت جدید در هر روز.</li>
+      <li><b>پیگیری و فالوآپ:</b> پیگیری حداقل ۲ مشتری یا مخاطب قبلی.</li>
+      <li><b>ارسال گزارش شبانه:</b> ثبت عملکرد روز و حفظ زنجیره ۷ روزه در اپلیکیشن.</li>
+    </ul>
+    <div class="highlight-box">
+      ★ <b>نکته طلایی:</b> با رسیدن زنجیره به روز هفتم، مرحله ۳ به طور خودکار در اپلیکیشن برای شما باز می‌شود!
+    </div>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- راهنمای گام ۳، ۴ و ۵ -->
+  <div class="card">
+    <span class="badge badge-stage3">مرحله ۳: ساخت | ۳۰ روز</span>
+    <div class="card-title">👥 کار با CRM داخلی و لیست ۱۰۰+ نفره</div>
+    <p style="font-size: 10pt; margin: 0 0 10px 0;">در این مرحله، شما مخاطبان و مشتریان دمنوش‌ها را در سامانه CRM ثبت و پیگیری می‌کنید:</p>
+    <div class="step-item">
+      <div class="step-num">۱</div>
+      <div><b>افزودن مخاطب:</b> نام، شماره تماس و منبع آشنایی (دوستان، مشتری، سوشال) را در فرم وارد کرده و دکمه <b>+</b> را بزنید.</div>
+    </div>
+    <div class="step-item">
+      <div class="step-num">۲</div>
+      <div><b>لینک‌های اقدام سریع:</b> روی هر مخاطب دکمه‌های مستقیم <b>📞 تماس</b>، <b>💬 پیامک</b> و <b>🟢 واتساپ</b> قرار دارد.</div>
+    </div>
+    <div class="step-item">
+      <div class="step-num">۳</div>
+      <div><b>چرخه وضعیت:</b> با کلیک روی برچسب وضعیت، آن را از «تازه اضافه‌شده» تا «مشتری / عضو تیم» به جلو ببرید.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="badge badge-stage4">مرحله ۴: تکثیر | ۹۰ روز</span>
+    <div class="card-title">🔄 چرخه ۵ گامه تکثیر تیمی</div>
+    <p style="font-size: 10pt; margin: 0 0 10px 0;">هر عضوی که به تیم شما می‌پیوندد را در این ماتریس وارد کرده و ۵ گام را با او طی کنید:</p>
+    <table>
+      <thead>
+        <tr>
+          <th>گام</th>
+          <th>عنوان</th>
+          <th>نقش شما</th>
+          <th>نقش عضو جدید</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>۱</td><td><b>یاد بگیر</b></td><td>آموزش اصول پایه</td><td>یادگیری و یادداشت‌برداری</td></tr>
+        <tr><td>۲</td><td><b>انجام بده</b></td><td>الگوی عملی جلوی چشم او</td><td>مشاهده دقیق</td></tr>
+        <tr><td>۳</td><td><b>نشان بده</b></td><td>نظارت در حین اجرا</td><td>اجرای کار در حضور شما</td></tr>
+        <tr><td>۴</td><td><b>همراهی کن</b></td><td>بازخورد و رفع اشکال</td><td>بهبود مهارت‌ها</td></tr>
+        <tr><td>۵</td><td><b>واگذار کن</b></td><td>اعتماد و تشویق</td><td>استقلال کامل و آموزش به دیگران</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ابزارهای ویژه اپلیکیشن -->
+  <div class="card">
+    <div class="card-title">⚙️ ابزارهای ویژه برنامه برای شما</div>
+    <ul style="margin: 0; padding-right: 20px; font-size: 10pt;">
+      <li><b>🤖 مربی هوشمند (Coach Card):</b> در بالای صفحه همیشه وضعیت شما را می‌خواند و می‌گوید امروز بهترین اقدام بعدی چیست.</li>
+      <li><b>🎙 تایپ صوتی فارسی:</b> در ثبت داستان و یادداشت‌ها دکمه ضبط را بزنید و روان به فارسی صحبت کنید.</li>
+      <li><b>🍵 فلش‌کارت کاتالوگ دمنوش‌ها:</b> از نوار پایین دکمه «کاتالوگ نیوشا» را بزنید تا خواص ترکیبات و اسکریپت مشاوره را ببینید.</li>
+      <li><b>💾 پشتیبان‌گیری آفلاین:</b> در پنجره ☁️ می‌توانید فایل پشتیبان دیتای خود را در قالب یک فایل JSON دانلود و ذخیره کنید.</li>
+    </ul>
+  </div>
+
+  <div class="footer">
+    سیستم ۵×۵ تیم اورست | آدرس اپلیکیشن: https://rezzzz77.github.io/everest-5x5-system/
+  </div>
+
+</body>
+</html>
