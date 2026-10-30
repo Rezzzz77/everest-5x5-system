@@ -44,3 +44,79 @@ export function resetDailyCounters(state, today = localDateKey()) {
   state.counterDate = today;
   return true;
 }
+
+/**
+ * ارزیابی وضعیت سلامت و فعالیت عضو تیم بر اساس استریک، مرحله و آخرین فعالیت
+ */
+export function calculateMemberHealth(member, now = new Date()) {
+  if (!member || typeof member !== 'object') {
+    return { status: 'attention', label: '🟡 نیازمند توجه', badge: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/40', reason: 'اطلاعات نامشخص' };
+  }
+  const streak = Number(member.s2_streak || 0);
+  const stage = Number(member.current_stage || 1);
+  const updated = member.updated_at ? new Date(member.updated_at) : null;
+  const daysSinceUpdate = updated ? (now.getTime() - updated.getTime()) / (1000 * 60 * 60 * 24) : 999;
+
+  if (streak >= 1) {
+    return { status: 'active', label: '🟢 فعال و پیگیر', badge: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40', reason: `${streak} روز زنجیره فعال` };
+  }
+  if (daysSinceUpdate > 7) {
+    return { status: 'risk', label: '🔴 در خطر توقف', badge: 'bg-rose-500/20 text-rose-300 border-rose-500/40', reason: 'بیش از ۷ روز بدون فعالیت' };
+  }
+  if (stage === 1 && daysSinceUpdate > 3) {
+    return { status: 'attention', label: '🟡 کندی در ۷۲ ساعت اول', badge: 'bg-amber-500/20 text-amber-300 border-amber-500/40', reason: 'بیش از ۳ روز در مرحله ۱' };
+  }
+  if (streak === 0 && daysSinceUpdate > 2) {
+    return { status: 'attention', label: '🟡 استریک قطع‌شده', badge: 'bg-amber-500/20 text-amber-300 border-amber-500/40', reason: 'استریک صفر و نیاز به تماس' };
+  }
+  return { status: 'active', label: '🟢 در حال پیگیری', badge: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40', reason: 'فعالیت اخیر ثبت شده' };
+}
+
+/**
+ * بررسی اینکه آیا در بازه زمانی گزارش شبانه (۲۰:۰۰ تا ۰۲:۰۰ بامداد) هستیم
+ */
+export function isEveningReportTime(date = new Date()) {
+  const hour = date.getHours();
+  return hour >= 20 || hour < 2;
+}
+
+/**
+ * خروجی CSV با UTF-8 BOM برای باز شدن صحیح در مایکروسافت اکسل فارسی
+ */
+export function contactsToCsv(contacts = []) {
+  const headers = ['نام', 'شماره تماس', 'منبع', 'وضعیت', 'تاریخ پیگیری', 'یادداشت'];
+  const formatCell = (val) => `"${String(val ?? '').replace(/"/g, '""')}"`;
+  const rows = (contacts || []).map(c => [
+    c.name || '',
+    c.phone || '',
+    c.source || '',
+    c.status || '',
+    c.followupDate || '',
+    c.notes || ''
+  ]);
+  const content = [headers.map(formatCell).join(','), ...rows.map(r => r.map(formatCell).join(','))].join('\r\n');
+  return '\uFEFF' + content;
+}
+
+/**
+ * خروجی CSV اعضای تیم برای استفاده لیدرها
+ */
+export function teamToCsv(team = []) {
+  const headers = ['نام و نام خانوادگی', 'ایمیل', 'مرحله فعلی', 'استریک ۷ روزه', 'تعداد مخاطبان CRM', 'وضعیت سلامت', 'دلیل وضعیت', 'آخرین فعالیت'];
+  const formatCell = (val) => `"${String(val ?? '').replace(/"/g, '""')}"`;
+  const rows = (team || []).map(m => {
+    const health = calculateMemberHealth(m);
+    return [
+      m.full_name || 'عضو بدون نام',
+      m.email || '',
+      `مرحله ${m.current_stage || 1}`,
+      `${m.s2_streak || 0} روز`,
+      `${m.crm_count || 0} نفر`,
+      health.label,
+      health.reason,
+      m.updated_at ? new Date(m.updated_at).toLocaleString('fa-IR') : 'نامشخص'
+    ];
+  });
+  const content = [headers.map(formatCell).join(','), ...rows.map(r => r.map(formatCell).join(','))].join('\r\n');
+  return '\uFEFF' + content;
+}

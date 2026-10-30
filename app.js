@@ -15,7 +15,7 @@ import {
 import { sendOtp, verifyOtp, signOut, loadSession, currentUser, isValidEmail, authErrorText, consumeAuthRedirect } from './src/auth.js';
 import { generateCoachCard, getStageTheme } from './src/coach.js';
 import { getHighestUnlockedStage, isStageUnlocked } from './src/stages.js';
-import { escapeHtml, phoneDigits, resetDailyCounters } from './src/utils.js';
+import { escapeHtml, phoneDigits, resetDailyCounters, calculateMemberHealth, isEveningReportTime, contactsToCsv, teamToCsv } from './src/utils.js';
 
 export { getHighestUnlockedStage };
 
@@ -684,30 +684,7 @@ function renderStage3() {
   }).join('');
 
   // CRM
-  const crmBox = document.getElementById('crm-contacts-container');
-  document.getElementById('crm-total-badge').innerText = `${(appState.crm || []).length} / ۱۰۰ نفر`;
-  crmBox.innerHTML = (appState.crm || []).map((c, idx) => {
-    const phone = phoneDigits(c.phone);
-    const waPhone = phone.replace(/^0/, '98');
-    return `
-      <div class="bg-slate-900 p-2.5 rounded-xl border border-slate-800 space-y-2">
-        <div class="flex justify-between items-center text-xs">
-          <div>
-            <span class="font-bold text-white">${escapeHtml(c.name)}</span>
-            <span class="text-[10px] text-slate-400 mr-1">(${escapeHtml(c.source)})</span>
-          </div>
-          <button onclick="cycleCRMStatus(${idx})" class="text-[10px] bg-orange-950 text-orange-300 border border-orange-700/40 px-2 py-0.5 rounded-full">
-            ${escapeHtml(c.status)} ↻
-          </button>
-        </div>
-        <div class="grid grid-cols-3 gap-1.5 text-[10px]">
-          <a href="tel:${phone}" class="bg-slate-800 hover:bg-slate-700 text-emerald-400 text-center py-1 rounded-lg border border-slate-700">📞 تماس</a>
-          <a href="https://wa.me/${waPhone}" target="_blank" rel="noopener" class="bg-slate-800 hover:bg-slate-700 text-green-400 text-center py-1 rounded-lg border border-slate-700">💬 واتساپ</a>
-          <a href="sms:${phone}" class="bg-slate-800 hover:bg-slate-700 text-blue-400 text-center py-1 rounded-lg border border-slate-700">✉️ پیامک</a>
-        </div>
-      </div>
-    `;
-  }).join('');
+  renderCRMList();
 
   // چک‌لیست عبور
   const criteriaContainer = document.getElementById('s3-pass-criteria');
@@ -721,17 +698,92 @@ function renderStage3() {
   }
 }
 
+function renderCRMList() {
+  const crmBox = document.getElementById('crm-contacts-container');
+  if (!crmBox) return;
+  const totalBadge = document.getElementById('crm-total-badge');
+  if (totalBadge) totalBadge.innerText = `${(appState.crm || []).length} / ۱۰۰ نفر`;
+
+  const search = (document.getElementById('crm-search-input')?.value || '').trim().toLowerCase();
+  const filter = document.getElementById('crm-filter-status')?.value || 'all';
+
+  const list = (appState.crm || []).filter(c => {
+    if (filter !== 'all' && c.status !== filter) return false;
+    if (search) {
+      const matchName = String(c.name || '').toLowerCase().includes(search);
+      const matchPhone = String(c.phone || '').includes(search);
+      const matchNotes = String(c.notes || '').toLowerCase().includes(search);
+      if (!matchName && !matchPhone && !matchNotes) return false;
+    }
+    return true;
+  });
+
+  if (list.length === 0) {
+    crmBox.innerHTML = '<div class="text-[11px] text-slate-500 text-center py-3">مخاطبی با این فیلتر یافت نشد.</div>';
+    return;
+  }
+
+  crmBox.innerHTML = list.map((c) => {
+    const origIdx = (appState.crm || []).indexOf(c);
+    const phone = phoneDigits(c.phone);
+    const waPhone = phone.replace(/^0/, '98');
+    const followupHtml = c.followupDate ? `<div class="text-[9px] text-amber-300 font-mono">📅 پیگیری: ${escapeHtml(c.followupDate)}</div>` : '';
+    const notesHtml = c.notes ? `<div class="text-[9px] text-slate-400 truncate">📝 ${escapeHtml(c.notes)}</div>` : '';
+    return `
+      <div class="bg-slate-900 p-2.5 rounded-xl border border-slate-800 space-y-1.5 shadow-sm">
+        <div class="flex justify-between items-center text-xs">
+          <div>
+            <span class="font-bold text-white">${escapeHtml(c.name)}</span>
+            <span class="text-[10px] text-slate-400 mr-1">(${escapeHtml(c.source)})</span>
+          </div>
+          <div class="flex items-center gap-1">
+            <button onclick="cycleCRMStatus(${origIdx})" class="text-[10px] bg-orange-950 text-orange-300 border border-orange-700/40 px-2 py-0.5 rounded-full hover:bg-orange-900 transition">
+              ${escapeHtml(c.status || 'تازه اضافه‌شده')} ↻
+            </button>
+            <button onclick="deleteCRMContact(${origIdx})" title="حذف مخاطب" class="text-slate-500 hover:text-rose-400 text-xs px-1">✕</button>
+          </div>
+        </div>
+        ${followupHtml}
+        ${notesHtml}
+        <div class="grid grid-cols-3 gap-1.5 text-[10px] pt-0.5">
+          <a href="tel:${phone}" class="bg-slate-800 hover:bg-slate-700 text-emerald-400 text-center py-1 rounded-lg border border-slate-700">📞 تماس</a>
+          <a href="https://wa.me/${waPhone}" target="_blank" rel="noopener" class="bg-slate-800 hover:bg-slate-700 text-green-400 text-center py-1 rounded-lg border border-slate-700">💬 واتساپ</a>
+          <a href="sms:${phone}" class="bg-slate-800 hover:bg-slate-700 text-blue-400 text-center py-1 rounded-lg border border-slate-700">✉️ پیامک</a>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function filterCRMList() {
+  renderCRMList();
+}
+
 function addCRMContact() {
   const name = document.getElementById('crm-name').value.trim();
   const phone = document.getElementById('crm-phone').value.trim();
   const source = document.getElementById('crm-source').value;
+  const followupDate = document.getElementById('crm-followup')?.value || '';
+  const notes = document.getElementById('crm-notes')?.value?.trim() || '';
+
   if (!name) return alert('نام مخاطب را وارد کنید.');
   if (!appState.crm) appState.crm = [];
-  appState.crm.unshift({ name, phone, source, status: 'تازه اضافه‌شده' });
+  appState.crm.unshift({ name, phone, source, followupDate, notes, status: 'تازه اضافه‌شده' });
   document.getElementById('crm-name').value = '';
   document.getElementById('crm-phone').value = '';
+  if (document.getElementById('crm-followup')) document.getElementById('crm-followup').value = '';
+  if (document.getElementById('crm-notes')) document.getElementById('crm-notes').value = '';
   saveAll();
   renderStage3();
+}
+
+function deleteCRMContact(idx) {
+  if (!confirm('آیا این مخاطب از لیست حذف شود؟')) return;
+  if (appState.crm && appState.crm[idx] !== undefined) {
+    appState.crm.splice(idx, 1);
+    saveAll();
+    renderStage3();
+  }
 }
 
 function cycleCRMStatus(idx) {
@@ -740,6 +792,11 @@ function cycleCRMStatus(idx) {
   appState.crm[idx].status = statuses[(cur + 1) % statuses.length];
   saveAll();
   renderStage3();
+}
+
+function exportCRMToExcel() {
+  const csv = contactsToCsv(appState.crm || []);
+  downloadFile('everest_crm_contacts.csv', csv);
 }
 
 function togglePassCriterion(stageKey, idx) {
@@ -830,6 +887,28 @@ async function renderOnlineTeam() {
     return;
   }
 
+  // بروزرسانی کارت‌های خلاصه وضعیت سلامت تیم
+  const statTotal = document.getElementById('team-stat-total');
+  const statActive = document.getElementById('team-stat-active');
+  const statAttention = document.getElementById('team-stat-attention');
+  const statRisk = document.getElementById('team-stat-risk');
+
+  let countActive = 0;
+  let countAttention = 0;
+  let countRisk = 0;
+
+  onlineTeamCache.forEach(m => {
+    const h = calculateMemberHealth(m);
+    if (h.status === 'active') countActive++;
+    else if (h.status === 'attention') countAttention++;
+    else if (h.status === 'risk') countRisk++;
+  });
+
+  if (statTotal) statTotal.innerText = String(onlineTeamCache.length);
+  if (statActive) statActive.innerText = String(countActive);
+  if (statAttention) statAttention.innerText = String(countAttention);
+  if (statRisk) statRisk.innerText = String(countRisk);
+
   const stageLabels = {
     1: { title: 'مرحله ۱: شروع', badge: 'bg-blue-600/30 text-blue-300 border-blue-500/40' },
     2: { title: 'مرحله ۲: حرکت', badge: 'bg-emerald-600/30 text-emerald-300 border-emerald-500/40' },
@@ -838,17 +917,43 @@ async function renderOnlineTeam() {
     5: { title: 'مرحله ۵: راهبری', badge: 'bg-amber-500/30 text-amber-300 border-amber-400/40' }
   };
 
-  container.innerHTML = onlineTeamCache.map((m) => {
+  // اعمال فیلترها و جستجو
+  const search = (document.getElementById('team-search-input')?.value || '').trim().toLowerCase();
+  const stageFilter = document.getElementById('team-filter-stage')?.value || 'all';
+  const healthFilter = document.getElementById('team-filter-health')?.value || 'all';
+
+  const filtered = onlineTeamCache.filter(m => {
+    const h = calculateMemberHealth(m);
+    if (stageFilter !== 'all' && String(m.current_stage || 1) !== stageFilter) return false;
+    if (healthFilter !== 'all' && h.status !== healthFilter) return false;
+    if (search) {
+      const matchName = String(m.full_name || '').toLowerCase().includes(search);
+      const matchEmail = String(m.email || '').toLowerCase().includes(search);
+      if (!matchName && !matchEmail) return false;
+    }
+    return true;
+  });
+
+  if (filtered.length === 0) {
+    container.innerHTML = '<div class="text-[11px] text-slate-400 text-center py-3">هیچ عضوی با فیلتر انتخابی یافت نشد.</div>';
+    return;
+  }
+
+  container.innerHTML = filtered.map((m) => {
     const stg = stageLabels[m.current_stage] || stageLabels[1];
+    const health = calculateMemberHealth(m);
     const updatedTime = m.updated_at ? new Date(m.updated_at).toLocaleDateString('fa-IR') : 'نامشخص';
     return `
-      <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-700 space-y-2">
+      <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-700 space-y-2 shadow-sm">
         <div class="flex justify-between items-start">
           <div>
             <div class="font-bold text-xs text-slate-100">${escapeHtml(m.full_name || 'عضو بدون نام')}</div>
             <div class="text-[10px] text-slate-400 font-mono mt-0.5" dir="ltr">${escapeHtml(m.email || '')}</div>
           </div>
-          <span class="text-[10px] px-2 py-0.5 rounded-full font-bold border ${stg.badge}">${stg.title}</span>
+          <div class="flex flex-col items-end gap-1">
+            <span class="text-[10px] px-2 py-0.5 rounded-full font-bold border ${stg.badge}">${stg.title}</span>
+            <span class="text-[9px] px-2 py-0.5 rounded-full font-bold border ${health.badge}">${health.label}</span>
+          </div>
         </div>
         <div class="grid grid-cols-3 gap-1.5 text-center text-[10px] bg-slate-950/60 p-2 rounded-lg border border-slate-800">
           <div>
@@ -864,10 +969,34 @@ async function renderOnlineTeam() {
             <span class="font-bold text-sky-400">👤 ${m.crm_count || 0} نفر</span>
           </div>
         </div>
-        <div class="text-[9px] text-slate-500 text-left" dir="ltr">آخرین فعالیت: ${escapeHtml(updatedTime)}</div>
+        <div class="flex justify-between items-center text-[9px] text-slate-400 pt-0.5">
+          <div>${escapeHtml(health.reason)}</div>
+          <div dir="ltr" class="text-slate-500">آخرین فعالیت: ${escapeHtml(updatedTime)}</div>
+        </div>
       </div>
     `;
   }).join('');
+}
+
+function filterTeamList() {
+  renderOnlineTeam();
+}
+
+function exportTeamToExcel() {
+  const csv = teamToCsv(onlineTeamCache || []);
+  downloadFile('everest_team_members.csv', csv);
+}
+
+function downloadFile(filename, content, mimeType = 'text/csv;charset=utf-8;') {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 async function refreshOnlineTeam() {
@@ -1125,7 +1254,73 @@ function closeHelperModal() {
   document.getElementById('helper-modal').classList.add('hidden');
 }
 
+function initTheme() {
+  try {
+    const isLight = localStorage.getItem('everest_theme') === 'light';
+    if (isLight) {
+      document.body.classList.add('light-mode');
+      const btn = document.getElementById('dark-mode-btn');
+      if (btn) btn.innerText = '☀️';
+    }
+  } catch (_) {}
+}
+
+function toggleDarkMode() {
+  const isLight = document.body.classList.toggle('light-mode');
+  try {
+    localStorage.setItem('everest_theme', isLight ? 'light' : 'dark');
+  } catch (_) {}
+  const btn = document.getElementById('dark-mode-btn');
+  if (btn) btn.innerText = isLight ? '☀️' : '🌙';
+}
+
+function checkEveningReminder() {
+  const banner = document.getElementById('evening-reminder-banner');
+  if (!banner) return;
+  try {
+    const isDismissed = sessionStorage.getItem('dismissed_evening_reminder');
+    const isStreakTodayDone = (appState.s2DailyActions || []).every(a => a.done);
+    if (isEveningReportTime() && !isStreakTodayDone && !isDismissed) {
+      banner.classList.remove('hidden');
+    } else {
+      banner.classList.add('hidden');
+    }
+  } catch (_) {}
+}
+
+function dismissEveningReminder() {
+  const banner = document.getElementById('evening-reminder-banner');
+  if (banner) banner.classList.add('hidden');
+  try {
+    sessionStorage.setItem('dismissed_evening_reminder', 'true');
+  } catch (_) {}
+}
+
+function requestNotificationPermission() {
+  if (typeof window === 'undefined' || !('Notification' in window)) {
+    alert('مرورگر شما از اعلان‌ها پشتیبانی نمی‌کند.');
+    return;
+  }
+  Notification.requestPermission().then(permission => {
+    const btn = document.getElementById('notif-btn');
+    if (permission === 'granted') {
+      if (btn) btn.innerText = '🔔✓';
+      try {
+        new Notification('سیستم ۵×۵ تیم اورست', {
+          body: 'یادآور شبانه فعال شد. هر شب استریک خود را ثبت کنید!',
+          icon: 'data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 rx=%2714%27 fill=%27%231d4ed8%27/%3E%3Ctext x=%2732%27 y=%2743%27 font-size=%2724%27 font-family=%27sans-serif%27 font-weight=%27bold%27 fill=%27white%27 text-anchor=%27middle%27%3E5%C3%975%3C/text%3E%3C/svg%3E'
+        });
+      } catch (_) {}
+    } else {
+      if (btn) btn.innerText = '🔕';
+      alert('دسترسی به اعلان‌ها رد شد.');
+    }
+  });
+}
+
 function initApp() {
+  initTheme();
+  checkEveningReminder();
   const session = loadSession();
   const sessionUser = currentUser(session);
 
@@ -1276,6 +1471,14 @@ Object.assign(window, {
   handleBackupFileSelect,
   refreshOnlineTeam,
   copyMyInviteLink,
+  toggleDarkMode,
+  requestNotificationPermission,
+  dismissEveningReminder,
+  deleteCRMContact,
+  filterCRMList,
+  exportCRMToExcel,
+  filterTeamList,
+  exportTeamToExcel,
   saveAll,
   renderCoachCard
 });
