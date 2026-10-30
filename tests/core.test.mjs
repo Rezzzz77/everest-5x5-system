@@ -1,8 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { validateConfig, isConfigured, getSupabaseConfig, SUPABASE_CONFIG } from '../src/config.js';
-import { testConnection, mergeWithDefaults, stripNationalId } from '../src/db.js';
+import {
+  validateConfig, isConfigured, getSupabaseConfig, SUPABASE_CONFIG,
+  getN8nConfig, saveN8nConfig, clearN8nConfig, validateN8nConfig
+} from '../src/config.js';
+import {
+  testConnection, mergeWithDefaults, stripNationalId,
+  sendBackupToN8n, exportStateAsJson, importStateFromJson
+} from '../src/db.js';
 import { DEFAULT_DATA } from '../src/defaults.js';
 
 const URL_OK = 'https://abcdefghijkl.supabase.co';
@@ -128,4 +134,73 @@ test('stripNationalId: وضعیت بدون کاربر یا بدون کد ملی 
   assert.deepEqual(stripNationalId({ crm: [] }), { crm: [] });
   assert.equal(stripNationalId(null), null);
   assert.deepEqual(stripNationalId({ user: { name: 'a' } }).user, { name: 'a' });
+});
+
+/* ---------------- تست‌های n8n و پشتیبان‌گیری ---------------- */
+
+test('validateN8nConfig: آدرس معتبر وب‌هوک خطا ندارد', () => {
+  assert.deepEqual(validateN8nConfig({ webhookUrl: 'https://n8n.example.com/webhook/everest-backup' }), []);
+  assert.deepEqual(validateN8nConfig({ webhookUrl: 'http://localhost:5678/webhook/test' }), []);
+});
+
+test('validateN8nConfig: آدرس خالی یا نامعتبر خطا دارد', () => {
+  const errEmpty = validateN8nConfig({ webhookUrl: '' });
+  assert.equal(errEmpty.length, 1);
+  assert.match(errEmpty[0], /وارد کن/);
+
+  const errInvalid = validateN8nConfig({ webhookUrl: 'ftp://example.com' });
+  assert.equal(errInvalid.length, 1);
+  assert.match(errInvalid[0], /http/);
+});
+
+test('getN8nConfig: در غیاب مقدار محلی رشته خالی است', () => {
+  assert.deepEqual(getN8nConfig(), { webhookUrl: '' });
+});
+
+test('sendBackupToN8n: بدون وب‌هوک تنظیم‌شده خطا می‌دهد', async () => {
+  const res = await sendBackupToN8n({ crm: [] }, { webhookUrl: '' });
+  assert.equal(res.ok, false);
+  assert.equal(res.reason, 'not-configured');
+});
+
+test('exportStateAsJson: خروجی JSON معتبر با حذف کد ملی تولید می‌کند', () => {
+  const state = {
+    user: { name: 'علی', nationalId: '1234567890' },
+    s2Streak: 5,
+    crm: [{ name: 'رضا' }]
+  };
+  const jsonStr = exportStateAsJson(state);
+  const parsed = JSON.parse(jsonStr);
+
+  assert.equal(parsed.everest_backup_version, '0.6.0');
+  assert.ok(parsed.exported_at);
+  assert.equal(parsed.data.user.name, 'علی');
+  assert.equal(parsed.data.user.nationalId, undefined);
+  assert.equal(parsed.data.s2Streak, 5);
+  assert.equal(parsed.data.crm.length, 1);
+});
+
+test('importStateFromJson: فایل پشتیبان معتبر را به‌درستی بازیابی می‌کند', () => {
+  const backupJson = JSON.stringify({
+    everest_backup_version: '0.6.0',
+    data: {
+      user: { name: 'نگار' },
+      s2Streak: 7,
+      crm: [{ name: 'مشتری ۱' }]
+    }
+  });
+
+  const res = importStateFromJson(backupJson);
+  assert.equal(res.ok, true);
+  assert.equal(res.state.user.name, 'نگار');
+  assert.equal(res.state.s2Streak, 7);
+  assert.equal(res.state.crm.length, 1);
+  // بررسی ادغام با پیش‌فرض‌ها
+  assert.ok(Array.isArray(res.state.s1Steps));
+});
+
+test('importStateFromJson: ساختار یا JSON نامعتبر خطا می‌دهد', () => {
+  assert.equal(importStateFromJson('').ok, false);
+  assert.equal(importStateFromJson('invalid-json').ok, false);
+  assert.equal(importStateFromJson('[]').ok, false);
 });

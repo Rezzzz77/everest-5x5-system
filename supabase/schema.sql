@@ -109,6 +109,34 @@ create trigger trg_profiles_touch
   for each row execute function public.touch_updated_at();
 
 -- ------------------------------------------------------------
+-- ۳.۱) محافظت از ستون role در جدول profiles (در صورت وجود ستون)
+-- ------------------------------------------------------------
+create or replace function public.protect_profile_role()
+returns trigger
+language plpgsql
+as $$
+begin
+  if tg_op = 'UPDATE' and new.role is distinct from old.role and current_user not in ('service_role', 'postgres') then
+    raise exception 'تغییر نقش کاربر مجاز نیست (فقط service_role)';
+  end if;
+  return new;
+end;
+$$;
+
+do $$
+begin
+  if exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'profiles' and column_name = 'role'
+  ) then
+    drop trigger if exists trg_protect_profile_role on public.profiles;
+    create trigger trg_protect_profile_role
+      before update on public.profiles
+      for each row execute function public.protect_profile_role();
+  end if;
+end $$;
+
+-- ------------------------------------------------------------
 -- ۴) Row Level Security
 -- ------------------------------------------------------------
 alter table public.user_state enable row level security;

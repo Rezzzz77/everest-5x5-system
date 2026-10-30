@@ -1,8 +1,8 @@
 /**
- * لایه داده: ذخیره‌سازی محلی (Offline-first) + همگام‌سازی با Supabase
+ * لایه داده: ذخیره‌سازی محلی (Offline-first) + همگام‌سازی با Supabase + پشتیبان‌گیری n8n
  */
 
-import { getSupabaseConfig, isConfigured as cfgValid, normalizeConfig } from './config.js';
+import { getSupabaseConfig, isConfigured as cfgValid, normalizeConfig, getN8nConfig } from './config.js';
 import { DEFAULT_DATA } from './defaults.js';
 import { authHeaders, currentUser } from './auth.js';
 
@@ -246,4 +246,84 @@ export async function syncState(state, cfg = getSupabaseConfig()) {
 
 export function getDefaultData() {
   return mergeWithDefaults(null);
+}
+
+/**
+ * ارسال نسخه پشتیبان به وب‌هوک n8n
+ * کد ملی طبق اصل حفظ حریم خصوصی هرگز فرستاده نمی‌شود.
+ */
+export async function sendBackupToN8n(state, rawN8nCfg = getN8nConfig()) {
+  const cfg = rawN8nCfg || getN8nConfig();
+  const webhookUrl = String(cfg?.webhookUrl || '').trim();
+  if (!webhookUrl) return { ok: false, reason: 'not-configured' };
+
+  const cleanState = stripNationalId(state) || {};
+  const user = currentUser() || cleanState.user || {};
+
+  const payload = {
+    source: 'everest-5x5-system',
+    version: '0.6.0',
+    timestamp: new Date().toISOString(),
+    user: {
+      id: user.id || 'local',
+      name: user.name || '',
+      email: user.email || '',
+      upline: user.upline || '',
+      isLocal: Boolean(user.local)
+    },
+    summary: {
+      streak: Number(cleanState.s2Streak) || 0,
+      crmCount: Array.isArray(cleanState.crm) ? cleanState.crm.length : 0,
+      teamCount: Array.isArray(cleanState.dupTeam) ? cleanState.dupTeam.length : 0,
+      meetingsCount: Array.isArray(cleanState.meetings) ? cleanState.meetings.length : 0,
+      kpi: cleanState.kpi || {}
+    },
+    state: cleanState
+  };
+
+  try {
+    const res = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (res.ok) return { ok: true, status: res.status };
+    const text = (await res.text()).slice(0, 300);
+    return { ok: false, reason: 'http', status: res.status, detail: text };
+  } catch (e) {
+    return { ok: false, reason: 'network', detail: String(e?.message || e) };
+  }
+}
+
+/**
+ * تولید خروجی JSON تمیز برای دانلود فایل پشتیبان
+ */
+export function exportStateAsJson(state) {
+  const clean = stripNationalId(state);
+  return JSON.stringify({
+    everest_backup_version: '0.6.0',
+    exported_at: new Date().toISOString(),
+    data: clean
+  }, null, 2);
+}
+
+/**
+ * بازیابی و اعتبارسنجی داده از فایل پشتیبان JSON
+ */
+export function importStateFromJson(jsonString) {
+  if (!jsonString || typeof jsonString !== 'string') {
+    return { ok: false, reason: 'ورودی نامعتبر یا خالی است.' };
+  }
+  try {
+    const parsed = JSON.parse(jsonString);
+    const data = parsed?.data || parsed;
+    if (typeof data !== 'object' || !data || Array.isArray(data)) {
+      return { ok: false, reason: 'ساختار فایل پشتیبان معتبر نیست.' };
+    }
+    const clean = stripNationalId(data);
+    const merged = mergeWithDefaults(clean);
+    return { ok: true, state: merged };
+  } catch (e) {
+    return { ok: false, reason: 'فایل JSON نامعتبر است: ' + String(e?.message || e) };
+  }
 }

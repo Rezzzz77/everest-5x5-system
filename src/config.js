@@ -8,6 +8,7 @@
  */
 
 const LS_KEY = 'everest_supabase_cfg';
+const N8N_LS_KEY = 'everest_n8n_cfg';
 
 export const SUPABASE_CONFIG = {
   url: 'https://cupcijeqqiyhqaifjzbl.supabase.co',
@@ -17,6 +18,45 @@ export const SUPABASE_CONFIG = {
 export const N8N_CONFIG = {
   webhookUrl: ''
 };
+
+/** پیکربندی n8n: اول localStorage، بعد پیش‌فرض */
+export function getN8nConfig() {
+  let over = null;
+  try {
+    over = JSON.parse(localStorage.getItem(N8N_LS_KEY) || 'null');
+  } catch (_) {
+    over = null;
+  }
+  const webhookUrl = String(over?.webhookUrl || N8N_CONFIG.webhookUrl || '').trim();
+  return { webhookUrl };
+}
+
+export function saveN8nConfig({ webhookUrl }) {
+  const clean = {
+    webhookUrl: String(webhookUrl || '').trim()
+  };
+  try {
+    localStorage.setItem(N8N_LS_KEY, JSON.stringify(clean));
+  } catch (_) {}
+  return clean;
+}
+
+export function clearN8nConfig() {
+  try {
+    localStorage.removeItem(N8N_LS_KEY);
+  } catch (_) {}
+}
+
+export function validateN8nConfig({ webhookUrl }) {
+  const errors = [];
+  const u = String(webhookUrl || '').trim();
+  if (!u) {
+    errors.push('آدرس وب‌هوک n8n را وارد کن.');
+  } else if (!/^https?:\/\/.+/i.test(u)) {
+    errors.push('آدرس وب‌هوک باید با http:// یا https:// شروع شود.');
+  }
+  return errors;
+}
 
 /** پیکربندی مؤثر: اول localStorage، بعد فایل */
 export function getSupabaseConfig() {
