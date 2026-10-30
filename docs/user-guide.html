@@ -8,7 +8,7 @@
 
     @page {
       size: A4;
-      margin: 14mm 16mm;
+      margin: 12mm 14mm;
     }
 
     * {
@@ -23,38 +23,38 @@
       color: #1e293b;
       margin: 0;
       padding: 0;
-      line-height: 1.65;
-      font-size: 11pt;
+      line-height: 1.6;
+      font-size: 10.5pt;
     }
 
     .header-banner {
       background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 100%);
       color: #ffffff;
-      padding: 22px 26px;
-      border-radius: 14px;
-      margin-bottom: 22px;
+      padding: 20px 24px;
+      border-radius: 12px;
+      margin-bottom: 18px;
       box-shadow: 0 4px 12px rgba(29, 78, 216, 0.15);
     }
 
     .header-banner h1 {
-      margin: 0 0 6px 0;
-      font-size: 19pt;
+      margin: 0 0 4px 0;
+      font-size: 18pt;
       font-weight: 900;
     }
 
     .header-banner p {
       margin: 0;
-      font-size: 10.5pt;
-      opacity: 0.9;
+      font-size: 10pt;
+      opacity: 0.92;
     }
 
     .badge {
       display: inline-block;
-      padding: 3px 10px;
-      border-radius: 20px;
+      padding: 2px 9px;
+      border-radius: 16px;
       font-size: 8.5pt;
       font-weight: 700;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
     }
 
     .badge-primary { background: #dbeafe; color: #1e40af; }
@@ -63,43 +63,45 @@
     .badge-stage3 { background: #ffedd5; color: #c2410c; }
     .badge-stage4 { background: #f3e8ff; color: #7e22ce; }
     .badge-stage5 { background: #fef3c7; color: #b45309; }
+    .badge-success { background: #dcfce7; color: #15803d; }
+    .badge-warning { background: #fef9c3; color: #854d0e; }
 
     .card {
       border: 1px solid #e2e8f0;
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 16px;
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin-bottom: 14px;
       background: #f8fafc;
       page-break-inside: avoid;
     }
 
     .card-title {
-      font-size: 12pt;
+      font-size: 11.5pt;
       font-weight: 800;
       color: #0f172a;
       margin: 0 0 8px 0;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
     }
 
     .step-item {
       display: flex;
       align-items: flex-start;
-      gap: 10px;
-      margin-bottom: 8px;
+      gap: 8px;
+      margin-bottom: 7px;
     }
 
     .step-num {
       background: #1e40af;
       color: #ffffff;
-      width: 22px;
-      height: 22px;
+      width: 20px;
+      height: 20px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 8.5pt;
+      font-size: 8pt;
       font-weight: 800;
       flex-shrink: 0;
       margin-top: 2px;
@@ -108,13 +110,13 @@
     table {
       width: 100%;
       border-collapse: collapse;
-      margin: 12px 0;
-      font-size: 9.5pt;
+      margin: 10px 0;
+      font-size: 9pt;
     }
 
     th, td {
       border: 1px solid #cbd5e1;
-      padding: 8px 10px;
+      padding: 6px 8px;
       text-align: right;
     }
 
@@ -127,19 +129,41 @@
     .highlight-box {
       background: #f0fdf4;
       border-right: 4px solid #16a34a;
-      padding: 10px 14px;
+      padding: 8px 12px;
       border-radius: 6px;
-      margin: 12px 0;
-      font-size: 10pt;
+      margin: 10px 0;
+      font-size: 9.5pt;
     }
+
+    .alert-box {
+      background: #eff6ff;
+      border-right: 4px solid #2563eb;
+      padding: 8px 12px;
+      border-radius: 6px;
+      margin: 10px 0;
+      font-size: 9.5pt;
+    }
+
+    .tag-color {
+      display: inline-block;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 8pt;
+      font-weight: 700;
+      margin-left: 3px;
+    }
+    .tag-red { background: #fee2e2; color: #991b1b; }
+    .tag-yellow { background: #fef08a; color: #854d0e; }
+    .tag-green { background: #dcfce7; color: #166534; }
+    .tag-blue { background: #dbeafe; color: #1e40af; }
 
     .footer {
       text-align: center;
-      font-size: 8.5pt;
+      font-size: 8pt;
       color: #64748b;
-      margin-top: 20px;
+      margin-top: 16px;
       border-top: 1px solid #e2e8f0;
-      padding-top: 8px;
+      padding-top: 6px;
     }
 
     .page-break {
@@ -153,15 +177,38 @@
   <div class="header-banner">
     <span class="badge badge-primary">سیستم ۵×۵ تیم اورست | نیوشانیک</span>
     <h1>📘 راهنمای جامع کاربری و چک‌لیست موفقیت</h1>
-    <p>برنامه گام‌به‌گام از ورود تا استقلال مالی و راهبری سازمان فروش</p>
+    <p>راهنمای گام‌به‌گام از ثبت‌نام، لیست‌نویسی ۳۰ نفره، ثبت عادات و دریافت تاییدیه راهبر تا اوج فروش</p>
   </div>
 
   <!-- مقدمه و فلسفه ۵×۵ -->
   <div class="card">
     <div class="card-title">🌟 فلسفه سیستم ۵×۵ اورست چیست؟</div>
-    <p style="margin: 0; font-size: 10pt; text-align: justify;">
+    <p style="margin: 0; font-size: 9.5pt; text-align: justify;">
       سیستم ۵×۵ یک مسیر مهندسی‌شده و استاندارد برای اعضای شبکه فروش نیوشانیک است. این سیستم تضمین می‌کند که هر عضو جدید بدون سردرگمی، در ۵ مرحله دقیق با معیارهای عبور مشخص حرکت کند و مهارت‌های لازم را گام‌به‌گام یاد بگیرد، انجام دهد و در تیم خود تکثیر کند.
     </p>
+  </div>
+
+  <!-- بخش جدید: ثبت‌نام و ورود -->
+  <div class="card">
+    <div class="card-title">🔐 ثبت‌نام آنی، ورود با رمز عبور و انتخاب نقش</div>
+    <p style="margin: 0 0 8px 0; font-size: 9.5pt;">برای راحتی و امنیت حداکثری، سیستم بدون معطلی و با رمز عبور کار می‌کند:</p>
+    <div class="step-item">
+      <div class="step-num">۱</div>
+      <div><b>ورود و ثبت‌نام آنی (🚀):</b> تنها کافی است ایمیل و یک رمز عبور (حداقل ۶ کاراکتر) وارد کنید و دکمه سبز را بزنید. سیستم در کمتر از ۱ ثانیه حساب شما را فعال می‌کند؛ نیازی به منتظر ماندن برای لینک یا کد ایمیل نیست.</div>
+    </div>
+    <div class="step-item">
+      <div class="step-num">۲</div>
+      <div><b>انتخاب نقش در ثبت‌نام:</b> هنگام ایجاد حساب جدید، نقش خود را مشخص کنید:
+        <ul style="margin: 4px 0 0 0; padding-right: 18px; font-size: 9pt;">
+          <li>🎯 <b>عضو تیم / مشاور فروش:</b> مسیر استاندارد شروع از مرحله ۱، تکمیل گام‌ها و نیاز به تأییدیه راهبر برای ورود به مراحل بالاتر.</li>
+          <li>👑 <b>راهبر / لیدر تیم:</b> دسترسی کامل به همه مراحل بدون قفل + پنل دیده‌بانی آنلاین اعضای تیم و ابزار تایید مراحل زیرمجموعه.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="step-item">
+      <div class="step-num">۳</div>
+      <div><b>ورود با لینک یا حالت مهمان:</b> در صورت تمایل، دکمه ورود با لینک ایمیل و همچنین استفاده آفلاین بدون حساب نیز در دسترس است.</div>
+    </div>
   </div>
 
   <!-- جدول ۵ مرحله در یک نگاه -->
@@ -173,7 +220,7 @@
           <th>مرحله</th>
           <th>عنوان</th>
           <th>دوره زمانی</th>
-          <th>معیار طلایی عبور به مرحله بعد</th>
+          <th>معیار عبور و شرط باز شدن</th>
         </tr>
       </thead>
       <tbody>
@@ -181,129 +228,182 @@
           <td><span class="badge badge-stage1">مرحله ۱</span></td>
           <td><b>شروع</b></td>
           <td>۷۲ ساعت اول</td>
-          <td>انجام ۵ اقدام اولیه + ثبت هدف و داستان شخصی</td>
+          <td>۵ اقدام اولیه (هدف، داستان، لیست ۳۰ نفره، ۲۰ دعوت، ۱ پرزنت) + <b>تأیید راهبر</b></td>
         </tr>
         <tr>
           <td><span class="badge badge-stage2">مرحله ۲</span></td>
           <td><b>حرکت</b></td>
           <td>۷ روز متوالی</td>
-          <td>تکمیل زنجیره ۷ روزه عادات + گزارش شبانه</td>
+          <td>تکمیل زنجیره ۷ روزه عادات روزانه + گزارش شبانه + <b>تأیید راهبر</b></td>
         </tr>
         <tr>
           <td><span class="badge badge-stage3">مرحله ۳</span></td>
           <td><b>ساخت</b></td>
           <td>۳۰ روز</td>
-          <td>لیست ۱۰۰+ مخاطب، مدیریت CRM، ۵ معیار عبور</td>
+          <td>بانک ۱۰۰+ مخاطب، CRM، ۵ معیار عبور فروش و جذب + <b>تأیید راهبر</b></td>
         </tr>
         <tr>
           <td><span class="badge badge-stage4">مرحله ۴</span></td>
           <td><b>تکثیر</b></td>
           <td>۹۰ روز</td>
-          <td>هدایت حداقل ۳ نفر در چرخه ۵ گامه تا استقلال</td>
+          <td>هدایت حداقل ۳ نفر در چرخه ۵ گامه تکثیر تا استقلال کامل</td>
         </tr>
         <tr>
           <td><span class="badge badge-stage5">مرحله ۵</span></td>
           <td><b>راهبری</b></td>
           <td>مستمر</td>
-          <td>مدیریت شاخص‌های رشد تیمی (KPI) و سازمان‌سازی</td>
+          <td>مدیریت شاخص‌های رشد تیمی (KPI)، جلسات لیدرشیپ و سازمان‌سازی</td>
         </tr>
       </tbody>
     </table>
   </div>
 
-  <!-- راهنمای گام ۱ و ۲ -->
+  <div class="page-break"></div>
+
+  <!-- مرحله ۱: شروع و لیست ۳۰ نفره رسمی -->
   <div class="card">
     <span class="badge badge-stage1">مرحله ۱: شروع | ۷۲ ساعت اول</span>
     <div class="card-title">🚀 ۵ اقدام کلیدی ۷۲ ساعت اول</div>
     <div class="step-item">
       <div class="step-num">۱</div>
-      <div><b>تعیین «چرایی» و داستان من:</b> با زدن دکمه 🎯 در بالای برنامه، هدف مالی و داستان کوتاه شروع خود را تایپ یا صوتی ضبط کنید.</div>
+      <div><b>تعیین «چرایی» و داستان من:</b> با زدن دکمه 🎯 بالای صفحه، هدف مالی و داستان کوتاه شروع خود را بنویسید یا صوتی با میکروفون بگویید.</div>
     </div>
     <div class="step-item">
       <div class="step-num">۲</div>
-      <div><b>نوشتن لیست ۳۰ نفره گرم:</b> اسامی ۳۰ نفر از اطرافیان و دوستان نزدیک را آماده کنید.</div>
+      <div><b>آموزش نحوه سفارش و کاتالوگ نیوشا:</b> فلش‌کارت‌های ترکیبات و دمنوش‌ها را از نوار پایین مطالعه کنید.</div>
     </div>
     <div class="step-item">
       <div class="step-num">۳</div>
-      <div><b>انجام ۲۰ دعوت حرفه‌ای:</b> طبق اسکریپت استاندارد برنامه، ۲۰ نفر را به جلسه یا تماس معرفی دعوت کنید.</div>
+      <div><b>تکمیل فرم لیست ۳۰ نفره رسمی اورست:</b> اسامی ۳۰ نفر از اطرافیان را در فرم اختصاصی ثبت کنید (توضیح در کادر زیر).</div>
     </div>
     <div class="step-item">
       <div class="step-num">۴</div>
-      <div><b>برگزاری اولین جلسه پرزنت:</b> با همراهی و نظارت حامی (معرف) خود جلسه را برگزار کنید.</div>
+      <div><b>انجام حداقل ۲۰ دعوت:</b> طبق الگوهای استاندارد و کمک مربی هوشمند، حداقل ۲۰ نفر را به جلسه یا تست دمنوش دعوت کنید.</div>
     </div>
     <div class="step-item">
       <div class="step-num">۵</div>
-      <div><b>آموزش نحوه سفارش و کاتالوگ:</b> فلش‌کارت‌های دمنوش‌های نیوشا را از نوار پایین مطالعه کنید.</div>
+      <div><b>اولین ارائه / اولین فروش:</b> اولین پرزنت یا مشاوره را در کنار راهبر خود اجرا کنید.</div>
     </div>
   </div>
 
+  <!-- فرم رسمی ۳۰ نفره اورست -->
   <div class="card">
-    <span class="badge badge-stage2">مرحله ۲: حرکت | ۷ روز متوالی</span>
-    <div class="card-title">🔥 ۵ عادت روزانه و زنجیره ۷ روزه</div>
-    <p style="font-size: 10pt; margin-top: 0;">هر روز باید شمارنده‌های خود را در اپلیکیشن ثبت کنید و زنجیره را نشکنید:</p>
-    <ul style="margin: 0; padding-right: 20px; font-size: 10pt;">
-      <li><b>مطالعه / پادکست:</b> حداقل ۱۵ دقیقه آموزش روزانه در حوزه سلامت و فروش.</li>
-      <li><b>دعوت روزانه:</b> حداقل ۲ دعوت جدید در هر روز.</li>
-      <li><b>پیگیری و فالوآپ:</b> پیگیری حداقل ۲ مشتری یا مخاطب قبلی.</li>
-      <li><b>ارسال گزارش شبانه:</b> ثبت عملکرد روز و حفظ زنجیره ۷ روزه در اپلیکیشن.</li>
-    </ul>
+    <div class="card-title">📝 لیست ۳۰ نفره برگه رسمی اورست (گام ۳)</div>
+    <p style="margin: 0 0 8px 0; font-size: 9.5pt;">این بخش دقیقاً طبق برگه چاپی رسمی اورست طراحی شده و اطلاعات زیر را ثبت می‌کند:</p>
+    <table>
+      <thead>
+        <tr>
+          <th>ستون فرم</th>
+          <th>توضیحات و گزینه‌ها</th>
+          <th>کاربرد در دعوت و پرزنت</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><b>نام و نام خانوادگی</b></td>
+          <td>نام مخاطب بدون پیش‌داوری</td>
+          <td>هویت اصلی در لیست</td>
+        </tr>
+        <tr>
+          <td><b>نسبت با ما</b></td>
+          <td>خانواده، فامیل، همکار، دوست صمیمی، آشنا، همسایه...</td>
+          <td>شناخت بستر اعتماد اولیه</td>
+        </tr>
+        <tr>
+          <td><b>سطح ارتباط</b></td>
+          <td>🔴 <b>گرم</b> (صمیمی)، 🟡 <b>ولرم</b> (آشنا)، 🔵 <b>سرد</b> (کم‌ارتباط)</td>
+          <td>اولویت‌بندی؛ شروع حتماً از مخاطبان گرم است.</td>
+        </tr>
+        <tr>
+          <td><b>نوع شخصیت (۴ رنگ)</b></td>
+          <td>
+            <span class="tag-color tag-red">قرمز</span> نتیجه‌گرا، جسور و پول‌ساز<br>
+            <span class="tag-color tag-yellow">زرد</span> مهربان، یاور و خانواده‌دوست<br>
+            <span class="tag-color tag-green">سبز</span> تحلیلی، دقیق و نیازمند اطلاعات<br>
+            <span class="tag-color tag-blue">آبی</span> پرانرژی، عاشق جمع، سفر و هیجان
+          </td>
+          <td>انتخاب نحوه صحبت و واژه‌های کلیدی اثرگذار در دعوت و معرفی فرصت نیوشا</td>
+        </tr>
+        <tr>
+          <td><b>زمینه همکاری</b></td>
+          <td>💼 <b>همکاری در کار</b> یا 🍵 <b>معرفی محصول و دمنوش</b></td>
+          <td>مشخص کردن زاویه ورود به گفتگو</td>
+        </tr>
+        <tr>
+          <td><b>اقدام سریع</b></td>
+          <td>دکمه‌های مستقیم <b>📞 تماس تلفنی</b> و <b>🟢 چت واتساپ</b></td>
+          <td>تماس فوری بدون نیاز به خروج از اپ و اتلاف وقت</td>
+        </tr>
+      </tbody>
+    </table>
     <div class="highlight-box">
-      ★ <b>نکته طلایی:</b> با رسیدن زنجیره به روز هفتم، مرحله ۳ به طور خودکار در اپلیکیشن برای شما باز می‌شود!
+      ★ <b>امکانات ویژه لیست:</b> نوار پیشرفت زنده تا ۳۰ نفر، جستجوی آنی در اسامی، <b>خروجی اکسل استاندارد (CSV با پشتیبانی فارسی)</b> و تیک‌خوردن خودکار گام سوم با تکمیل ۳۰ نفر!
+    </div>
+  </div>
+
+  <!-- سیستم گیت و تاییدیه راهبر -->
+  <div class="card">
+    <div class="card-title">🔒 سیستم تاییدیه راهبر برای ورود به مراحل بعدی</div>
+    <p style="font-size: 9.5pt; margin: 0 0 8px 0;">برای تضمین موفقیت و جلوگیری از جهش‌های بدون مهارت، ارتقا به هر مرحله نیازمند تایید راهبر شماست:</p>
+    <div class="step-item">
+      <div class="step-num">۱</div>
+      <div><b>تکمیل اقدامات مرحله:</b> وقتی تمام ۵ اقدام مرحله را تیک زدید، سیستم به طور خودکار آماده ارتقا می‌شود.</div>
+    </div>
+    <div class="step-item">
+      <div class="step-num">۲</div>
+      <div><b>ارسال پیام تایید در واتساپ (📲):</b> دکمه سبز رنگ «ارسال درخواست به راهبر در واتساپ» را بزنید تا پیامی حاوی نام شما و درخواست بررسی مرحله در واتساپ راهبر باز شود.</div>
+    </div>
+    <div class="step-item">
+      <div class="step-num">۳</div>
+      <div><b>تایید با یک کلیک توسط راهبر:</b> راهبر شما پس از بررسی لیست و پرزنت‌ها، در پنل خود دکمه «تایید مرحله» را می‌زند و بلافاصله مرحله بعدی برای شما فعال و سبز می‌شود.</div>
     </div>
   </div>
 
   <div class="page-break"></div>
 
-  <!-- راهنمای گام ۳، ۴ و ۵ -->
+  <!-- مرحله ۲ و ۳ -->
+  <div class="card">
+    <span class="badge badge-stage2">مرحله ۲: حرکت | ۷ روز متوالی</span>
+    <div class="card-title">🔥 ۵ عادت روزانه و زنجیره ۷ روزه</div>
+    <p style="font-size: 9.5pt; margin-top: 0;">هر روز باید شمارنده‌های خود را در اپلیکیشن ثبت کنید و زنجیره را نشکنید:</p>
+    <ul style="margin: 0; padding-right: 18px; font-size: 9.5pt;">
+      <li><b>مطالعه / پادکست:</b> حداقل ۱۵ دقیقه آموزش روزانه در حوزه سلامت و فروش.</li>
+      <li><b>دعوت روزانه:</b> حداقل ۲ دعوت جدید در هر روز.</li>
+      <li><b>پیگیری و فالوآپ:</b> پیگیری حداقل ۲ مشتری یا مخاطب قبلی.</li>
+      <li><b>ارسال گزارش شبانه:</b> ثبت عملکرد روز در اپلیکیشن قبل از خواب و یادآوری خودکار اعلان مرورگر.</li>
+    </ul>
+    <div class="highlight-box">
+      ★ <b>معیار عبور:</b> با رسیدن زنجیره به ۷ روز و تایید راهبر، مرحله ۳ فعال می‌شود.
+    </div>
+  </div>
+
   <div class="card">
     <span class="badge badge-stage3">مرحله ۳: ساخت | ۳۰ روز</span>
-    <div class="card-title">👥 کار با CRM داخلی و لیست ۱۰۰+ نفره</div>
-    <p style="font-size: 10pt; margin: 0 0 10px 0;">در این مرحله، شما مخاطبان و مشتریان دمنوش‌ها را در سامانه CRM ثبت و پیگیری می‌کنید:</p>
+    <div class="card-title">👥 کار با CRM پیشرفته و لیست ۱۰۰+ نفره</div>
+    <p style="font-size: 9.5pt; margin: 0 0 8px 0;">در این مرحله، شما مخاطبان و مشتریان دمنوش‌ها را به طور سیستماتیک در CRM ثبت و پیگیری می‌کنید:</p>
     <div class="step-item">
       <div class="step-num">۱</div>
-      <div><b>افزودن مخاطب:</b> نام، شماره تماس و منبع آشنایی (دوستان، مشتری، سوشال) را در فرم وارد کرده و دکمه <b>+</b> را بزنید.</div>
+      <div><b>ثبت و دسته‌بندی سرنخ‌ها:</b> نام، شماره تماس، تاریخ پیگیری بعدی و یادداشت‌های تخصصی مزاج و طبع.</div>
     </div>
     <div class="step-item">
       <div class="step-num">۲</div>
-      <div><b>لینک‌های اقدام سریع:</b> روی هر مخاطب دکمه‌های مستقیم <b>📞 تماس</b>، <b>💬 پیامک</b> و <b>🟢 واتساپ</b> قرار دارد.</div>
+      <div><b>فیلتر وضعیت:</b> دسته‌بندی از «تازه اضافه‌شده» تا «در حال پیگیری»، «ارائه فرصت» و «مشتری / همکار».</div>
     </div>
     <div class="step-item">
       <div class="step-num">۳</div>
-      <div><b>چرخه وضعیت:</b> با کلیک روی برچسب وضعیت، آن را از «تازه اضافه‌شده» تا «مشتری / عضو تیم» به جلو ببرید.</div>
+      <div><b>خروجی اکسل کامل:</b> پشتیبان‌گیری و انتقال بانک مخاطبان به فایل Excel تنها با یک کلیک.</div>
     </div>
   </div>
 
+  <!-- ابزارهای ویژه و هوش مصنوعی DeepSeek -->
   <div class="card">
-    <span class="badge badge-stage4">مرحله ۴: تکثیر | ۹۰ روز</span>
-    <div class="card-title">🔄 چرخه ۵ گامه تکثیر تیمی</div>
-    <p style="font-size: 10pt; margin: 0 0 10px 0;">هر عضوی که به تیم شما می‌پیوندد را در این ماتریس وارد کرده و ۵ گام را با او طی کنید:</p>
-    <table>
-      <thead>
-        <tr>
-          <th>گام</th>
-          <th>عنوان</th>
-          <th>نقش شما</th>
-          <th>نقش عضو جدید</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr><td>۱</td><td><b>یاد بگیر</b></td><td>آموزش اصول پایه</td><td>یادگیری و یادداشت‌برداری</td></tr>
-        <tr><td>۲</td><td><b>انجام بده</b></td><td>الگوی عملی جلوی چشم او</td><td>مشاهده دقیق</td></tr>
-        <tr><td>۳</td><td><b>نشان بده</b></td><td>نظارت در حین اجرا</td><td>اجرای کار در حضور شما</td></tr>
-        <tr><td>۴</td><td><b>همراهی کن</b></td><td>بازخورد و رفع اشکال</td><td>بهبود مهارت‌ها</td></tr>
-        <tr><td>۵</td><td><b>واگذار کن</b></td><td>اعتماد و تشویق</td><td>استقلال کامل و آموزش به دیگران</td></tr>
-      </tbody>
-    </table>
-  </div>
-
-  <!-- ابزارهای ویژه اپلیکیشن -->
-  <div class="card">
-    <div class="card-title">⚙️ ابزارهای ویژه برنامه برای شما</div>
-    <ul style="margin: 0; padding-right: 20px; font-size: 10pt;">
-      <li><b>🤖 مربی هوشمند (Coach Card):</b> در بالای صفحه همیشه وضعیت شما را می‌خواند و می‌گوید امروز بهترین اقدام بعدی چیست.</li>
-      <li><b>🎙 تایپ صوتی فارسی:</b> در ثبت داستان و یادداشت‌ها دکمه ضبط را بزنید و روان به فارسی صحبت کنید.</li>
-      <li><b>🍵 فلش‌کارت کاتالوگ دمنوش‌ها:</b> از نوار پایین دکمه «کاتالوگ نیوشا» را بزنید تا خواص ترکیبات و اسکریپت مشاوره را ببینید.</li>
-      <li><b>💾 پشتیبان‌گیری آفلاین:</b> در پنجره ☁️ می‌توانید فایل پشتیبان دیتای خود را در قالب یک فایل JSON دانلود و ذخیره کنید.</li>
+    <div class="card-title">⚙️ ابزارهای ویژه اپلیکیشن و مربی هوش مصنوعی (DeepSeek AI)</div>
+    <ul style="margin: 0; padding-right: 18px; font-size: 9.5pt;">
+      <li><b>🤖 مربی هوش مصنوعی (DeepSeek AI Coach):</b> با لمس آیکون ربات، می‌توانید هر سوالی درباره شیوه دعوت، معرفی پک‌های سلامت لاغری/کبد چرب و پاسخ به بهانه‌ها («قیمت بالاست»، «وقت ندارم») بپرسید و سناریوی آماده دریافت کنید.</li>
+      <li><b>🎙 تایپ صوتی فارسی (Speech-to-Text):</b> در بخش اهداف، یادداشت‌های CRM و چت با مربی، دکمه میکروفون را بزنید و بدون تایپ کردن صحبت کنید.</li>
+      <li><b>🍵 کاتالوگ تعاملی دمنوش‌های نیوشا:</b> خواص کامل، ترکیبات و نحوه مصرف هر دمنوش برای مشاوره اصولی با مشتریان.</li>
+      <li><b>🌙 حالت شب و روز:</b> رابط کاربری چشم‌نواز با تم تیره و روشن برای راحتی استفاده در شب و روز.</li>
+      <li><b>💾 پشتیبان‌گیری آفلاین JSON:</b> در منوی بالا در هر زمان می‌توانید یک فایل پشتیبان کامل از اطلاعات خود دریافت و ذخیره کنید.</li>
     </ul>
   </div>
 
