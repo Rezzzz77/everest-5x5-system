@@ -313,7 +313,63 @@ export async function authHeaders() {
   };
 }
 
-/** پیام فارسی خطا */
+/**
+ * ورود با رمز عبور (بدون نیاز به ارسال ایمیل — حل مشکل سقف Rate Limit ایمیل)
+ */
+export async function signInWithPassword(email, password, cfg = getSupabaseConfig()) {
+  const normEmail = normalizeEmail(email);
+  if (!isValidEmail(normEmail)) return { ok: false, reason: 'invalid-email' };
+  if (!password || password.length < 6) return { ok: false, reason: 'weak-password', message: 'رمز عبور باید حداقل ۶ کاراکتر باشد.' };
+
+  const url = `${baseUrl(cfg)}/auth/v1/token?grant_type=password`;
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: anonHeaders(cfg),
+      body: JSON.stringify({ email: normEmail, password })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      return { ok: false, status: res.status, message: data?.error_description || data?.msg || 'ایمیل یا رمز عبور اشتباه است.' };
+    }
+    saveSession(data);
+    return { ok: true, session: data, user: data.user };
+  } catch (err) {
+    return { ok: false, reason: 'network', message: 'خطای شبکه در اتصال به سرور.' };
+  }
+}
+
+/**
+ * ثبت‌نام با رمز عبور (به علت فعال بودن mailer_autoconfirm، آنی و بدون ایمیل تأیید می‌شود)
+ */
+export async function signUpWithPassword(email, password, metadata = {}, cfg = getSupabaseConfig()) {
+  const normEmail = normalizeEmail(email);
+  if (!isValidEmail(normEmail)) return { ok: false, reason: 'invalid-email' };
+  if (!password || password.length < 6) return { ok: false, reason: 'weak-password', message: 'رمز عبور باید حداقل ۶ کاراکتر باشد.' };
+
+  const url = `${baseUrl(cfg)}/auth/v1/signup`;
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: anonHeaders(cfg),
+      body: JSON.stringify({ email: normEmail, password, data: metadata })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      return { ok: false, status: res.status, message: data?.error_description || data?.msg || 'خطا در ثبت‌نام.' };
+    }
+    if (data.session) {
+      saveSession(data.session);
+    }
+    return { ok: true, user: data.user || data, session: data.session };
+  } catch (err) {
+    return { ok: false, reason: 'network', message: 'خطای شبکه در اتصال به سرور.' };
+  }
+}
+
+/**
+ * پیام فارسی خطا
+ */
 export function authErrorText(r) {
   const map = {
     'not-configured': 'اتصال ابری تنظیم نشده است.',
