@@ -79,9 +79,10 @@ test('mergeWithDefaults: آرایه‌های خالی با پیش‌فرض پر 
   assert.equal(merged.s2Streak, 4);
 });
 
-test('mergeWithDefaults: لیست‌های کاربر (crm) خالی می‌مانند', () => {
-  const merged = mergeWithDefaults({ crm: [] });
+test('mergeWithDefaults: لیست‌های کاربر (crm و initialList30) خالی می‌مانند', () => {
+  const merged = mergeWithDefaults({ crm: [], initialList30: [] });
   assert.deepEqual(merged.crm, []);
+  assert.deepEqual(merged.initialList30, []);
 });
 
 test('mergeWithDefaults: ورودی null امن است', () => {

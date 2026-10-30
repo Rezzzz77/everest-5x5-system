@@ -120,3 +120,24 @@ export function teamToCsv(team = []) {
   const content = [headers.map(formatCell).join(','), ...rows.map(r => r.map(formatCell).join(','))].join('\r\n');
   return '\uFEFF' + content;
 }
+
+/**
+ * خروجی CSV لیست ۳۰ نفره فرم رسمی اورست (مطابق فرم چاپی)
+ */
+export function initialList30ToCsv(list = []) {
+  const headers = ['ردیف', 'نام و نام خانوادگی', 'نسبت شخص با ما', 'سطح ارتباط', 'نوع شخصیت شخص', 'همکاری در زمینه کار یا معرفی محصول', 'زمان اولین ارتباط‌گیری', 'تلفن تماس'];
+  const formatCell = (val) => `"${String(val ?? '').replace(/"/g, '""')}"`;
+  const rows = (list || []).map((item, idx) => [
+    idx + 1,
+    item.name || '',
+    item.relation || '',
+    item.level || '',
+    item.personality || '',
+    item.category || '',
+    item.firstContactDate || '',
+    item.phone || ''
+  ]);
+  const content = [headers.map(formatCell).join(','), ...rows.map(r => r.map(formatCell).join(','))].join('\r\n');
+  return '\uFEFF' + content;
+}
+
