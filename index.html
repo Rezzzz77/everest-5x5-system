@@ -342,9 +342,9 @@
 
     <!-- ================= مودال اتصال ابری (Supabase) ================= -->
     <div id="cloud-modal" class="hidden absolute inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4 w-full max-w-sm space-y-3 shadow-2xl">
+      <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4 w-full max-w-sm space-y-3 shadow-2xl max-h-[90vh] overflow-y-auto">
         <div class="flex justify-between items-center border-b border-slate-700 pb-2">
-          <h3 class="font-extrabold text-sm text-sky-400">☁️ اتصال ابری (Supabase)</h3>
+          <h3 class="font-extrabold text-sm text-sky-400">☁️ اتصال ابری و پشتیبان‌گیری</h3>
           <button onclick="closeCloudModal()" class="text-slate-400 hover:text-white text-sm">✕</button>
         </div>
 
@@ -372,7 +372,34 @@
           <button onclick="saveCloudConfigAndSync()" class="bg-sky-600 hover:bg-sky-500 text-white font-extrabold py-2.5 rounded-xl text-xs">ذخیره و همگام‌سازی</button>
         </div>
         <button onclick="disconnectCloud()" class="w-full text-[11px] text-red-400 hover:text-red-300 py-1">قطع اتصال و برگشت به حالت آفلاین</button>
-        <button onclick="signOutUser()" class="w-full text-[11px] bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 rounded-xl">خروج از حساب</button>
+
+        <!-- بخش پشتیبان‌گیری خودکار با وب‌هوک n8n -->
+        <div class="border-t border-slate-700 pt-3 space-y-2">
+          <h4 class="font-bold text-xs text-amber-400 flex items-center gap-1">
+            <span>⚡</span> پشتیبان‌گیری خودکار (n8n Webhook)
+          </h4>
+          <div>
+            <label class="text-[11px] font-bold text-slate-300">n8n Webhook URL</label>
+            <input id="n8n-url" type="text" dir="ltr" placeholder="https://n8n.your-domain.com/webhook/..."
+              class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white text-left focus:border-amber-500 focus:outline-none" />
+          </div>
+          <button onclick="triggerN8nBackup()" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-2 rounded-xl text-xs">ارسال نسخه پشتیبان به n8n</button>
+        </div>
+
+        <!-- بخش پشتیبان‌گیری و بازیابی محلی -->
+        <div class="border-t border-slate-700 pt-3 space-y-2">
+          <h4 class="font-bold text-xs text-emerald-400 flex items-center gap-1">
+            <span>💾</span> پشتیبان‌گیری و بازیابی محلی (JSON)
+          </h4>
+          <div class="grid grid-cols-2 gap-2">
+            <button onclick="exportBackupFile()" class="bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 rounded-xl text-[11px]">دانلود فایل (Export)</button>
+            <button onclick="triggerImportBackup()" class="bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 rounded-xl text-[11px]">بازیابی از فایل (Import)</button>
+          </div>
+          <input id="import-backup-file" type="file" accept=".json" class="hidden" onchange="handleBackupFileSelect(event)" />
+          <div id="backup-result" class="text-[11px] leading-relaxed"></div>
+        </div>
+
+        <button onclick="signOutUser()" class="w-full text-[11px] bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 rounded-xl mt-2">خروج از حساب</button>
 
         <p class="text-[10px] text-slate-500 leading-relaxed border-t border-slate-700 pt-2">
           اگر خطای «جدول user_state وجود ندارد» گرفتی، فایل

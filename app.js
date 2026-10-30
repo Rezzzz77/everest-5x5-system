@@ -5,9 +5,12 @@
 
 import {
   loadFromStorage, saveToStorage, syncState, loadFromCloud, isSupabaseConfigured, testConnection,
-  clearStorage, getDefaultData, saveProfile
+  clearStorage, getDefaultData, saveProfile, sendBackupToN8n, exportStateAsJson, importStateFromJson
 } from './src/db.js';
-import { getSupabaseConfig, saveSupabaseConfig, clearSupabaseConfig, validateConfig } from './src/config.js';
+import {
+  getSupabaseConfig, saveSupabaseConfig, clearSupabaseConfig, validateConfig,
+  getN8nConfig, saveN8nConfig, validateN8nConfig
+} from './src/config.js';
 import { sendOtp, verifyOtp, signOut, loadSession, currentUser, isValidEmail, authErrorText, consumeAuthRedirect } from './src/auth.js';
 import { generateCoachCard, getStageTheme } from './src/coach.js';
 import { getHighestUnlockedStage, isStageUnlocked } from './src/stages.js';
@@ -130,6 +133,11 @@ function openCloudModal() {
   document.getElementById('cloud-url').value = cfg.url || '';
   document.getElementById('cloud-key').value = cfg.key || '';
   document.getElementById('cloud-result').innerHTML = '';
+  const n8nCfg = getN8nConfig();
+  const n8nInput = document.getElementById('n8n-url');
+  if (n8nInput) n8nInput.value = n8nCfg.webhookUrl || '';
+  const backupRes = document.getElementById('backup-result');
+  if (backupRes) backupRes.innerHTML = '';
   document.getElementById('cloud-modal').classList.remove('hidden');
 }
 
@@ -212,6 +220,71 @@ function disconnectCloud() {
   clearSupabaseConfig();
   cloudLabel('off');
   cloudBox('info', 'اتصال قطع شد. اپ به‌صورت آفلاین با حافظه دستگاه کار می‌کند.');
+}
+
+/* ---------------- پشتیبان‌گیری n8n و محلی ---------------- */
+async function triggerN8nBackup() {
+  const url = document.getElementById('n8n-url')?.value.trim() || '';
+  const errors = validateN8nConfig({ webhookUrl: url });
+  const resEl = document.getElementById('backup-result');
+  if (!resEl) return;
+  if (errors.length) {
+    resEl.innerHTML = `<div class="border border-red-700/40 bg-red-950/60 text-red-200 rounded-xl p-2 mt-1">${errors.join('<br>')}</div>`;
+    return;
+  }
+  saveN8nConfig({ webhookUrl: url });
+  resEl.innerHTML = '<div class="border border-slate-700 bg-slate-900 text-slate-300 rounded-xl p-2 mt-1">در حال ارسال نسخه پشتیبان به n8n… ⏳</div>';
+  const r = await sendBackupToN8n(appState, { webhookUrl: url });
+  if (r.ok) {
+    resEl.innerHTML = '<div class="border border-emerald-700/40 bg-emerald-950/60 text-emerald-200 rounded-xl p-2 mt-1">نسخه پشتیبان با موفقیت به n8n ارسال شد ✅</div>';
+  } else {
+    resEl.innerHTML = `<div class="border border-red-700/40 bg-red-950/60 text-red-200 rounded-xl p-2 mt-1">خطا در ارسال: ${escapeHtml(r.detail || r.reason || 'نامشخص')}</div>`;
+  }
+}
+
+function exportBackupFile() {
+  const resEl = document.getElementById('backup-result');
+  try {
+    const jsonStr = exportStateAsJson(appState);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const dateStr = new Date().toISOString().slice(0, 10);
+    a.href = url;
+    a.download = `everest-5x5-backup-${dateStr}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    if (resEl) resEl.innerHTML = '<div class="border border-emerald-700/40 bg-emerald-950/60 text-emerald-200 rounded-xl p-2 mt-1">فایل پشتیبان دانلود شد ✅</div>';
+  } catch (e) {
+    if (resEl) resEl.innerHTML = `<div class="border border-red-700/40 bg-red-950/60 text-red-200 rounded-xl p-2 mt-1">خطا در دانلود فایل: ${escapeHtml(e?.message || e)}</div>`;
+  }
+}
+
+function triggerImportBackup() {
+  document.getElementById('import-backup-file')?.click();
+}
+
+function handleBackupFileSelect(event) {
+  const file = event.target?.files?.[0];
+  const resEl = document.getElementById('backup-result');
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const content = e.target?.result;
+    const res = importStateFromJson(content);
+    if (res.ok) {
+      appState = res.state;
+      saveAll();
+      initApp();
+      if (resEl) resEl.innerHTML = '<div class="border border-emerald-700/40 bg-emerald-950/60 text-emerald-200 rounded-xl p-2 mt-1">داده‌ها با موفقیت بازیابی شدند ✅</div>';
+    } else {
+      if (resEl) resEl.innerHTML = `<div class="border border-red-700/40 bg-red-950/60 text-red-200 rounded-xl p-2 mt-1">${escapeHtml(res.reason)}</div>`;
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
 }
 
 /* ---------------- Agent Coach ---------------- */
@@ -1059,6 +1132,10 @@ Object.assign(window, {
   testCloudConnection,
   saveCloudConfigAndSync,
   disconnectCloud,
+  triggerN8nBackup,
+  exportBackupFile,
+  triggerImportBackup,
+  handleBackupFileSelect,
   saveAll,
   renderCoachCard
 });
