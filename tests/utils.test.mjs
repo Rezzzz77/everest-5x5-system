@@ -9,7 +9,8 @@ import {
   calculateMemberHealth,
   isEveningReportTime,
   contactsToCsv,
-  teamToCsv
+  teamToCsv,
+  initialList30ToCsv
 } from '../src/utils.js';
 
 test('escapeHtml: کاراکترهای خطرناک HTML خنثی می‌شوند', () => {
@@ -106,4 +107,16 @@ test('teamToCsv: خروجی اعضای تیم تولید می‌شود', () => {
   assert.ok(csv.startsWith('\uFEFF'));
   assert.ok(csv.includes('"مریم کمالی"'));
   assert.ok(csv.includes('"مرحله 3"'));
+});
+
+test('initialList30ToCsv: خروجی CSV فرم رسمی اورست با BOM و ستون‌ها تولید می‌شود', () => {
+  const list = [
+    { name: 'رضا صبوری', relation: 'دوست', level: 'گرم', personality: 'قرمز', category: 'همکاری کاری', firstContactDate: 'شنبه ۱۸', phone: '09121112233' }
+  ];
+  const csv = initialList30ToCsv(list);
+  assert.ok(csv.startsWith('\uFEFF'), 'باید با UTF-8 BOM شروع شود');
+  assert.ok(csv.includes('"ردیف","نام و نام خانوادگی","نسبت شخص با ما"'));
+  assert.ok(csv.includes('"رضا صبوری"'));
+  assert.ok(csv.includes('"قرمز"'));
+  assert.ok(csv.includes('"09121112233"'));
 });

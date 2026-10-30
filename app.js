@@ -22,7 +22,7 @@ import {
 } from './src/auth.js';
 import { generateCoachCard, getStageTheme } from './src/coach.js';
 import { getHighestUnlockedStage, isStageUnlocked } from './src/stages.js';
-import { escapeHtml, phoneDigits, resetDailyCounters, calculateMemberHealth, isEveningReportTime, contactsToCsv, teamToCsv } from './src/utils.js';
+import { escapeHtml, phoneDigits, resetDailyCounters, calculateMemberHealth, isEveningReportTime, contactsToCsv, teamToCsv, initialList30ToCsv } from './src/utils.js';
 
 export { getHighestUnlockedStage };
 
@@ -697,14 +697,25 @@ function update72HourTimer() {
 function renderStage1() {
   const c = document.getElementById('s1-steps-container');
   if (!appState.s1Steps || appState.s1Steps.length === 0) return;
+
+  const l30Count = (appState.initialList30 || []).length;
+  // اگر ۳۰ نفر تکمیل شده باشد و گام ۳ تیک نخورده باشد، خودکار علامت بزن
+  if (l30Count >= 30 && appState.s1Steps[2] && !appState.s1Steps[2].done) {
+    appState.s1Steps[2].done = true;
+  }
+
   let doneCount = 0;
   c.innerHTML = appState.s1Steps.map((s, idx) => {
     if (s.done) doneCount++;
+    const isStep3 = idx === 2;
     return `
       <div onclick="toggleS1Step(${idx})" class="cursor-pointer p-3 rounded-2xl border transition ${s.done ? 'bg-blue-950/50 border-blue-500/70' : 'bg-slate-800/90 border-slate-700'}">
         <div class="flex justify-between items-start gap-2">
           <div>
-            <div class="text-xs font-extrabold ${s.done ? 'text-blue-300' : 'text-white'}">${escapeHtml(s.title)}</div>
+            <div class="text-xs font-extrabold flex items-center gap-2 ${s.done ? 'text-blue-300' : 'text-white'}">
+              <span>${escapeHtml(s.title)}</span>
+              ${isStep3 ? `<span class="text-[10px] bg-blue-600/40 text-blue-200 border border-blue-500/40 px-2 py-0.5 rounded-full font-bold">${l30Count} / ۳۰ نفر</span>` : ''}
+            </div>
             <p class="text-[11px] text-slate-300 mt-0.5">${escapeHtml(s.desc)}</p>
             <span class="inline-block mt-1.5 text-[10px] bg-slate-900 text-blue-300 px-2 py-0.5 rounded-lg border border-blue-800/40">★ ${escapeHtml(s.tip)}</span>
           </div>
@@ -715,8 +726,12 @@ function renderStage1() {
   }).join('');
 
   const pct = Math.round((doneCount / 5) * 100);
-  document.getElementById('s1-progress-label').innerText = `${doneCount} از ۵ اقدام`;
-  document.getElementById('s1-progress-bar').style.width = `${pct}%`;
+  const progLabel = document.getElementById('s1-progress-label');
+  const progBar = document.getElementById('s1-progress-bar');
+  if (progLabel) progLabel.innerText = `${doneCount} از ۵ اقدام`;
+  if (progBar) progBar.style.width = `${pct}%`;
+
+  renderInitialList30();
 }
 
 function toggleS1Step(idx) {
@@ -724,6 +739,160 @@ function toggleS1Step(idx) {
   saveAll();
   renderStage1();
   renderTabs();
+}
+
+/* ---------------- لیست اولیه ۳۰ نفره مرحله ۱ (فرم رسمی اورست) ---------------- */
+
+function renderInitialList30() {
+  const container = document.getElementById('initial-list-30-container');
+  const badge = document.getElementById('s1-list30-badge');
+  const bar = document.getElementById('s1-list30-progress-bar');
+  const progText = document.getElementById('s1-list30-progress-text');
+  const nextRowEl = document.getElementById('s1-list30-next-row');
+  if (!container) return;
+
+  if (!appState.initialList30) appState.initialList30 = [];
+  const list = appState.initialList30;
+  const count = list.length;
+  const pct = Math.min(100, Math.round((count / 30) * 100));
+
+  if (badge) badge.innerText = `${count} / ۳۰ نفر`;
+  if (bar) bar.style.width = `${pct}%`;
+  if (progText) progText.innerText = `${pct}٪ (${count} از ۳۰ نفر)`;
+  if (nextRowEl) nextRowEl.innerText = String(count + 1);
+
+  const search = (document.getElementById('l30-search')?.value || '').trim().toLowerCase();
+  const filtered = list.filter(item => {
+    if (!search) return true;
+    return (
+      (item.name || '').toLowerCase().includes(search) ||
+      (item.relation || '').toLowerCase().includes(search) ||
+      (item.category || '').toLowerCase().includes(search) ||
+      (item.personality || '').toLowerCase().includes(search) ||
+      (item.phone || '').includes(search)
+    );
+  });
+
+  if (filtered.length === 0) {
+    container.innerHTML = `
+      <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 text-center space-y-1">
+        <div class="text-xs text-slate-400 font-bold">${list.length === 0 ? 'هنوز فردی به لیست ۳۰ نفره اضافه نشده است.' : 'موردی با این جستجو پیدا نشد.'}</div>
+        <p class="text-[10px] text-slate-500">فرم بالا را پر کن و دکمه «+ افزودن به لیست ۳۰ نفره» را بزن تا دقیقاً مثل فرم چاپی اورست ردیف به ردیف ثبت شود.</p>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = filtered.map((item) => {
+    const origIdx = list.indexOf(item);
+    const rowNum = origIdx + 1;
+
+    let persBadge = 'bg-slate-800 text-slate-300 border-slate-700';
+    if (item.personality?.includes('قرمز')) persBadge = 'bg-rose-950/80 text-rose-300 border-rose-700/60';
+    else if (item.personality?.includes('زرد')) persBadge = 'bg-amber-950/80 text-amber-300 border-amber-700/60';
+    else if (item.personality?.includes('سبز')) persBadge = 'bg-emerald-950/80 text-emerald-300 border-emerald-700/60';
+    else if (item.personality?.includes('آبی')) persBadge = 'bg-sky-950/80 text-sky-300 border-sky-700/60';
+
+    let levelBadge = 'bg-slate-800 text-slate-300';
+    if (item.level?.includes('گرم')) levelBadge = 'bg-orange-950/70 text-orange-300 border border-orange-700/50';
+    else if (item.level?.includes('ولرم')) levelBadge = 'bg-amber-950/50 text-amber-200 border border-amber-700/40';
+    else if (item.level?.includes('سرد')) levelBadge = 'bg-cyan-950/50 text-cyan-200 border border-cyan-700/40';
+
+    const pDigits = phoneDigits(item.phone);
+
+    return `
+      <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-750 space-y-2 hover:border-blue-500/50 transition">
+        <div class="flex justify-between items-start gap-2">
+          <div class="flex items-center gap-2">
+            <span class="w-6 h-6 rounded-lg bg-blue-600/30 text-blue-300 border border-blue-500/40 text-[10px] font-black flex items-center justify-center">${rowNum}</span>
+            <div>
+              <div class="text-xs font-extrabold text-white">${escapeHtml(item.name)}</div>
+              <div class="text-[10px] text-slate-400 mt-0.5">نسبت: <b class="text-slate-300">${escapeHtml(item.relation || 'نامشخص')}</b></div>
+            </div>
+          </div>
+          <button onclick="deleteInitialList30Member(${origIdx})" title="حذف از لیست" class="text-slate-500 hover:text-rose-400 p-1 text-xs">✕</button>
+        </div>
+
+        <div class="flex flex-wrap gap-1 text-[9px]">
+          <span class="px-2 py-0.5 rounded-md ${levelBadge}">${escapeHtml(item.level || '')}</span>
+          <span class="px-2 py-0.5 rounded-md border ${persBadge}">${escapeHtml(item.personality || '')}</span>
+          <span class="px-2 py-0.5 rounded-md bg-slate-800 text-blue-300 border border-slate-700">${escapeHtml(item.category || '')}</span>
+        </div>
+
+        ${item.firstContactDate ? `
+          <div class="text-[10px] text-slate-400 bg-slate-950/60 px-2 py-1 rounded-lg border border-slate-800/80 flex items-center justify-between">
+            <span>زمان اولین ارتباط‌گیری:</span>
+            <span class="font-bold text-blue-200">${escapeHtml(item.firstContactDate)}</span>
+          </div>
+        ` : ''}
+
+        ${pDigits ? `
+          <div class="flex items-center justify-between pt-1 border-t border-slate-800 text-[10px]">
+            <span class="font-mono text-slate-300" dir="ltr">${escapeHtml(item.phone)}</span>
+            <div class="flex gap-1.5">
+              <a href="tel:${pDigits}" class="bg-blue-600/80 hover:bg-blue-600 text-white px-2 py-0.5 rounded-md font-bold">تماس 📞</a>
+              <a href="https://wa.me/98${pDigits.replace(/^0/, '')}" target="_blank" rel="noopener" class="bg-emerald-600/80 hover:bg-emerald-600 text-white px-2 py-0.5 rounded-md font-bold">واتساپ 💬</a>
+            </div>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+function addInitialList30Member() {
+  const nameInput = document.getElementById('l30-name');
+  const relInput = document.getElementById('l30-relation');
+  const levelInput = document.getElementById('l30-level');
+  const persInput = document.getElementById('l30-personality');
+  const catInput = document.getElementById('l30-category');
+  const timeInput = document.getElementById('l30-time');
+  const phoneInput = document.getElementById('l30-phone');
+
+  const name = (nameInput?.value || '').trim();
+  if (!name) {
+    nameInput?.focus();
+    return;
+  }
+
+  const relation = relInput?.value || 'دوست';
+  const level = levelInput?.value || 'گرم (صمیمی / ارتباط هفتگی)';
+  const personality = persInput?.value || 'قرمز (قاطع، رهبر، نتیجه‌گرا)';
+  const category = catInput?.value || 'همکاری کاری (بیزنس / فرصت)';
+  const firstContactDate = (timeInput?.value || '').trim();
+  const phone = (phoneInput?.value || '').trim();
+
+  if (!appState.initialList30) appState.initialList30 = [];
+  appState.initialList30.push({
+    name,
+    relation,
+    level,
+    personality,
+    category,
+    firstContactDate,
+    phone
+  });
+
+  if (nameInput) nameInput.value = '';
+  if (timeInput) timeInput.value = '';
+  if (phoneInput) phoneInput.value = '';
+
+  saveAll();
+  renderInitialList30();
+  renderStage1();
+}
+
+function deleteInitialList30Member(idx) {
+  if (!appState.initialList30 || appState.initialList30[idx] === undefined) return;
+  appState.initialList30.splice(idx, 1);
+  saveAll();
+  renderInitialList30();
+  renderStage1();
+}
+
+function exportInitialList30Csv() {
+  const csv = initialList30ToCsv(appState.initialList30 || []);
+  downloadFile('everest_initial_list_30.csv', csv);
 }
 
 // رندر مرحله ۲
@@ -1839,7 +2008,11 @@ Object.assign(window, {
   triggerQuickAIPrompt,
   startAIVoiceInput,
   saveAll,
-  renderCoachCard
+  renderCoachCard,
+  renderInitialList30,
+  addInitialList30Member,
+  deleteInitialList30Member,
+  exportInitialList30Csv
 });
 
 // راه‌اندازی — اگر کاربر از لینک ایمیل برگشته باشد، اول نشست را بساز.

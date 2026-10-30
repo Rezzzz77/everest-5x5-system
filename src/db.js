@@ -51,7 +51,7 @@ export function mergeWithDefaults(stored) {
   for (const key of Object.keys(DEFAULT_DATA)) {
     const def = DEFAULT_DATA[key];
     const cur = out[key];
-    if (Array.isArray(def) && (!Array.isArray(cur) || cur.length === 0) && def.length > 0 && key !== 'crm' && key !== 'dupTeam' && key !== 'meetings') {
+    if (Array.isArray(def) && (!Array.isArray(cur) || cur.length === 0) && def.length > 0 && key !== 'crm' && key !== 'dupTeam' && key !== 'meetings' && key !== 'initialList30') {
       out[key] = JSON.parse(JSON.stringify(def));
     }
     if (cur === undefined || cur === null) {

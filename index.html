@@ -158,6 +158,119 @@
 
         <div id="s1-steps-container" class="space-y-2.5"></div>
 
+        <!-- کارت لیست اولیه ۳۰ نفره (فرم رسمی اورست) -->
+        <div id="s1-list30-card" class="bg-slate-800/90 border border-blue-500/50 rounded-2xl p-3.5 space-y-3 shadow-lg">
+          <div class="flex justify-between items-center border-b border-slate-700/80 pb-2.5">
+            <div class="flex items-center gap-2">
+              <span class="text-lg">🏔️</span>
+              <div>
+                <h3 class="text-xs font-black text-blue-300">📋 لیست اولیه ۳۰ نفره (فرم رسمی اورست)</h3>
+                <p class="text-[10px] text-slate-400">نام آشنایان و اطرافیان را بدون پیش‌داوری ثبت کن؛ سرمایه اصلی تو این لیست است.</p>
+              </div>
+            </div>
+            <span id="s1-list30-badge" class="text-[11px] bg-blue-900/80 text-blue-200 border border-blue-500/40 px-2.5 py-0.5 rounded-full font-bold">۰ / ۳۰ نفر</span>
+          </div>
+
+          <!-- نوار پیشرفت تکمیل ۳۰ نفر -->
+          <div class="space-y-1">
+            <div class="w-full bg-slate-950 h-2 rounded-full overflow-hidden">
+              <div id="s1-list30-progress-bar" class="bg-gradient-to-r from-blue-500 to-emerald-400 h-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+            <div class="flex justify-between items-center text-[10px] text-slate-400">
+              <span id="s1-list30-progress-text">۰٪ تکمیل شده</span>
+              <span>هدف قدم ۳: حداقل ۳۰ نفر</span>
+            </div>
+          </div>
+
+          <!-- فرم ورود اطلاعات فرد جدید (مطابق فیلدهای فرم چاپی اورست) -->
+          <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-700/80 space-y-2.5">
+            <div class="flex justify-between items-center text-[11px] font-bold text-slate-200">
+              <span>➕ افزودن فرد جدید به لیست</span>
+              <span class="text-[10px] text-blue-400">ردیف بعدی: <b id="s1-list30-next-row">۱</b></span>
+            </div>
+
+            <!-- ردیف ۱: نام و نسبت با ما -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div>
+                <label class="text-[10px] text-slate-300 font-bold block mb-1">نام و نام خانوادگی *</label>
+                <input id="l30-name" type="text" placeholder="مثال: علی رضایی" onkeydown="if(event.key==='Enter') addInitialList30Member()" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-white focus:border-blue-500 focus:outline-none" />
+              </div>
+              <div>
+                <label class="text-[10px] text-slate-300 font-bold block mb-1">نسبت شخص با ما *</label>
+                <select id="l30-relation" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-white focus:border-blue-500 focus:outline-none">
+                  <option value="دوست">دوست</option>
+                  <option value="خانواده / فامیل نزدیک">خانواده / فامیل نزدیک</option>
+                  <option value="فامیل دور">فامیل دور</option>
+                  <option value="همکار">همکار</option>
+                  <option value="هم‌دانشگاهی / هم‌کلاسی">هم‌دانشگاهی / هم‌کلاسی</option>
+                  <option value="همسایه / آشنا">همسایه / آشنا</option>
+                  <option value="سایر ارتباطات">سایر ارتباطات</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- ردیف ۲: سطح ارتباط و نوع شخصیت شخص -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div>
+                <label class="text-[10px] text-slate-300 font-bold block mb-1">سطح ارتباط *</label>
+                <select id="l30-level" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-white focus:border-blue-500 focus:outline-none">
+                  <option value="گرم (صمیمی / ارتباط هفتگی)">🔥 گرم (صمیمی / ارتباط هفتگی)</option>
+                  <option value="ولرم (معمولی / ارتباط گاه‌به‌گاه)">🌤 ولرم (معمولی / ارتباط گاه‌به‌گاه)</option>
+                  <option value="سرد (دور / ارتباط خیلی کم)">❄️ سرد (دور / ارتباط خیلی کم)</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-[10px] text-slate-300 font-bold block mb-1">نوع شخصیت شخص *</label>
+                <select id="l30-personality" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-white focus:border-blue-500 focus:outline-none">
+                  <option value="قرمز (قاطع، رهبر، نتیجه‌گرا)">🔴 قرمز (قاطع، هدفمند، لیدر)</option>
+                  <option value="زرد (صمیمی، حامی، اهل کمک)">🟡 زرد (صمیمی، حامی، مهربان)</option>
+                  <option value="سبز (تحلیلی، دقیق، منطقی)">🟢 سبز (تحلیلی، دقیق، منطقی)</option>
+                  <option value="آبی (شاد، پرانرژی، اجتماعی)">🔵 آبی (شاد، اجتماعی، خوش‌صحبت)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- ردیف ۳: زمینه همکاری و زمان اولین ارتباط‌گیری -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div>
+                <label class="text-[10px] text-slate-300 font-bold block mb-1">همکاری در زمینه کار یا معرفی محصول *</label>
+                <select id="l30-category" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-white focus:border-blue-500 focus:outline-none">
+                  <option value="همکاری کاری (بیزنس / فرصت)">💼 همکاری کاری (بیزنس / فرصت درآمدی)</option>
+                  <option value="معرفی محصول (مشتری / سلامتی)">📦 معرفی محصول (مشتری سلامت‌محور)</option>
+                  <option value="هر دو (کار و محصول)">🌟 هر دو (محصول + فرصت کاری)</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-[10px] text-slate-300 font-bold block mb-1">زمان اولین ارتباط‌گیری</label>
+                <input id="l30-time" type="text" placeholder="مثال: شنبه ساعت ۱۸ یا تاریخ" onkeydown="if(event.key==='Enter') addInitialList30Member()" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-white focus:border-blue-500 focus:outline-none" />
+              </div>
+            </div>
+
+            <!-- ردیف ۴: تلفن اختیاری + دکمه افزودن -->
+            <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 pt-1">
+              <div class="sm:col-span-8">
+                <input id="l30-phone" type="tel" dir="ltr" placeholder="شماره تماس (اختیاری جهت تماس سریع / واتساپ)" onkeydown="if(event.key==='Enter') addInitialList30Member()" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-white text-left focus:border-blue-500 focus:outline-none font-mono" />
+              </div>
+              <div class="sm:col-span-4">
+                <button onclick="addInitialList30Member()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-extrabold py-2 px-3 rounded-xl text-xs shadow-md transition flex items-center justify-center gap-1">
+                  <span>+ افزودن به لیست ۳۰ نفره</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ابزارهای جستجو و خروجی اکسل -->
+          <div class="flex items-center justify-between gap-2 pt-1 border-t border-slate-700/60">
+            <input id="l30-search" oninput="renderInitialList30()" type="text" placeholder="🔍 جستجو در نام، نسبت یا زمینه..." class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1 text-[10px] text-white" />
+            <button onclick="exportInitialList30Csv()" title="دانلود خروجی اکسل / CSV لیست ۳۰ نفره" class="bg-emerald-700 hover:bg-emerald-600 text-white font-bold px-2.5 py-1 rounded-xl text-[10px] flex items-center gap-1 transition shadow">
+              <span>📊 خروجی اکسل</span>
+            </button>
+          </div>
+
+          <!-- لیست نفرات ثبت‌شده با شماره ردیف مطابق فرم چاپی -->
+          <div id="initial-list-30-container" class="space-y-2 max-h-80 overflow-y-auto pr-0.5"></div>
+        </div>
+
         <!-- کارت معیار عبور مرحله ۱ -->
         <div class="bg-slate-800/90 border border-slate-700 rounded-2xl p-3.5 space-y-2">
           <div class="flex justify-between items-center">
@@ -669,6 +782,6 @@
 
   </div>
 
-  <script type="module" src="./app.js?v=0.9.1"></script>
+  <script type="module" src="./app.js?v=0.9.2"></script>
 </body>
 </html>
