@@ -50,12 +50,18 @@ end $$;
 --    کلید یکتا = همان شناسه کاربر در Auth.
 -- ------------------------------------------------------------
 create table if not exists public.profiles (
-  id          uuid primary key default auth.uid() references auth.users(id) on delete cascade,
-  full_name   text,
-  national_id text,
-  upline      text,
-  created_at  timestamptz not null default now(),
-  updated_at  timestamptz not null default now()
+  id            uuid primary key default auth.uid() references auth.users(id) on delete cascade,
+  full_name     text,
+  national_id   text,
+  upline        text,
+  email         text,
+  upline_email  text,
+  upline_id     uuid references auth.users(id),
+  current_stage int not null default 1,
+  s2_streak     int not null default 0,
+  crm_count     int not null default 0,
+  created_at    timestamptz not null default now(),
+  updated_at    timestamptz not null default now()
 );
 
 -- سازگاری: اگر نسخه قدیمی این فایل جدول را با user_id ساخته باشد
@@ -76,11 +82,17 @@ begin
 end $$;
 
 -- ستون‌هایی که اپ لازم دارد (جدول موجود ممکن است آن‌ها را نداشته باشد)
-alter table public.profiles add column if not exists full_name   text;
-alter table public.profiles add column if not exists national_id text;
-alter table public.profiles add column if not exists upline      text;
-alter table public.profiles add column if not exists created_at  timestamptz not null default now();
-alter table public.profiles add column if not exists updated_at  timestamptz not null default now();
+alter table public.profiles add column if not exists full_name     text;
+alter table public.profiles add column if not exists national_id   text;
+alter table public.profiles add column if not exists upline        text;
+alter table public.profiles add column if not exists email         text;
+alter table public.profiles add column if not exists upline_email  text;
+alter table public.profiles add column if not exists upline_id     uuid references auth.users(id);
+alter table public.profiles add column if not exists current_stage int not null default 1;
+alter table public.profiles add column if not exists s2_streak     int not null default 0;
+alter table public.profiles add column if not exists crm_count     int not null default 0;
+alter table public.profiles add column if not exists created_at    timestamptz not null default now();
+alter table public.profiles add column if not exists updated_at    timestamptz not null default now();
 
 -- اجازه درج بدون فرستادن id؛ مقدار همیشه از JWT گرفته می‌شود
 alter table public.profiles alter column id set default auth.uid();
@@ -137,6 +149,89 @@ begin
 end $$;
 
 -- ------------------------------------------------------------
+-- ۳.۲) همگام‌سازی خودکار مرحله و آمار کاربر در profiles برای مشاهده لیدر
+-- ------------------------------------------------------------
+create or replace function public.sync_profile_progress()
+returns trigger
+language plpgsql
+security definer
+as $$
+declare
+  _streak int := 0;
+  _crm_cnt int := 0;
+  _stage int := 1;
+  _s1_done boolean := false;
+  _s3_done boolean := false;
+  _s4_done boolean := false;
+begin
+  _streak := coalesce((new.state_data->>'s2Streak')::int, 0);
+
+  if jsonb_typeof(new.state_data->'crm') = 'array' then
+    _crm_cnt := jsonb_array_length(new.state_data->'crm');
+  end if;
+
+  if jsonb_typeof(new.state_data->'s1Steps') = 'array'
+     and not exists (select 1 from jsonb_array_elements(new.state_data->'s1Steps') elem where elem::text <> 'true') then
+    _s1_done := true;
+  end if;
+
+  if _s1_done then
+    _stage := 2;
+    if _streak >= 7 then
+      _stage := 3;
+      if jsonb_typeof(new.state_data->'s3Pass') = 'array'
+         and not exists (select 1 from jsonb_array_elements(new.state_data->'s3Pass') elem where coalesce((elem->>'done')::boolean, false) = false) then
+        _stage := 4;
+        if jsonb_typeof(new.state_data->'s4Pass') = 'array'
+           and not exists (select 1 from jsonb_array_elements(new.state_data->'s4Pass') elem where coalesce((elem->>'done')::boolean, false) = false) then
+          _stage := 5;
+        end if;
+      end if;
+    end if;
+  end if;
+
+  update public.profiles
+  set
+    current_stage = _stage,
+    s2_streak     = _streak,
+    crm_count     = _crm_cnt,
+    updated_at    = now()
+  where id = new.user_id;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_sync_profile_progress on public.user_state;
+create trigger trg_sync_profile_progress
+  after insert or update on public.user_state
+  for each row execute function public.sync_profile_progress();
+
+-- ------------------------------------------------------------
+-- ۳.۳) اتصال خودکار upline_id بر اساس upline_email
+-- ------------------------------------------------------------
+create or replace function public.link_upline()
+returns trigger
+language plpgsql
+security definer
+as $$
+begin
+  if new.upline_email is not null and (new.upline_id is null or (old.upline_email is distinct from new.upline_email)) then
+    select id into new.upline_id
+    from public.profiles
+    where lower(email) = lower(new.upline_email)
+    limit 1;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_link_upline on public.profiles;
+create trigger trg_link_upline
+  before insert or update on public.profiles
+  for each row execute function public.link_upline();
+
+-- ------------------------------------------------------------
 -- ۴) Row Level Security
 -- ------------------------------------------------------------
 alter table public.user_state enable row level security;
@@ -150,13 +245,27 @@ create policy "users own their state"
   using (user_id = (select auth.uid()))
   with check (user_id = (select auth.uid()));
 
+-- کاربر خود ردیفش را مدیریت می‌کند (CRUD کامل)
 drop policy if exists "users own their profile" on public.profiles;
-create policy "users own their profile"
+drop policy if exists "users can update own profile" on public.profiles;
+create policy "users can update own profile"
   on public.profiles
   for all
   to authenticated
   using (id = (select auth.uid()))
   with check (id = (select auth.uid()));
+
+-- لیدر بالاسری می‌تواند پروفایل اعضای زیرمجموعه‌اش را مشاهده کند (فقط SELECT)
+drop policy if exists "leaders can view downline profiles" on public.profiles;
+create policy "leaders can view downline profiles"
+  on public.profiles
+  for select
+  to authenticated
+  using (
+    id = (select auth.uid())
+    or upline_id = (select auth.uid())
+    or (upline_email is not null and lower(upline_email) = lower(auth.jwt()->>'email'))
+  );
 
 -- ------------------------------------------------------------
 -- ۵) دسترسی‌ها

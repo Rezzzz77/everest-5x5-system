@@ -7,7 +7,8 @@ import {
 } from '../src/config.js';
 import {
   testConnection, mergeWithDefaults, stripNationalId,
-  sendBackupToN8n, exportStateAsJson, importStateFromJson
+  sendBackupToN8n, exportStateAsJson, importStateFromJson,
+  loadTeamMembers, saveProfile
 } from '../src/db.js';
 import { DEFAULT_DATA } from '../src/defaults.js';
 
@@ -203,4 +204,17 @@ test('importStateFromJson: ساختار یا JSON نامعتبر خطا می‌�
   assert.equal(importStateFromJson('').ok, false);
   assert.equal(importStateFromJson('invalid-json').ok, false);
   assert.equal(importStateFromJson('[]').ok, false);
+});
+
+/* ---------------- تست‌های پایش آنلاین تیم ---------------- */
+
+test('loadTeamMembers: بدون نشست آرایه خالی برمی‌گرداند', async () => {
+  const members = await loadTeamMembers({ url: '', key: '' });
+  assert.deepEqual(members, []);
+});
+
+test('saveProfile: بدون نشست یا کانفیگ نامعتبر خطا می‌دهد', async () => {
+  const res = await saveProfile({ full_name: 'تست' }, { url: '', key: '' });
+  assert.equal(res.ok, false);
+  assert.equal(res.reason, 'not-configured');
 });
