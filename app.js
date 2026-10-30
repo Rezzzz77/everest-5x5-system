@@ -1553,6 +1553,13 @@ function startAIVoiceInput() {
 function initApp() {
   initTheme();
   checkEveningReminder();
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const dsParam = params.get('deepseek') || params.get('ai_key');
+    if (dsParam && dsParam.trim().startsWith('sk-')) {
+      saveDeepSeekConfig({ apiKey: dsParam.trim() });
+    }
+  } catch (_) {}
   const dsCfg = getDeepSeekConfig();
   const cloudDsInput = document.getElementById('cloud-deepseek-key');
   if (cloudDsInput && dsCfg.apiKey) cloudDsInput.value = dsCfg.apiKey;
