@@ -5,7 +5,9 @@
 `Offline-first` · `PWA` · `Supabase` · `فارسی / RTL`
 
 **دمو زنده:** https://rezzzz77.github.io/everest-5x5-system/  
-**گراف دانش پروژه:** https://rezzzz77.github.io/everest-5x5-system/docs/graph.html
+**گراف دانش پروژه:** https://rezzzz77.github.io/everest-5x5-system/docs/graph.html  
+**📘 راهنمای جامع کاربران (PDF):** [Everest_User_Guide.pdf](Everest_User_Guide.pdf) · [مشاهده آنلاین وب](https://rezzzz77.github.io/everest-5x5-system/docs/user-guide.html)  
+**👔 راهنمای جامع مدیران و راهبران (PDF):** [Everest_Manager_Guide.pdf](Everest_Manager_Guide.pdf) · [مشاهده آنلاین وب](https://rezzzz77.github.io/everest-5x5-system/docs/manager-guide.html)
 
 ---
 
@@ -101,6 +103,10 @@ everest-5x5-system/
 │   └── check.yml           # CI: سینتکس، قرارداد، همگامی گراف
 └── docs/
     ├── MEMORY.md           # 🧠 حافظه پروژه — از اینجا ادامه بده
+    ├── user-guide.html     # وب‌ویو راهنمای کاربر
+    ├── manager-guide.html  # وب‌ویو راهنمای مدیر
+    ├── Everest_User_Guide.pdf
+    ├── Everest_Manager_Guide.pdf
     ├── graph.html          # نمایش تعاملی گراف
     ├── graph.json          # داده گراف (تولیدشده)
     └── SECURITY.md         # ریسک‌ها و مسیر ارتقا

@@ -210,7 +210,8 @@ anon  ──✖──► user_state, profiles   (revoke + no policy)
 - تریگر محافظت از ستون `profiles.role` در `supabase/schema.sql` افزوده شد تا از ترفیع سطح دسترسی کاربران عادی جلوگیری شود.
 - امکان پشتیبان‌گیری خودکار به n8n Webhook و دانلود/بازیابی آفلاین با فرمت JSON در نسخه ۰.۶.۰ پیاده‌سازی و تست شد.
 - پایش آنلاین اعضای تیم توسط مدیر بالاسری (`profiles.upline_id`, `upline_email`, `current_stage`, `s2_streak`, `crm_count`) و لینک هوشمند دعوت در نسخه ۰.۷.۰ پیاده‌سازی شد.
+- کتابچه‌های جامع راهنمای کاربران (`Everest_User_Guide.pdf` و `docs/user-guide.html`) و راهنمای مدیران و راهبران (`Everest_Manager_Guide.pdf` و `docs/manager-guide.html`) تولید و به پروژه افزوده شدند.
 
 ## ۹. جمله بازیابی برای نشست بعدی
 
-> «پروژه everest-5x5-system را از `docs/MEMORY.md` بازیابی کن — نسخه ۰.۷.۰ آنلاین با قابلیت مانیتورینگ لیدر فعال است.»
+> «پروژه everest-5x5-system را از `docs/MEMORY.md` بازیابی کن — نسخه ۰.۷.۰ آنلاین با پایش زنده اعضای تیم و کتابچه‌های راهنمای کاربر و مدیر PDF فعال است.»
