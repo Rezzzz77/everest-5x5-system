@@ -229,6 +229,9 @@ export async function saveProfile(profile = {}, rawCfg = getSupabaseConfig()) {
   if (profile.current_stage != null) row.current_stage = Number(profile.current_stage) || 1;
   if (profile.s2_streak != null) row.s2_streak = Number(profile.s2_streak) || 0;
   if (profile.crm_count != null) row.crm_count = Number(profile.crm_count) || 0;
+  if (profile.role != null) row.role = String(profile.role).slice(0, 50);
+  if (profile.approved_stage != null) row.approved_stage = Number(profile.approved_stage) || 1;
+  if (profile.pending_stage !== undefined) row.pending_stage = profile.pending_stage ? Number(profile.pending_stage) : null;
   // فقط اگر مقدار واقعی آمده باشد؛ در غیر این صورت مقدار قبلی پاک نمی‌شود.
   if (profile.national_id) row.national_id = String(profile.national_id).slice(0, 40);
 
@@ -271,13 +274,85 @@ export async function loadTeamMembers(rawCfg = getSupabaseConfig()) {
     } else {
       filter = `upline_email=ilike.${encodeURIComponent(userEmail)}`;
     }
-    const url = `${cfg.url}/rest/v1/profiles?${filter}&select=id,full_name,email,current_stage,s2_streak,crm_count,updated_at&order=updated_at.desc`;
+    const url = `${cfg.url}/rest/v1/profiles?${filter}&select=id,full_name,email,current_stage,s2_streak,crm_count,role,approved_stage,pending_stage,updated_at&order=updated_at.desc`;
     const res = await fetch(url, { headers: h, cache: 'no-store' });
     if (!res.ok) return [];
     return await res.json();
   } catch (e) {
     console.error('خطا در دریافت اعضای تیم:', e);
     return [];
+  }
+}
+
+/**
+ * تأیید ورود عضو تیم به مرحله هدف توسط راهبر
+ */
+export async function approveMemberStage(memberId, targetStage, rawCfg = getSupabaseConfig()) {
+  const cfg = normalizeConfig(rawCfg);
+  if (!cfgValid(cfg) || !memberId) return { ok: false, message: 'تنظیمات یا شناسه نامعتبر' };
+  const h = await headers();
+  if (!h) return { ok: false, message: 'عدم احراز هویت' };
+
+  try {
+    // ابتدا از طریق RPC امن
+    const resRpc = await fetch(`${cfg.url}/rest/v1/rpc/approve_member_stage`, {
+      method: 'POST',
+      headers: h,
+      body: JSON.stringify({ member_id: memberId, target_stage: Number(targetStage) || 2 })
+    });
+    if (resRpc.ok) {
+      const data = await resRpc.json();
+      return data?.ok ? { ok: true, data } : { ok: true };
+    }
+
+    // جایگزین با PATCH مستقیم روی ردیف عضو با دسترسی RLS راهبر
+    const resPatch = await fetch(`${cfg.url}/rest/v1/profiles?id=eq.${memberId}`, {
+      method: 'PATCH',
+      headers: h,
+      body: JSON.stringify({
+        approved_stage: Number(targetStage) || 2,
+        current_stage: Number(targetStage) || 2,
+        pending_stage: null,
+        updated_at: new Date().toISOString()
+      })
+    });
+    if (resPatch.ok) return { ok: true };
+    return { ok: false, message: 'خطا در ثبت تایید مرحله' };
+  } catch (err) {
+    return { ok: false, message: err?.message || 'خطای شبکه' };
+  }
+}
+
+/**
+ * ارسال درخواست تأیید ورود به مرحله برای راهبر توسط عضو
+ */
+export async function requestStageApproval(targetStage, rawCfg = getSupabaseConfig()) {
+  const cfg = normalizeConfig(rawCfg);
+  if (!cfgValid(cfg)) return { ok: false, message: 'تنظیمات نامعتبر' };
+  const h = await headers();
+  if (!h) return { ok: false, message: 'عدم احراز هویت' };
+  const user = currentUser();
+  if (!user?.id) return { ok: false, message: 'عدم احراز هویت' };
+
+  try {
+    const resRpc = await fetch(`${cfg.url}/rest/v1/rpc/request_stage_approval`, {
+      method: 'POST',
+      headers: h,
+      body: JSON.stringify({ target_stage: Number(targetStage) || 2 })
+    });
+    if (resRpc.ok) return { ok: true };
+
+    const resPatch = await fetch(`${cfg.url}/rest/v1/profiles?id=eq.${user.id}`, {
+      method: 'PATCH',
+      headers: h,
+      body: JSON.stringify({
+        pending_stage: Number(targetStage) || 2,
+        updated_at: new Date().toISOString()
+      })
+    });
+    return { ok: resPatch.ok };
+  } catch (err) {
+    return { ok: false, message: err?.message || 'خطای شبکه' };
   }
 }
 
