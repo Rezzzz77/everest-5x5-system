@@ -998,7 +998,6 @@ function downloadFile(filename, content, mimeType = 'text/csv;charset=utf-8;') {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
-}
 
 async function refreshOnlineTeam() {
   const container = document.getElementById('online-team-container');
