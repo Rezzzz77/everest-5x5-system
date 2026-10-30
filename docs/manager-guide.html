@@ -8,7 +8,7 @@
 
     @page {
       size: A4;
-      margin: 14mm 16mm;
+      margin: 12mm 14mm;
     }
 
     * {
@@ -23,81 +23,82 @@
       color: #1e293b;
       margin: 0;
       padding: 0;
-      line-height: 1.65;
-      font-size: 11pt;
+      line-height: 1.6;
+      font-size: 10.5pt;
     }
 
     .header-banner {
       background: linear-gradient(135deg, #4c1d95 0%, #7c3aed 100%);
       color: #ffffff;
-      padding: 22px 26px;
-      border-radius: 14px;
-      margin-bottom: 22px;
+      padding: 20px 24px;
+      border-radius: 12px;
+      margin-bottom: 18px;
       box-shadow: 0 4px 12px rgba(124, 58, 237, 0.15);
     }
 
     .header-banner h1 {
-      margin: 0 0 6px 0;
-      font-size: 19pt;
+      margin: 0 0 4px 0;
+      font-size: 18pt;
       font-weight: 900;
     }
 
     .header-banner p {
       margin: 0;
-      font-size: 10.5pt;
-      opacity: 0.9;
+      font-size: 10pt;
+      opacity: 0.92;
     }
 
     .badge {
       display: inline-block;
-      padding: 3px 10px;
-      border-radius: 20px;
+      padding: 2px 9px;
+      border-radius: 16px;
       font-size: 8.5pt;
       font-weight: 700;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
     }
 
     .badge-primary { background: #ede9fe; color: #5b21b6; }
     .badge-kpi { background: #fef3c7; color: #92400e; }
     .badge-alert { background: #fee2e2; color: #991b1b; }
     .badge-success { background: #dcfce7; color: #166534; }
+    .badge-warning { background: #fef9c3; color: #854d0e; }
 
     .card {
       border: 1px solid #e2e8f0;
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 16px;
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin-bottom: 14px;
       background: #f8fafc;
       page-break-inside: avoid;
     }
 
     .card-title {
-      font-size: 12pt;
+      font-size: 11.5pt;
       font-weight: 800;
       color: #0f172a;
       margin: 0 0 8px 0;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
     }
 
     .step-item {
       display: flex;
       align-items: flex-start;
-      gap: 10px;
-      margin-bottom: 8px;
+      gap: 8px;
+      margin-bottom: 7px;
     }
 
     .step-num {
       background: #6d28d9;
       color: #ffffff;
-      width: 22px;
-      height: 22px;
+      width: 20px;
+      height: 20px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 8.5pt;
+      font-size: 8pt;
       font-weight: 800;
       flex-shrink: 0;
       margin-top: 2px;
@@ -106,13 +107,13 @@
     table {
       width: 100%;
       border-collapse: collapse;
-      margin: 12px 0;
-      font-size: 9.5pt;
+      margin: 10px 0;
+      font-size: 9pt;
     }
 
     th, td {
       border: 1px solid #cbd5e1;
-      padding: 8px 10px;
+      padding: 6px 8px;
       text-align: right;
     }
 
@@ -125,19 +126,19 @@
     .highlight-box {
       background: #faf5ff;
       border-right: 4px solid #7c3aed;
-      padding: 12px 14px;
+      padding: 10px 14px;
       border-radius: 6px;
-      margin: 12px 0;
-      font-size: 10pt;
+      margin: 10px 0;
+      font-size: 9.5pt;
     }
 
     .footer {
       text-align: center;
-      font-size: 8.5pt;
+      font-size: 8pt;
       color: #64748b;
-      margin-top: 20px;
+      margin-top: 16px;
       border-top: 1px solid #e2e8f0;
-      padding-top: 8px;
+      padding-top: 6px;
     }
 
     .page-break {
@@ -149,7 +150,7 @@
       background: #e2e8f0;
       padding: 2px 6px;
       border-radius: 4px;
-      font-size: 9pt;
+      font-size: 8.5pt;
       direction: ltr;
       display: inline-block;
     }
@@ -159,80 +160,109 @@
 
   <!-- هدر اصلی راهنمای مدیران -->
   <div class="header-banner">
-    <span class="badge badge-primary">پنل دیده‌بانی و لیدرشیپ اورست</span>
+    <span class="badge badge-primary">پنل دیده‌بانی، لیدرشیپ و تایید صلاحیت اورست</span>
     <h1>👑 راهنمای اختصاصی مدیران و راهبران تیم</h1>
-    <p>دستورالعمل مانیتورینگ زنده اعضا، کوچینگ مرحله‌به‌مرحله و مدیریت شاخص‌های کلان سازمان</p>
+    <p>دستورالعمل جامع مانیتورینگ زنده، تایید صلاحیت مراحل اعضا، کوچینگ سازمانی و مدیریت شاخص‌ها</p>
   </div>
 
   <!-- قانون طلایی راهبر -->
   <div class="card">
     <div class="card-title">🎯 قانون طلایی راهبر اورست</div>
     <div class="highlight-box">
-      «کاری را که نمی‌توانی منتقل کنی، هنوز تبدیل به سیستم نکرده‌ای. راهبری یعنی ساختن آدم‌هایی که حتی وقتی تو در جلسه نیستی، رشد و تکثیر را با استانداردهای ۵×۵ ادامه دهند.»
+      «کاری را که نمی‌توانی منتقل کنی، هنوز تبدیل به سیستم نکرده‌ای. راهبری یعنی ساختن آدم‌هایی که حتی وقتی تو در جلسه نیستی، رشد، پرزنت، پیگیری و تکثیر را با استانداردهای ۵×۵ بدون افت کیفیت ادامه دهند.»
     </div>
   </div>
 
-  <!-- چگونگی عضوگیری و لینک اختصاصی -->
+  <!-- ثبت‌نام به عنوان راهبر و اتصال اعضا -->
   <div class="card">
-    <div class="card-title">🔗 گام اول: نحوه اتصال اعضای جدید به سازمان شما</div>
-    <p style="font-size: 10pt; margin: 0 0 10px 0;">برای اینکه اعضا مستقیماً زیرمجموعه شما شوند و وضعیتشان در داشبورد شما پایش شود:</p>
+    <div class="card-title">🔗 گام اول: ثبت‌نام با نقش راهبر و اتصال اعضای جدید</div>
     <div class="step-item">
       <div class="step-num">۱</div>
-      <div>در اپلیکیشن به <b>مرحله ۴</b> بروید و در کادر بنفش «دیده‌بانی آنلاین»، دکمه <b>«کپی لینک»</b> را بزنید.</div>
+      <div><b>ثبت‌نام مستقیم به عنوان راهبر:</b> در فرم ورود/ثبت‌نام اپلیکیشن، گزینه <b>«👑 راهبر / لیدر تیم»</b> را انتخاب کنید. با این نقش تمام ۵ مرحله از ابتدا برای شما باز است و امکانات لیدرشیپ فعال خواهد بود.</div>
     </div>
     <div class="step-item">
       <div class="step-num">۲</div>
-      <div>لینک تولیدشده به صورت <code>https://.../?upline=ایمیل_شما</code> خواهد بود.</div>
+      <div><b>کپی لینک هوشمند عضوگیری:</b> در اپلیکیشن به <b>مرحله ۴</b> بروید و در کادر بنفش «دیده‌بانی آنلاین اعضای تیم»، دکمه <b>«کپی لینک»</b> را بزنید. لینک اختصاصی شما به شکل <code>https://.../?upline=ایمیل_شما</code> ایجاد می‌شود.</div>
     </div>
     <div class="step-item">
       <div class="step-num">۳</div>
-      <div>این لینک را برای عضو جدید بفرستید. به محض اینکه او در سایت لاگین کند، سیستم به صورت خودکار او را به عنوان نفر مستقیم شما ثبت می‌کند.</div>
+      <div><b>اتصال خودکار بالاسری:</b> این لینک را برای اعضای جدید خود ارسال کنید. به محض اینکه فرد با ایمیل خود ثبت‌نام یا ورود کند، سیستم به صورت کاملاً خودکار شما را به عنوان حامی و لیدر او ثبت کرده و او را به پنل شما متصل می‌کند.</div>
     </div>
   </div>
 
-  <!-- کار با پنل دیده‌بانی آنلاین -->
+  <!-- تایید صلاحیت مراحل اعضا -->
   <div class="card">
-    <div class="card-title">👥 کار با پنل مانیتورینگ زنده اعضای تیم</div>
-    <p style="font-size: 10pt; margin-top: 0;">در پنل دیده‌بانی آنلاین، اطلاعات لحظه‌ای هر عضو نمایش داده می‌شود:</p>
-    <table>
-      <thead>
-        <tr>
-          <th>شاخص پایش</th>
-          <th>معنی در سیستم</th>
-          <th>اقدام نظارتی راهبر</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td><b>برچسب سطح (مرحله ۱ تا ۵)</b></td>
-          <td>نشان می‌دهد عضو در کدام مرحله از سیستم قرار دارد.</td>
-          <td>بررسی موانع عبور و کمک به انجام معیارهای باز شدن مرحله بعد.</td>
-        </tr>
-        <tr>
-          <td><b>زنجیره ۷ روزه (🔥 Streak)</b></td>
-          <td>تداوم اجرای عادات روزانه (مطالعه، دعوت، پیگیری).</td>
-          <td>اگر زنجیره بیش از ۲ روز صفر بود، تماس انگیزشی و فالوآپ بگیرید.</td>
-        </tr>
-        <tr>
-          <td><b>مخاطبان CRM (👤)</b></td>
-          <td>تعداد سرنخ‌ها و مشتریان دمنوش ثبت‌شده توسط عضو.</td>
-          <td>بررسی کیفیت لیست و کمک به پرزنت مخاطبان گرم.</td>
-        </tr>
-        <tr>
-          <td><b>آخرین فعالیت</b></td>
-          <td>تاریخ آخرین ثبت گزارش یا ذخیره داده توسط عضو.</td>
-          <td>شناسایی اعضای فعال و مستعد ارتقا به لیدرشیپ.</td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="card-title">✅ گام دوم: تایید صلاحیت مراحل اعضا (Stage Approval Workflow)</div>
+    <p style="font-size: 9.5pt; margin: 0 0 8px 0;">یکی از مهم‌ترین وظایف راهبر، نظارت بر کیفیت اقدامات قبل از جهش به مرحله بعدی است:</p>
+    <div class="step-item">
+      <div class="step-num">۱</div>
+      <div><b>دریافت درخواست تاییدیه:</b> وقتی عضو ۵ اقدام مرحله را تیک می‌زند، از داخل اپلیکیشن پیام هماهنگی در واتساپ برای شما می‌فرستد و در پنل دیده‌بانی شما برچسب <b>«⏳ در انتظار تایید مرحله X»</b> نمایان می‌شود.</div>
+    </div>
+    <div class="step-item">
+      <div class="step-num">۲</div>
+      <div><b>بررسی کیفیت استانداردها:</b> قبل از تایید، اطمینان حاصل کنید که:
+        <ul style="margin: 3px 0 0 0; padding-right: 18px; font-size: 9pt;">
+          <li><b>برای مرحله ۱ به ۲:</b> لیست ۳۰ نفره رسمی با رنگ‌های شخصیتی تکمیل شده و حداقل ۲۰ دعوت و اولین پرزنت انجام گرفته باشد.</li>
+          <li><b>برای مرحله ۲ به ۳:</b> زنجیره ۷ روزه عادات و ارسال گزارش‌های شبانه واقعاً تداوم داشته باشد.</li>
+          <li><b>برای مرحله ۳ به ۴:</b> حداقل ۱۰۰ مخاطب در CRM و معیارهای ۵ گانه فروش و جذب برآورده شده باشد.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="step-item">
+      <div class="step-num">۳</div>
+      <div><b>تایید با یک کلیک (✓):</b> در ردیف عضو در پنل دیده‌بانی، روی دکمه سبز <b>«✓ تأیید مرحله X»</b> کلیک کنید. مرحله بعد بلافاصله برای عضو باز و در پایگاه داده Supabase ثبت می‌شود.</div>
+    </div>
   </div>
 
   <div class="page-break"></div>
 
+  <!-- مانیتورینگ آنلاین و شاخص‌های پایش -->
+  <div class="card">
+    <div class="card-title">👥 کار با پنل مانیتورینگ زنده و ارزیابی ریسک ریزش</div>
+    <p style="font-size: 9.5pt; margin-top: 0;">در پنل دیده‌بانی آنلاین، وضعیت لحظه‌ای هر مشاور به همراه برچسب سلامت نمایش داده می‌شود:</p>
+    <table>
+      <thead>
+        <tr>
+          <th>شاخص پایش</th>
+          <th>معنی و تفسیر در سیستم</th>
+          <th>اقدام مداخله‌ای راهبر</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><b>برچسب مرحله (۱ تا ۵)</b></td>
+          <td>جایگاه فعلی عضو در مسیر ۵ گامه اورست</td>
+          <td>کمک به رفع موانع عبور و تمرین مهارت‌های آن مرحله</td>
+        </tr>
+        <tr>
+          <td><b>زنجیره ۷ روزه (🔥 Streak)</b></td>
+          <td>میزان تداوم در اجرای عادات روزانه (آموزش، دعوت، پیگیری)</td>
+          <td>اگر زنجیره صفر یا متوقف است، تماس بررسی موانع بگیرید.</td>
+        </tr>
+        <tr>
+          <td><b>تعداد مخاطبان CRM (👤)</b></td>
+          <td>بانک مخاطبان و مشتریان دمنوش ثبت‌شده توسط عضو</td>
+          <td>بررسی رنگ‌بندی شخصیتی مخاطبان و همراهی در پرزنت‌های اول</td>
+        </tr>
+        <tr>
+          <td><b>ارزیابی ریسک ریزش</b></td>
+          <td>
+            <span class="badge badge-success">🟢 فعال</span> عملکرد منظم و پیوسته<br>
+            <span class="badge badge-warning">🟡 نیازمند توجه</span> کندی در ثبت گزارش<br>
+            <span class="badge badge-alert">🔴 در خطر توقف</span> بیش از ۳ روز بدون فعالیت
+          </td>
+          <td>اولویت‌بندی تماس‌های کوچینگ هفتگی با اعضایی که در خطر دلسردی و توقف هستند.</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="highlight-box">
+      ★ <b>خروجی اکسل تیم:</b> با زدن دکمه <b>«📥 خروجی اکسل تیم»</b> می‌توانید فایل کامل وضعیت تمام اعضای سازمان خود را با مشخصات، مرحله و آمار برای جلسات لیدرشیپ دانلود کنید.
+    </div>
+  </div>
+
   <!-- ماتریس کوچینگ مرحله به مرحله -->
   <div class="card">
     <div class="card-title">🧭 ماتریس مداخله و کوچینگ هوشمند بر اساس مرحله عضو</div>
-    <p style="font-size: 10pt; margin: 0 0 8px 0;">وقتی در پنل می‌بینید عضوی در یک مرحله خاص است، دقیقاً باید چه کمکی به او برسانید؟</p>
     <table>
       <thead>
         <tr>
@@ -244,54 +274,42 @@
       <tbody>
         <tr>
           <td><span class="badge badge-primary">مرحله ۱: شروع</span></td>
-          <td>ترس از دعوت، ننوشتن هدف</td>
-          <td>کمک در تکمیل «داستان من»، شرکت در پرزنت‌های اول به‌عنوان همراه.</td>
+          <td>ترس از دعوت، کمبود لیست گرم، ناآشنایی با محصولات</td>
+          <td>بررسی فرم ۳۰ نفره رسمی، تمرین دعوت تلفنی، همراهی در اولین مشاوره دمنوش.</td>
         </tr>
         <tr>
           <td><span class="badge badge-success">مرحله ۲: حرکت</span></td>
-          <td>قطع شدن زنجیره، عدم تداوم</td>
-          <td>پیگیری روزانه گزارش شبانه؛ تشویق به حفظ زنجیره تا روز ۷.</td>
+          <td>قطع شدن زنجیره، فراموشی گزارش شبانه</td>
+          <td>فالوآپ روزانه ساعت ۲۲:۰۰؛ تبریک روزانه تا رسیدن به روز ۷.</td>
         </tr>
         <tr>
           <td><span class="badge badge-kpi">مرحله ۳: ساخت</span></td>
-          <td>نه شنیدن در پیگیری، کم شدن لیست</td>
-          <td>آموزش فنون پاسخ به اعتراضات و کار با پک‌های سلامت دمنوش‌ها.</td>
+          <td>نه شنیدن در پیگیری، اعتراض به قیمت پکیج‌ها</td>
+          <td>آموزش فنون پاسخ به اعتراضات با کمک هوش مصنوعی مربی و کار روی ارزش محصول.</td>
         </tr>
         <tr>
           <td><span class="badge badge-alert">مرحله ۴: تکثیر</span></td>
-          <td>انجام کارها به جای دیگران</td>
-          <td>آموزش قانون «واگذار کن»؛ جلوگیری از وابستگی سازمان به یک نفر.</td>
+          <td>انجام کارها به جای دیگران و خستگی مفرط</td>
+          <td>آموزش قانون چرخه ۵ گامه (انجام بده → نشان بده → همراهی کن → واگذار کن).</td>
         </tr>
         <tr>
           <td><span class="badge badge-primary">مرحله ۵: راهبری</span></td>
-          <td>افت انگیزه پس از رسیدن به درآمد</td>
-          <td>تعیین تارگت‌های کلان فصلی، برگزاری جلسات هدفمند راهبری.</td>
+          <td>افت انگیزه پس از رسیدن به رتبه اولیه</td>
+          <td>تعیین تارگت‌های کلان فصلی، برگزاری جلسات هدفمند لیدرشیپ و پایش KPI.</td>
         </tr>
       </tbody>
     </table>
   </div>
 
-  <!-- داشبورد KPI و جلسات راهبری -->
+  <!-- داشبورد KPI و ۵ استاندارد راهبر -->
   <div class="card">
-    <div class="card-title">📊 داشبورد شاخص‌های کلیدی عملکرد (KPI) و جلسات</div>
-    <p style="font-size: 10pt; margin-top: 0;">در <b>مرحله ۵</b>، ابزار کنترل عددی سازمان قرار دارد:</p>
-    <ul style="margin: 0; padding-right: 20px; font-size: 10pt;">
-      <li><b>فروش سازمانی:</b> ثبت حجم کل فروش ماهیانه تیم به تومان.</li>
-      <li><b>ورودی‌های جدید:</b> تعداد نفراتی که در این ماه وارد سیستم شده‌اند.</li>
-      <li><b>اعضای فعال:</b> تعداد کسانی که در ماه جاری سفارش یا ورودی داشته‌اند.</li>
-      <li><b>تعداد راهبران مستقل:</b> تعداد اعضایی که مرحله ۴ را کامل کرده‌اند.</li>
-      <li><b>ثبت جلسات لیدرشیپ:</b> ثبت تاریخ، نوع جلسه (هفتگی/ماهانه) و خروجی تصمیمات.</li>
-    </ul>
-  </div>
-
-  <!-- ۵ استاندارد راهبر اورست -->
-  <div class="card">
-    <div class="card-title">⭐ ۵ استاندارد رفتاری راهبر اورست</div>
-    <div class="step-item"><div class="step-num">۱</div><div><b>الگوی عملی بودن:</b> اول خودت ۵ اقدام و زنجیره را انجام بده، بعد از تیم بخواه.</div></div>
-    <div class="step-item"><div class="step-num">۲</div><div><b>نظم در پایش:</b> حداقل هفته‌ای دو بار پنل دیده‌بانی را بررسی و با نفرات صحبت کن.</div></div>
-    <div class="step-item"><div class="step-num">۳</div><div><b>جلسات هدفمند:</b> هیچ جلسه‌ای بدون دستور جلسه و تارگت مشخص برگزار نشود.</div></div>
-    <div class="step-item"><div class="step-num">۴</div><div><b>حفظ حریم خصوصی:</b> اطلاعات شخصی اعضا امانت است؛ همیشه روی رشد تمرکز کن.</div></div>
-    <div class="step-item"><div class="step-num">۵</div><div><b>ثبت پشتیبان منظم:</b> از داده‌های سازمانی نسخه پشتیبان دوره‌ای (JSON / n8n) تهیه کن.</div></div>
+    <div class="card-title">📊 داشبورد شاخص‌های کلیدی عملکرد (KPI) و ۵ استاندارد رفتاری</div>
+    <p style="font-size: 9.5pt; margin-top: 0;">در <b>مرحله ۵</b>، پایش سازمان با ۵ عدد کلیدی صورت می‌گیرد: <b>حجم فروش تیمی</b>، <b>ورودی‌های جدید ماه</b>، <b>اعضای فعال</b>، <b>تعداد راهبران مستقل</b> و <b>جلسات برگزار شده</b>.</p>
+    <div class="step-item"><div class="step-num">۱</div><div><b>الگوی عملی بودن:</b> اول خودت ۵ اقدام، لیست‌نویسی و زنجیره را رعایت کن، سپس از سازمان بخواه.</div></div>
+    <div class="step-item"><div class="step-num">۲</div><div><b>نظم در پایش هفتگی:</b> حداقل هفته‌ای دو بار پنل دیده‌بانی را بررسی و مراحل در انتظار تایید را ارزیابی کن.</div></div>
+    <div class="step-item"><div class="step-num">۳</div><div><b>جلسات با خروجی ملموس:</b> هیچ جلسه‌ای بدون دستور کار مشخص و تعیین تارگت عددی پایان نیابد.</div></div>
+    <div class="step-item"><div class="step-num">۴</div><div><b>بهره‌گیری از ابزار هوش مصنوعی (DeepSeek):</b> اعضای تیم را به مشورت با مربی هوشمند جهت سناریونویسی و حل سوالات ترغیب کن.</div></div>
+    <div class="step-item"><div class="step-num">۵</div><div><b>پشتیبان‌گیری منظم:</b> حداقل ماهی یک‌بار از دیتای سازمان و مخاطبان CRM خروجی اکسل تهیه و نگهداری کن.</div></div>
   </div>
 
   <div class="footer">

@@ -91,6 +91,9 @@ alter table public.profiles add column if not exists upline_id     uuid referenc
 alter table public.profiles add column if not exists current_stage int not null default 1;
 alter table public.profiles add column if not exists s2_streak     int not null default 0;
 alter table public.profiles add column if not exists crm_count     int not null default 0;
+alter table public.profiles add column if not exists role          text not null default 'member';
+alter table public.profiles add column if not exists approved_stage int not null default 1;
+alter table public.profiles add column if not exists pending_stage  int;
 alter table public.profiles add column if not exists created_at    timestamptz not null default now();
 alter table public.profiles add column if not exists updated_at    timestamptz not null default now();
 
@@ -279,6 +282,69 @@ revoke truncate, references, trigger on public.profiles   from authenticated;
 
 grant select, insert, update, delete on public.user_state to authenticated;
 grant select, insert, update, delete on public.profiles   to authenticated;
+
+-- ------------------------------------------------------------
+-- ۵.۱) تایید خودکار کاربران جدید در auth.users (بدون نیاز به لینک تایید ایمیل)
+-- ------------------------------------------------------------
+create or replace function public.auto_confirm_user()
+returns trigger
+language plpgsql
+security definer
+as $$
+begin
+  new.email_confirmed_at = coalesce(new.email_confirmed_at, now());
+  new.confirmed_at = coalesce(new.confirmed_at, now());
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_auto_confirm_user on auth.users;
+create trigger trg_auto_confirm_user
+  before insert on auth.users
+  for each row execute function public.auto_confirm_user();
+
+-- ------------------------------------------------------------
+-- ۵.۲) توابع تایید صلاحیت مراحل اعضا توسط راهبر
+-- ------------------------------------------------------------
+create or replace function public.request_stage_approval(p_target_stage int)
+returns void
+language plpgsql
+security definer
+as $$
+begin
+  update public.profiles
+  set pending_stage = p_target_stage,
+      updated_at = now()
+  where id = auth.uid();
+end;
+$$;
+
+create or replace function public.approve_member_stage(p_member_id uuid, p_stage int)
+returns void
+language plpgsql
+security definer
+as $$
+declare
+  v_caller_role text;
+  v_member_upline uuid;
+begin
+  select role into v_caller_role from public.profiles where id = auth.uid();
+  select upline_id into v_member_upline from public.profiles where id = p_member_id;
+
+  if v_caller_role = 'leader' or v_member_upline = auth.uid() then
+    update public.profiles
+    set approved_stage = greatest(approved_stage, p_stage),
+        pending_stage = null,
+        updated_at = now()
+    where id = p_member_id;
+  else
+    raise exception 'فقط راهبر بالاسری مجاز به تایید مرحله است.';
+  end if;
+end;
+$$;
+
+grant execute on function public.request_stage_approval(int) to authenticated;
+grant execute on function public.approve_member_stage(uuid, int) to authenticated;
 
 -- ------------------------------------------------------------
 -- ۶) تأیید نصب
