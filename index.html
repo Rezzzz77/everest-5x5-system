@@ -65,8 +65,9 @@
           <p class="text-[10px] text-slate-400 mt-1">فقط برای پروفایل شخصی؛ در سرور با سطح دسترسی خودت ذخیره می‌شود.</p>
         </div>
         <div>
-          <label class="text-xs text-slate-300 font-bold">نام حامی / راهبر شما</label>
-          <input id="reg-upline" type="text" placeholder="نام معرف یا راهبر تیم" class="w-full mt-1 bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-white focus:border-blue-500 focus:outline-none" />
+          <label class="text-xs text-slate-300 font-bold">ایمیل یا نام راهبر / معرف شما (جهت اتصال به تیم)</label>
+          <input id="reg-upline" type="text" placeholder="مثال: leader@gmail.com یا نام راهبر" class="w-full mt-1 bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-white focus:border-blue-500 focus:outline-none" />
+          <p class="text-[10px] text-slate-400 mt-1">با وارد کردن ایمیل راهبر، وضعیت پیشرفت شما به صورت خودکار در داشبورد تیم ثبت می‌شود.</p>
         </div>
         <button onclick="verifyOtpAndStart()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold py-3 rounded-xl text-xs shadow-lg transition">
           ورود و استارت ۷۲ ساعت اول 🚀
@@ -242,6 +243,33 @@
             <button onclick="addDuplicationMember()" class="bg-purple-600 hover:bg-purple-500 text-white px-3.5 py-2 rounded-xl text-xs font-bold">+ افزودن عضو</button>
           </div>
           <div id="duplication-members-container" class="space-y-2"></div>
+        </div>
+
+        <!-- پایش آنلاین اعضای سازمان برای بالاسری -->
+        <div class="bg-slate-800/90 border border-purple-500/50 rounded-2xl p-3.5 space-y-3 shadow-lg">
+          <div class="flex justify-between items-center border-b border-slate-700/80 pb-2">
+            <div>
+              <span class="text-[10px] bg-purple-600 text-white px-2 py-0.5 rounded-full font-bold">دیده‌بانی آنلاین</span>
+              <h3 class="text-xs font-extrabold text-purple-300 mt-1">👥 پایش اعضای تیم من (زنده و آنلاین)</h3>
+            </div>
+            <button onclick="refreshOnlineTeam()" class="text-[10px] bg-purple-900/60 hover:bg-purple-800 text-purple-200 px-2.5 py-1 rounded-xl border border-purple-500/40 font-bold flex items-center gap-1 transition">
+              <span>⟳</span> بروزرسانی
+            </button>
+          </div>
+
+          <!-- لینک دعوت اختصاصی راهبر -->
+          <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-700 space-y-1.5">
+            <div class="flex justify-between items-center text-[10px]">
+              <span class="text-slate-300 font-bold">🔗 لینک اختصاصی شما برای عضویت مستقیم در تیم:</span>
+              <button onclick="copyMyInviteLink()" id="copy-invite-btn" class="text-purple-400 hover:text-purple-300 font-bold">کپی لینک</button>
+            </div>
+            <div id="my-invite-link-preview" class="text-[9px] font-mono text-slate-400 bg-slate-950 p-2 rounded-lg truncate text-left" dir="ltr"></div>
+          </div>
+
+          <!-- کانتینر نمایش اعضا و مراحل آن‌ها -->
+          <div id="online-team-container" class="space-y-2 max-h-64 overflow-y-auto pr-0.5">
+            <div class="text-[11px] text-slate-400 text-center py-3">در حال بارگذاری اعضای تیم…</div>
+          </div>
         </div>
 
         <!-- معیار عبور مرحله ۴ -->

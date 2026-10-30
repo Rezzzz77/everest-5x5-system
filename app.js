@@ -5,7 +5,8 @@
 
 import {
   loadFromStorage, saveToStorage, syncState, loadFromCloud, isSupabaseConfigured, testConnection,
-  clearStorage, getDefaultData, saveProfile, sendBackupToN8n, exportStateAsJson, importStateFromJson
+  clearStorage, getDefaultData, saveProfile, sendBackupToN8n, exportStateAsJson, importStateFromJson,
+  loadTeamMembers
 } from './src/db.js';
 import {
   getSupabaseConfig, saveSupabaseConfig, clearSupabaseConfig, validateConfig,
@@ -80,7 +81,15 @@ function saveAll() {
   cloudTimer = setTimeout(async () => {
     try {
       const r = await syncState(appState);
-      if (r.cloud?.ok) cloudLabel('ok');
+      if (r.cloud?.ok) {
+        cloudLabel('ok');
+        saveProfile({
+          full_name: appState.user?.name,
+          current_stage: getHighestUnlockedStage(appState),
+          s2_streak: Number(appState.s2Streak) || 0,
+          crm_count: (appState.crm || []).length
+        }).catch(() => {});
+      }
       else if (r.cloud?.reason === 'no-session' || r.cloud?.reason === 'not-configured') cloudLabel('idle');
       else cloudLabel('err');
     } catch (_) { cloudLabel('err'); }
@@ -428,6 +437,10 @@ async function verifyOtpAndStart() {
   const profileResult = await saveProfile({
     full_name: appState.user.name,
     upline: appState.user.upline,
+    upline_email: (upline && upline.includes('@')) ? upline.trim().toLowerCase() : '',
+    current_stage: getHighestUnlockedStage(appState),
+    s2_streak: Number(appState.s2Streak) || 0,
+    crm_count: (appState.crm || []).length,
     national_id: nationalIdToSave
   });
   // اگر جدول/شبکه در دسترس نبود، کد ملی به‌صورت موقت فقط محلی می‌ماند؛
@@ -766,6 +779,122 @@ function renderStage4() {
       </label>
     `).join('');
   }
+  renderOnlineTeam();
+}
+
+/* ---------------- دیده‌بانی آنلاین اعضای تیم برای بالاسری ---------------- */
+let onlineTeamCache = [];
+
+async function renderOnlineTeam() {
+  const container = document.getElementById('online-team-container');
+  const preview = document.getElementById('my-invite-link-preview');
+  if (!container) return;
+
+  const user = appState.user;
+  const userEmail = (user?.email || '').trim().toLowerCase();
+
+  // تولید لینک دعوت
+  if (preview) {
+    const base = window.location.origin + window.location.pathname;
+    const inviteUrl = userEmail ? `${base}?upline=${encodeURIComponent(userEmail)}` : `${base}?upline=${encodeURIComponent(user?.name || '')}`;
+    preview.innerText = inviteUrl;
+  }
+
+  // در حالت بدون حساب یا آفلاین:
+  if (!user || user.local || !loadSession() || !isSupabaseConfigured()) {
+    container.innerHTML = `
+      <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-700/60 text-center space-y-1.5">
+        <div class="text-[11px] text-amber-300 font-bold">حالت آنلاین غیرفعال است</div>
+        <p class="text-[10px] text-slate-400">برای پایش آنلاین و نظارت بر مراحل اعضای تیم، با حساب آنلاین خود وارد شوید.</p>
+      </div>
+    `;
+    return;
+  }
+
+  if (onlineTeamCache.length === 0) {
+    container.innerHTML = '<div class="text-[11px] text-slate-400 text-center py-2">در حال بارگذاری اعضای تیم… ⏳</div>';
+    try {
+      onlineTeamCache = await loadTeamMembers();
+    } catch (_) {
+      onlineTeamCache = [];
+    }
+  }
+
+  if (!onlineTeamCache || onlineTeamCache.length === 0) {
+    container.innerHTML = `
+      <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-700/60 text-center space-y-1.5">
+        <div class="text-[11px] text-slate-300 font-bold">هنوز عضوی به تیم شما متصل نشده است.</div>
+        <p class="text-[10px] text-slate-400">لینک اختصاصی بالا را برای اعضای تیم خود بفرستید تا با ثبت‌نام، پیشرفت مراحلشان به صورت زنده اینجا نمایش داده شود.</p>
+      </div>
+    `;
+    return;
+  }
+
+  const stageLabels = {
+    1: { title: 'مرحله ۱: شروع', badge: 'bg-blue-600/30 text-blue-300 border-blue-500/40' },
+    2: { title: 'مرحله ۲: حرکت', badge: 'bg-emerald-600/30 text-emerald-300 border-emerald-500/40' },
+    3: { title: 'مرحله ۳: ساخت', badge: 'bg-orange-600/30 text-orange-300 border-orange-500/40' },
+    4: { title: 'مرحله ۴: تکثیر', badge: 'bg-purple-600/30 text-purple-300 border-purple-500/40' },
+    5: { title: 'مرحله ۵: راهبری', badge: 'bg-amber-500/30 text-amber-300 border-amber-400/40' }
+  };
+
+  container.innerHTML = onlineTeamCache.map((m) => {
+    const stg = stageLabels[m.current_stage] || stageLabels[1];
+    const updatedTime = m.updated_at ? new Date(m.updated_at).toLocaleDateString('fa-IR') : 'نامشخص';
+    return `
+      <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-700 space-y-2">
+        <div class="flex justify-between items-start">
+          <div>
+            <div class="font-bold text-xs text-slate-100">${escapeHtml(m.full_name || 'عضو بدون نام')}</div>
+            <div class="text-[10px] text-slate-400 font-mono mt-0.5" dir="ltr">${escapeHtml(m.email || '')}</div>
+          </div>
+          <span class="text-[10px] px-2 py-0.5 rounded-full font-bold border ${stg.badge}">${stg.title}</span>
+        </div>
+        <div class="grid grid-cols-3 gap-1.5 text-center text-[10px] bg-slate-950/60 p-2 rounded-lg border border-slate-800">
+          <div>
+            <span class="text-slate-400 block text-[9px]">سطح فعلی</span>
+            <span class="font-bold text-slate-200">مرحله ${m.current_stage || 1}</span>
+          </div>
+          <div>
+            <span class="text-slate-400 block text-[9px]">زنجیره ۷ روزه</span>
+            <span class="font-bold text-emerald-400">🔥 ${m.s2_streak || 0} روز</span>
+          </div>
+          <div>
+            <span class="text-slate-400 block text-[9px]">مخاطبان CRM</span>
+            <span class="font-bold text-sky-400">👤 ${m.crm_count || 0} نفر</span>
+          </div>
+        </div>
+        <div class="text-[9px] text-slate-500 text-left" dir="ltr">آخرین فعالیت: ${escapeHtml(updatedTime)}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+async function refreshOnlineTeam() {
+  const container = document.getElementById('online-team-container');
+  if (container) container.innerHTML = '<div class="text-[11px] text-slate-400 text-center py-2">در حال به‌روزرسانی زنده… ⏳</div>';
+  try {
+    onlineTeamCache = await loadTeamMembers();
+  } catch (_) {
+    onlineTeamCache = [];
+  }
+  renderOnlineTeam();
+}
+
+function copyMyInviteLink() {
+  const preview = document.getElementById('my-invite-link-preview');
+  const btn = document.getElementById('copy-invite-btn');
+  if (!preview) return;
+  const link = preview.innerText;
+  try {
+    navigator.clipboard.writeText(link);
+    if (btn) {
+      btn.innerText = 'کپی شد! ✓';
+      setTimeout(() => { if (btn) btn.innerText = 'کپی لینک'; }, 2000);
+    }
+  } catch (_) {
+    alert(link);
+  }
 }
 
 function addDuplicationMember() {
@@ -1026,6 +1155,14 @@ function initApp() {
 
   if (!appState.user) {
     clearAuthFields();
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const ref = params.get('upline') || params.get('ref');
+      const uplineInput = document.getElementById('reg-upline');
+      if (ref && uplineInput) {
+        uplineInput.value = decodeURIComponent(ref).trim();
+      }
+    } catch (_) {}
     document.getElementById('auth-screen').classList.remove('hidden');
     showAuthStep(1);
     return;
@@ -1047,6 +1184,7 @@ function initApp() {
   renderStage5();
   renderKpi();
   renderCoachCard();
+  renderOnlineTeam();
   updateCloudBadge();
   update72HourTimer();
   if (!timerId) timerId = setInterval(update72HourTimer, 1000);
@@ -1136,6 +1274,8 @@ Object.assign(window, {
   exportBackupFile,
   triggerImportBackup,
   handleBackupFileSelect,
+  refreshOnlineTeam,
+  copyMyInviteLink,
   saveAll,
   renderCoachCard
 });

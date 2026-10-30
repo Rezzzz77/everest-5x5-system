@@ -213,12 +213,22 @@ export async function saveProfile(profile = {}, rawCfg = getSupabaseConfig()) {
 
   const h = await headers();
   if (!h) return { ok: false, reason: 'no-session' };
-  const userId = currentUser()?.id;
+  const user = currentUser();
+  const userId = user?.id;
   if (!userId) return { ok: false, reason: 'no-session' };
 
   const row = { id: userId };
+  if (user?.email) row.email = String(user.email).trim().toLowerCase();
   if (profile.full_name != null) row.full_name = String(profile.full_name).slice(0, 200);
   if (profile.upline != null) row.upline = String(profile.upline).slice(0, 200);
+  if (profile.upline_email != null) {
+    row.upline_email = String(profile.upline_email).trim().toLowerCase().slice(0, 200);
+  } else if (profile.upline && profile.upline.includes('@')) {
+    row.upline_email = String(profile.upline).trim().toLowerCase().slice(0, 200);
+  }
+  if (profile.current_stage != null) row.current_stage = Number(profile.current_stage) || 1;
+  if (profile.s2_streak != null) row.s2_streak = Number(profile.s2_streak) || 0;
+  if (profile.crm_count != null) row.crm_count = Number(profile.crm_count) || 0;
   // فقط اگر مقدار واقعی آمده باشد؛ در غیر این صورت مقدار قبلی پاک نمی‌شود.
   if (profile.national_id) row.national_id = String(profile.national_id).slice(0, 40);
 
@@ -235,6 +245,39 @@ export async function saveProfile(profile = {}, rawCfg = getSupabaseConfig()) {
     return { ok: false, reason: res.status === 401 || res.status === 403 ? 'auth' : 'http', status: res.status, detail: text };
   } catch (e) {
     return { ok: false, reason: 'network', detail: String(e && e.message || e) };
+  }
+}
+
+/**
+ * بارگذاری آنلاین اعضای تیم زیرمجموعه برای بالاسری
+ */
+export async function loadTeamMembers(rawCfg = getSupabaseConfig()) {
+  const cfg = normalizeConfig(rawCfg);
+  if (!cfgValid(cfg)) return [];
+
+  const h = await headers();
+  if (!h) return [];
+  const user = currentUser();
+  const userId = user?.id;
+  const userEmail = (user?.email || '').trim().toLowerCase();
+  if (!userId && !userEmail) return [];
+
+  try {
+    let filter = '';
+    if (userId && userEmail) {
+      filter = `or=(upline_id.eq.${userId},upline_email.ilike.${encodeURIComponent(userEmail)})`;
+    } else if (userId) {
+      filter = `upline_id=eq.${userId}`;
+    } else {
+      filter = `upline_email=ilike.${encodeURIComponent(userEmail)}`;
+    }
+    const url = `${cfg.url}/rest/v1/profiles?${filter}&select=id,full_name,email,current_stage,s2_streak,crm_count,updated_at&order=updated_at.desc`;
+    const res = await fetch(url, { headers: h, cache: 'no-store' });
+    if (!res.ok) return [];
+    return await res.json();
+  } catch (e) {
+    console.error('خطا در دریافت اعضای تیم:', e);
+    return [];
   }
 }
 
