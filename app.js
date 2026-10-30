@@ -407,61 +407,105 @@ async function requestOtp(ev) {
 }
 
 async function handlePasswordAuth() {
-  const email = document.getElementById('reg-email').value.trim();
-  const password = document.getElementById('reg-password').value.trim();
+  const emailInput = document.getElementById('reg-email');
+  const passwordInput = document.getElementById('reg-password');
+  const btn = document.getElementById('btn-password-auth');
+  const email = (emailInput?.value || '').trim();
+  const password = (passwordInput?.value || '').trim();
+
   if (!isValidEmail(email)) return authMsg(1, 'err', 'ایمیل معتبر نیست.');
   if (!password || password.length < 6) return authMsg(1, 'err', 'رمز عبور باید حداقل ۶ کاراکتر باشد.');
 
+  const originalBtnText = btn ? btn.innerHTML : 'ورود / ثبت‌نام آنی با رمز عبور 🚀';
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = 'در حال بررسی و ورود… ⏳';
+    btn.classList.add('opacity-75', 'cursor-wait');
+  }
   authMsg(1, 'info', 'در حال ورود / ثبت‌نام آنی… ⏳');
 
-  let r = await signInWithPassword(email, password);
-  if (!r.ok) {
-    const upRes = await signUpWithPassword(email, password);
-    if (upRes.ok) {
-      r = await signInWithPassword(email, password);
-    }
-  }
-
-  if (!r.ok) {
-    return authMsg(1, 'err', r.message || 'خطا در ورود. لطفاً رمز عبور را بررسی کنید.');
-  }
-
-  const u = currentUser(r.session);
-  if (!u) return authMsg(1, 'err', 'نشست ساخته نشد. دوباره تلاش کنید.');
-
-  const previousOwner = appState.user?.id || appState.ownerId || '';
-  const sameUser = Boolean(previousOwner && previousOwner === u.id && !appState.user?.local);
-  if (previousOwner && !sameUser) appState = getDefaultData();
-
-  appState.ownerId = u.id;
-  appState.user = {
-    id: u.id,
-    email: u.email,
-    name: u.name || 'عضو تیم اورست',
-    upline: u.upline || 'راهبر تیم اورست'
-  };
-  if (!appState.startTime) appState.startTime = Date.now();
-
-  await saveProfile({
-    full_name: appState.user.name,
-    upline: appState.user.upline,
-    current_stage: getHighestUnlockedStage(appState),
-    s2_streak: Number(appState.s2Streak) || 0,
-    crm_count: (appState.crm || []).length
-  });
-
   try {
-    const cloud = await loadFromCloud();
-    if (cloud) {
-      appState = mergeWithDefaults(cloud);
-      appState.user = { id: u.id, email: u.email, name: appState.user?.name || u.name, upline: appState.user?.upline || u.upline };
+    let r = await signInWithPassword(email, password);
+    if (!r.ok) {
+      const upRes = await signUpWithPassword(email, password);
+      if (upRes.ok) {
+        if (upRes.session?.access_token) {
+          r = upRes;
+        } else {
+          r = await signInWithPassword(email, password);
+        }
+      } else {
+        const msg = String(upRes.message || '').toLowerCase();
+        if (upRes.status === 422 || msg.includes('already registered')) {
+          r = { ok: false, message: 'این حساب قبلاً با رمز دیگری ثبت شده است. اگر رمز را فراموش کرده‌اید، از دکمه «ارسال لینک به ایمیل» استفاده کنید.' };
+        } else {
+          r = upRes;
+        }
+      }
     }
-  } catch (_) {}
-  saveToStorage(appState);
 
-  document.getElementById('auth-screen').classList.add('hidden');
-  initApp();
-  authMsg(1, 'ok', 'ورود با موفقیت انجام شد! خوش آمدید. 🎉');
+    if (!r.ok) {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = originalBtnText;
+        btn.classList.remove('opacity-75', 'cursor-wait');
+      }
+      return authMsg(1, 'err', r.message || 'خطا در ورود. لطفاً رمز عبور را بررسی کنید.');
+    }
+
+    const u = currentUser(r.session);
+    if (!u) {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = originalBtnText;
+        btn.classList.remove('opacity-75', 'cursor-wait');
+      }
+      return authMsg(1, 'err', 'نشست ساخته نشد. دوباره تلاش کنید.');
+    }
+
+    const previousOwner = appState.user?.id || appState.ownerId || '';
+    const sameUser = Boolean(previousOwner && previousOwner === u.id && !appState.user?.local);
+    if (previousOwner && !sameUser) appState = getDefaultData();
+
+    appState.ownerId = u.id;
+    appState.user = {
+      id: u.id,
+      email: u.email,
+      name: u.name || 'عضو تیم اورست',
+      upline: u.upline || 'راهبر تیم اورست'
+    };
+    if (!appState.startTime) appState.startTime = Date.now();
+
+    try {
+      await saveProfile({
+        full_name: appState.user.name,
+        upline: appState.user.upline,
+        current_stage: getHighestUnlockedStage(appState),
+        s2_streak: Number(appState.s2Streak) || 0,
+        crm_count: (appState.crm || []).length
+      });
+    } catch (_) {}
+
+    try {
+      const cloud = await loadFromCloud();
+      if (cloud) {
+        appState = mergeWithDefaults(cloud);
+        appState.user = { id: u.id, email: u.email, name: appState.user?.name || u.name, upline: appState.user?.upline || u.upline };
+      }
+    } catch (_) {}
+    saveToStorage(appState);
+
+    document.getElementById('auth-screen')?.classList.add('hidden');
+    initApp();
+    authMsg(1, 'ok', 'ورود با موفقیت انجام شد! خوش آمدید. 🎉');
+  } catch (err) {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalBtnText;
+      btn.classList.remove('opacity-75', 'cursor-wait');
+    }
+    authMsg(1, 'err', 'خطا در اتصال: ' + (err?.message || 'مشکل موقت شبکه'));
+  }
 }
 
 async function verifyOtpAndStart() {
@@ -1731,7 +1775,9 @@ function initApp() {
 // ثبت Service Worker برای PWA
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch(() => {});
+    navigator.serviceWorker.register('./sw.js').then(reg => {
+      reg.update().catch(() => {});
+    }).catch(() => {});
   });
 }
 
