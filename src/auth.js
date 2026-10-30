@@ -358,10 +358,11 @@ export async function signUpWithPassword(email, password, metadata = {}, cfg = g
     if (!res.ok) {
       return { ok: false, status: res.status, message: data?.error_description || data?.msg || 'خطا در ثبت‌نام.' };
     }
-    if (data.session) {
-      saveSession(data.session);
+    const session = data.session || (data.access_token ? data : null);
+    if (session) {
+      saveSession(session);
     }
-    return { ok: true, user: data.user || data, session: data.session };
+    return { ok: true, user: data.user || data, session };
   } catch (err) {
     return { ok: false, reason: 'network', message: 'خطای شبکه در اتصال به سرور.' };
   }

@@ -41,14 +41,14 @@
       <div id="auth-step-email" class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-inner">
         <div>
           <label class="text-xs text-slate-300 font-bold">ایمیل شما *</label>
-          <input id="reg-email" type="email" dir="ltr" autocomplete="email" placeholder="you@example.com" class="w-full mt-1 bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-white text-left focus:border-blue-500 focus:outline-none" />
+          <input id="reg-email" type="email" dir="ltr" autocomplete="email" placeholder="you@example.com" onkeydown="if(event.key==='Enter') document.getElementById('reg-password').focus()" class="w-full mt-1 bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-white text-left focus:border-blue-500 focus:outline-none" />
         </div>
         <div>
           <label class="text-xs text-slate-300 font-bold">رمز عبور (ورود آنی بدون معطلی ایمیل) *</label>
-          <input id="reg-password" type="password" dir="ltr" placeholder="حداقل ۶ کاراکتر" class="w-full mt-1 bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-white text-left focus:border-emerald-500 focus:outline-none font-mono" />
+          <input id="reg-password" type="password" dir="ltr" placeholder="حداقل ۶ کاراکتر" onkeydown="if(event.key==='Enter') handlePasswordAuth()" class="w-full mt-1 bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-white text-left focus:border-emerald-500 focus:outline-none font-mono" />
           <p class="text-[10px] text-emerald-400 mt-1">✓ ورود آنی بدون معطلی و بدون نیاز به دریافت ایمیل</p>
         </div>
-        <button onclick="handlePasswordAuth()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold py-3 rounded-xl text-xs shadow-lg transition">
+        <button id="btn-password-auth" onclick="handlePasswordAuth()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold py-3 rounded-xl text-xs shadow-lg transition">
           ورود / ثبت‌نام آنی با رمز عبور 🚀
         </button>
         <button onclick="requestOtp(event)" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2 rounded-xl text-xs transition border border-slate-700">
@@ -669,6 +669,6 @@
 
   </div>
 
-  <script type="module" src="app.js"></script>
+  <script type="module" src="./app.js?v=0.9.1"></script>
 </body>
 </html>

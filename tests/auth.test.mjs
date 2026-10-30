@@ -184,3 +184,42 @@ test('signUpWithPassword: رمز عبور کوتاه رد می‌شود', async 
   assert.equal(r.ok, false);
   assert.equal(r.reason, 'weak-password');
 });
+
+test('signUpWithPassword: توکن‌های بازگشتی روت در نشست ذخیره می‌شوند', async () => {
+  const hadFetch = globalThis.fetch;
+  try {
+    globalThis.fetch = async () => ({
+      ok: true,
+      json: async () => ({
+        access_token: 'fake-jwt',
+        token_type: 'bearer',
+        expires_in: 3600,
+        user: { id: 'u1', email: 'test@example.com' }
+      })
+    });
+    const r = await signUpWithPassword('test@example.com', 'password123');
+    assert.equal(r.ok, true);
+    assert.equal(r.session?.access_token, 'fake-jwt');
+    assert.equal(r.user?.email, 'test@example.com');
+  } finally {
+    globalThis.fetch = hadFetch;
+  }
+});
+
+test('signInWithPassword: موفق نشست را برمی‌گرداند', async () => {
+  const hadFetch = globalThis.fetch;
+  try {
+    globalThis.fetch = async () => ({
+      ok: true,
+      json: async () => ({
+        access_token: 'login-jwt',
+        user: { id: 'u2', email: 'test2@example.com' }
+      })
+    });
+    const r = await signInWithPassword('test2@example.com', 'password123');
+    assert.equal(r.ok, true);
+    assert.equal(r.session?.access_token, 'login-jwt');
+  } finally {
+    globalThis.fetch = hadFetch;
+  }
+});

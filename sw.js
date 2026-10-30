@@ -1,4 +1,4 @@
-const CACHE = 'everest-5x5-v9';
+const CACHE = 'everest-5x5-v10';
 
 const PRECACHE = [
   './',
@@ -10,6 +10,7 @@ const PRECACHE = [
   './src/defaults.js',
   './src/auth.js',
   './src/coach.js',
+  './src/ai.js',
   './src/stages.js',
   './src/utils.js'
 ];
@@ -34,25 +35,30 @@ self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
 
-  // درخواست‌های Supabase همیشه آنلاین
-  if (req.url.includes('supabase.co')) return;
+  // درخواست‌های Supabase و DeepSeek همیشه آنلاین
+  if (req.url.includes('supabase.co') || req.url.includes('deepseek.com')) return;
 
-  // صفحه‌ها: شبکه اول. اگر نسخه قدیمی HTML/JS از کش بیاید، لینک ورود
-  // (که توکن را در hash دارد) با کد قدیمی پردازش می‌شود و کاربر وارد نمی‌شود.
+  // صفحه‌ها و اسکریپت‌ها: شبکه اول. اگر نسخه جدید در دسترس است فوراً اجرا شود،
+  // و فقط در صورت آفلاین بودن از کش استفاده شود.
   const isHTML = req.mode === 'navigate' || (req.headers.get('accept') || '').includes('text/html');
-  if (isHTML) {
+  const isScript = req.destination === 'script' || req.url.endsWith('.js') || req.url.includes('.js?');
+
+  if (isHTML || isScript) {
     event.respondWith(
       fetch(req, { cache: 'no-cache' })
         .then(res => {
-          const copy = res.clone();
-          caches.open(CACHE).then(cache => cache.put(req, copy)).catch(() => {});
+          if (res.ok) {
+            const copy = res.clone();
+            caches.open(CACHE).then(cache => cache.put(req, copy)).catch(() => {});
+          }
           return res;
         })
-        .catch(() => caches.match(req).then(c => c || caches.match('./index.html')))
+        .catch(() => caches.match(req).then(c => c || (isHTML ? caches.match('./index.html') : null)))
     );
     return;
   }
 
+  // سایر منابع (تصاویر، آیکون‌ها و ...): کش اول با پس‌زمینه به‌روزرسانی
   event.respondWith(
     caches.match(req).then(cached => {
       const network = fetch(req)
