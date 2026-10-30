@@ -10,8 +10,12 @@ import {
 } from './src/db.js';
 import {
   getSupabaseConfig, saveSupabaseConfig, clearSupabaseConfig, validateConfig,
-  getN8nConfig, saveN8nConfig, validateN8nConfig
+  getN8nConfig, saveN8nConfig, validateN8nConfig,
+  getDeepSeekConfig, saveDeepSeekConfig, clearDeepSeekConfig, validateDeepSeekConfig, isDeepSeekConfigured
 } from './src/config.js';
+import {
+  callDeepSeekChat, testDeepSeekConnection, buildInvitePrompt, buildObjectionPrompt, buildCoachReviewPrompt
+} from './src/ai.js';
 import { sendOtp, verifyOtp, signOut, loadSession, currentUser, isValidEmail, authErrorText, consumeAuthRedirect } from './src/auth.js';
 import { generateCoachCard, getStageTheme } from './src/coach.js';
 import { getHighestUnlockedStage, isStageUnlocked } from './src/stages.js';
@@ -1318,9 +1322,240 @@ function requestNotificationPermission() {
   });
 }
 
+// ===== ماژول مربی هوشمند DeepSeek AI =====
+let aiChatHistory = [];
+
+function openAIChatModal() {
+  const modal = document.getElementById('ai-chat-modal');
+  if (modal) modal.classList.remove('hidden');
+  const cfg = getDeepSeekConfig();
+  const input = document.getElementById('ai-api-key');
+  if (input && cfg.apiKey) input.value = cfg.apiKey;
+  updateAIStatusIndicator();
+}
+
+function closeAIChatModal() {
+  const modal = document.getElementById('ai-chat-modal');
+  if (modal) modal.classList.add('hidden');
+}
+
+function toggleAIConfigSection() {
+  const sec = document.getElementById('ai-config-section');
+  if (sec) sec.classList.toggle('hidden');
+}
+
+function updateAIStatusIndicator() {
+  const indicator = document.getElementById('ai-status-indicator');
+  const configured = isDeepSeekConfigured();
+  if (indicator) {
+    if (configured) {
+      indicator.innerText = '🟢 متصل به DeepSeek — آماده پاسخ‌گویی هوشمند';
+      indicator.className = 'text-[9px] text-emerald-300 mt-0.5';
+    } else {
+      indicator.innerText = '🟡 برای فعال‌سازی، کلید DeepSeek API را در ⚙️ وارد کنید';
+      indicator.className = 'text-[9px] text-amber-300 mt-0.5';
+    }
+  }
+}
+
+function saveDeepSeekKey(source = 'modal') {
+  const inputId = source === 'cloud' ? 'cloud-deepseek-key' : 'ai-api-key';
+  const statusId = source === 'cloud' ? 'cloud-deepseek-status' : 'ai-key-status';
+  const input = document.getElementById(inputId);
+  const statusEl = document.getElementById(statusId);
+  const key = (input?.value || '').trim();
+
+  const errs = validateDeepSeekConfig({ apiKey: key });
+  if (errs.length > 0) {
+    if (statusEl) {
+      statusEl.innerText = errs.join(' ');
+      statusEl.className = 'text-[10px] text-rose-400 leading-relaxed';
+    }
+    return;
+  }
+
+  saveDeepSeekConfig({ apiKey: key });
+  if (statusEl) {
+    statusEl.innerText = 'کلید DeepSeek با موفقیت ذخیره شد! ✓';
+    statusEl.className = 'text-[10px] text-emerald-400 leading-relaxed font-bold';
+  }
+  updateAIStatusIndicator();
+
+  // همگام‌سازی فیلد دیگر
+  const otherId = source === 'cloud' ? 'ai-api-key' : 'cloud-deepseek-key';
+  const otherInput = document.getElementById(otherId);
+  if (otherInput) otherInput.value = key;
+}
+
+async function testDeepSeekKey(source = 'modal') {
+  const inputId = source === 'cloud' ? 'cloud-deepseek-key' : 'ai-api-key';
+  const statusId = source === 'cloud' ? 'cloud-deepseek-status' : 'ai-key-status';
+  const input = document.getElementById(inputId);
+  const statusEl = document.getElementById(statusId);
+  const key = (input?.value || '').trim();
+
+  if (!key) {
+    if (statusEl) {
+      statusEl.innerText = 'ابتدا کلید API را وارد کنید.';
+      statusEl.className = 'text-[10px] text-amber-400';
+    }
+    return;
+  }
+
+  if (statusEl) {
+    statusEl.innerText = 'در حال تست اتصال به سرور دیپ‌سیک… ⏳';
+    statusEl.className = 'text-[10px] text-sky-400';
+  }
+
+  const res = await testDeepSeekConnection(key);
+  if (res.ok) {
+    if (statusEl) {
+      statusEl.innerText = 'اتصال موفقیت‌آمیز بود! هوش مصنوعی آماده است. ✅';
+      statusEl.className = 'text-[10px] text-emerald-400 font-bold';
+    }
+    saveDeepSeekConfig({ apiKey: key });
+    updateAIStatusIndicator();
+  } else {
+    if (statusEl) {
+      statusEl.innerText = `خطای اتصال: ${res.message || 'ناموفق'}`;
+      statusEl.className = 'text-[10px] text-rose-400';
+    }
+  }
+}
+
+async function sendAIMessage(customText = null) {
+  const input = document.getElementById('ai-chat-input');
+  const text = (customText || input?.value || '').trim();
+  if (!text) return;
+
+  if (input) input.value = '';
+
+  const messagesBox = document.getElementById('ai-chat-messages');
+  if (!messagesBox) return;
+
+  // ۱. نمایش پیام کاربر
+  const userHtml = `
+    <div class="flex items-start justify-end gap-2">
+      <div class="bg-purple-600 text-white p-3 rounded-2xl rounded-tl-none max-w-[85%] shadow-sm leading-relaxed">
+        ${escapeHtml(text)}
+      </div>
+      <div class="w-7 h-7 rounded-lg bg-purple-500/30 border border-purple-400/40 flex items-center justify-center text-xs shrink-0 font-bold">شما</div>
+    </div>
+  `;
+  messagesBox.insertAdjacentHTML('beforeend', userHtml);
+
+  // ۲. نمایش حالت فکر کردن
+  const loadingId = 'ai-loading-' + Date.now();
+  const loadingHtml = `
+    <div id="${loadingId}" class="flex items-start gap-2">
+      <div class="w-7 h-7 rounded-lg bg-purple-600/30 border border-purple-500/40 flex items-center justify-center text-sm shrink-0">🤖</div>
+      <div class="bg-slate-800/90 border border-slate-700 p-2.5 rounded-2xl rounded-tr-none text-purple-300 text-[11px] animate-pulse">
+        مربی در حال اندیشیدن است… ⏳
+      </div>
+    </div>
+  `;
+  messagesBox.insertAdjacentHTML('beforeend', loadingHtml);
+  messagesBox.scrollTop = messagesBox.scrollHeight;
+
+  // ۳. ارسال درخواست
+  aiChatHistory.push({ role: 'user', content: text });
+  if (aiChatHistory.length > 10) aiChatHistory = aiChatHistory.slice(-10);
+
+  const res = await callDeepSeekChat({ messages: aiChatHistory });
+  const loadEl = document.getElementById(loadingId);
+
+  if (res.ok) {
+    aiChatHistory.push({ role: 'assistant', content: res.reply });
+    const formattedReply = escapeHtml(res.reply).replace(/\n/g, '<br/>');
+    const coachHtml = `
+      <div class="flex items-start gap-2">
+        <div class="w-7 h-7 rounded-lg bg-purple-600/30 border border-purple-500/40 flex items-center justify-center text-sm shrink-0">🤖</div>
+        <div class="bg-slate-800/90 border border-purple-500/30 p-3 rounded-2xl rounded-tr-none text-slate-100 max-w-[88%] shadow-sm space-y-1">
+          <div class="text-[10px] text-purple-300 font-extrabold flex items-center gap-1">مربی اورست (DeepSeek):</div>
+          <div class="text-[11px] leading-relaxed text-slate-200">${formattedReply}</div>
+        </div>
+      </div>
+    `;
+    if (loadEl) loadEl.outerHTML = coachHtml;
+  } else {
+    const errorHtml = `
+      <div class="flex items-start gap-2">
+        <div class="w-7 h-7 rounded-lg bg-rose-600/30 border border-rose-500/40 flex items-center justify-center text-sm shrink-0">⚠️</div>
+        <div class="bg-rose-950/70 border border-rose-600/40 p-3 rounded-2xl rounded-tr-none text-rose-200 max-w-[88%] space-y-1">
+          <div class="text-[10px] font-bold">خطا در دریافت پاسخ:</div>
+          <div class="text-[11px] leading-relaxed">${escapeHtml(res.message)}</div>
+          ${res.reason === 'no-key' ? '<button onclick="toggleAIConfigSection()" class="mt-1 bg-purple-600 text-white px-2 py-0.5 rounded text-[10px] font-bold">ورود کلید DeepSeek</button>' : ''}
+        </div>
+      </div>
+    `;
+    if (loadEl) loadEl.outerHTML = errorHtml;
+  }
+  messagesBox.scrollTop = messagesBox.scrollHeight;
+}
+
+function handleAIChatKeyDown(event) {
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    sendAIMessage();
+  }
+}
+
+function triggerQuickAIPrompt(type) {
+  if (type === 'invite') {
+    const name = prompt('نام مخاطب یا نسبت او را بنویسید (مثال: همکار سابق / دوستم علی):');
+    if (!name) return;
+    const promptText = buildInvitePrompt({ contactName: name, relation: 'آشنا', interest: 'درآمد پاره‌وقت و محصولات سلامت' });
+    sendAIMessage(promptText);
+  } else if (type === 'objection') {
+    const obj = prompt('بهانه یا اعتراض مشتری را وارد کنید (مثال: قیمت محصولات بالاست / وقت ندارم):');
+    if (!obj) return;
+    const promptText = buildObjectionPrompt(obj);
+    sendAIMessage(promptText);
+  } else if (type === 'review') {
+    const promptText = buildCoachReviewPrompt({
+      stage: activeStageView || 1,
+      streak: appState.s2Streak || 0,
+      crmCount: (appState.crm || []).length,
+      goal: appState.myWhy || ''
+    });
+    sendAIMessage(promptText);
+  }
+}
+
+function startAIVoiceInput() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    alert('تایپ صوتی در این مرورگر پشتیبانی نمی‌شود. از گوگل کروم استفاده کنید.');
+    return;
+  }
+  const recognition = new SpeechRecognition();
+  recognition.lang = 'fa-IR';
+  recognition.continuous = false;
+  recognition.interimResults = false;
+
+  const btn = document.getElementById('ai-voice-btn');
+  if (btn) btn.classList.add('bg-red-600', 'animate-pulse');
+
+  recognition.onresult = (event) => {
+    const text = event.results[0][0].transcript;
+    const input = document.getElementById('ai-chat-input');
+    if (input) input.value = text;
+  };
+  recognition.onerror = () => {
+    if (btn) btn.classList.remove('bg-red-600', 'animate-pulse');
+  };
+  recognition.onend = () => {
+    if (btn) btn.classList.remove('bg-red-600', 'animate-pulse');
+  };
+  recognition.start();
+}
+
 function initApp() {
   initTheme();
   checkEveningReminder();
+  const dsCfg = getDeepSeekConfig();
+  const cloudDsInput = document.getElementById('cloud-deepseek-key');
+  if (cloudDsInput && dsCfg.apiKey) cloudDsInput.value = dsCfg.apiKey;
   const session = loadSession();
   const sessionUser = currentUser(session);
 
@@ -1479,6 +1714,15 @@ Object.assign(window, {
   exportCRMToExcel,
   filterTeamList,
   exportTeamToExcel,
+  openAIChatModal,
+  closeAIChatModal,
+  toggleAIConfigSection,
+  saveDeepSeekKey,
+  testDeepSeekKey,
+  sendAIMessage,
+  handleAIChatKeyDown,
+  triggerQuickAIPrompt,
+  startAIVoiceInput,
   saveAll,
   renderCoachCard
 });

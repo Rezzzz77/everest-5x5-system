@@ -9,6 +9,7 @@
 
 const LS_KEY = 'everest_supabase_cfg';
 const N8N_LS_KEY = 'everest_n8n_cfg';
+const DEEPSEEK_LS_KEY = 'everest_deepseek_cfg';
 
 export const SUPABASE_CONFIG = {
   url: 'https://cupcijeqqiyhqaifjzbl.supabase.co',
@@ -18,6 +19,59 @@ export const SUPABASE_CONFIG = {
 export const N8N_CONFIG = {
   webhookUrl: ''
 };
+
+export const DEEPSEEK_CONFIG = {
+  apiKey: '',
+  model: 'deepseek-chat',
+  endpoint: 'https://api.deepseek.com/chat/completions'
+};
+
+/** پیکربندی DeepSeek AI: اول localStorage، بعد پیش‌فرض */
+export function getDeepSeekConfig() {
+  let over = null;
+  try {
+    over = JSON.parse(localStorage.getItem(DEEPSEEK_LS_KEY) || 'null');
+  } catch (_) {
+    over = null;
+  }
+  const apiKey = String(over?.apiKey || DEEPSEEK_CONFIG.apiKey || '').trim();
+  const model = String(over?.model || DEEPSEEK_CONFIG.model || 'deepseek-chat').trim();
+  const endpoint = String(over?.endpoint || DEEPSEEK_CONFIG.endpoint || 'https://api.deepseek.com/chat/completions').trim();
+  return { apiKey, model, endpoint };
+}
+
+export function saveDeepSeekConfig({ apiKey, model, endpoint }) {
+  const clean = {
+    apiKey: String(apiKey || '').trim(),
+    model: String(model || 'deepseek-chat').trim(),
+    endpoint: String(endpoint || 'https://api.deepseek.com/chat/completions').trim()
+  };
+  try {
+    localStorage.setItem(DEEPSEEK_LS_KEY, JSON.stringify(clean));
+  } catch (_) {}
+  return clean;
+}
+
+export function clearDeepSeekConfig() {
+  try {
+    localStorage.removeItem(DEEPSEEK_LS_KEY);
+  } catch (_) {}
+}
+
+export function isDeepSeekConfigured(cfg = getDeepSeekConfig()) {
+  return Boolean(cfg?.apiKey && cfg.apiKey.length >= 20);
+}
+
+export function validateDeepSeekConfig({ apiKey }) {
+  const errors = [];
+  const k = String(apiKey || '').trim();
+  if (!k) {
+    errors.push('کلید DeepSeek API را وارد کن (شروع با sk-).');
+  } else if (!/^sk-[a-zA-Z0-9_-]{20,}$/.test(k) && k.length < 25) {
+    errors.push('فرمت کلید دیپ‌سیک نامعتبر به نظر می‌رسد (معمولاً با sk- شروع می‌شود).');
+  }
+  return errors;
+}
 
 /** پیکربندی n8n: اول localStorage، بعد پیش‌فرض */
 export function getN8nConfig() {
