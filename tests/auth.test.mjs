@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 
 import {
   isValidEmail, loadSession, saveSession, clearSession, currentUser, authErrorText,
-  needsRefresh, isSessionExpired, getAccessToken, consumeAuthRedirect, sendOtp
+  needsRefresh, isSessionExpired, getAccessToken, consumeAuthRedirect, sendOtp,
+  signInWithPassword, signUpWithPassword
 } from '../src/auth.js';
 
 /** JWT ساختگی با payload دلخواه (فقط برای تست محلی) */
@@ -164,4 +165,22 @@ test('sendOtp: redirect_to به آدرس فعلی اپ فرستاده می‌ش�
     else delete globalThis.location;
     globalThis.fetch = hadFetch;
   }
+});
+
+test('signInWithPassword: ایمیل نامعتبر رد می‌شود', async () => {
+  const r = await signInWithPassword('invalid-email', '123456');
+  assert.equal(r.ok, false);
+  assert.equal(r.reason, 'invalid-email');
+});
+
+test('signInWithPassword: رمز عبور کوتاه رد می‌شود', async () => {
+  const r = await signInWithPassword('valid@example.com', '123');
+  assert.equal(r.ok, false);
+  assert.equal(r.reason, 'weak-password');
+});
+
+test('signUpWithPassword: رمز عبور کوتاه رد می‌شود', async () => {
+  const r = await signUpWithPassword('valid@example.com', '12');
+  assert.equal(r.ok, false);
+  assert.equal(r.reason, 'weak-password');
 });

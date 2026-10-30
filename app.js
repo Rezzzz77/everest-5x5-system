@@ -16,7 +16,10 @@ import {
 import {
   callDeepSeekChat, testDeepSeekConnection, buildInvitePrompt, buildObjectionPrompt, buildCoachReviewPrompt
 } from './src/ai.js';
-import { sendOtp, verifyOtp, signOut, loadSession, currentUser, isValidEmail, authErrorText, consumeAuthRedirect } from './src/auth.js';
+import {
+  sendOtp, verifyOtp, signOut, loadSession, currentUser, isValidEmail, authErrorText, consumeAuthRedirect,
+  signInWithPassword, signUpWithPassword
+} from './src/auth.js';
 import { generateCoachCard, getStageTheme } from './src/coach.js';
 import { getHighestUnlockedStage, isStageUnlocked } from './src/stages.js';
 import { escapeHtml, phoneDigits, resetDailyCounters, calculateMemberHealth, isEveningReportTime, contactsToCsv, teamToCsv } from './src/utils.js';
@@ -393,7 +396,7 @@ async function requestOtp(ev) {
   authMsg(1, 'info', 'در حال ارسال کد… ⏳');
 
   const r = await sendOtp(email);
-  if (btn) { btn.disabled = false; btn.textContent = 'ارسال کد ورود 📧'; }
+  if (btn) { btn.disabled = false; btn.textContent = 'یا ارسال لینک به ایمیل 📧'; }
 
   if (!r.ok) return authMsg(1, 'err', authErrorText(r));
 
@@ -401,6 +404,64 @@ async function requestOtp(ev) {
   document.getElementById('auth-email-show').innerText = email;
   authMsg(2, 'ok', 'ایمیل ورود ارسال شد ✅ اگر کد داشت همان را وارد کن؛ اگر فقط لینک داشت روی لینک بزن تا خودکار وارد شوی.');
   showAuthStep(2);
+}
+
+async function handlePasswordAuth() {
+  const email = document.getElementById('reg-email').value.trim();
+  const password = document.getElementById('reg-password').value.trim();
+  if (!isValidEmail(email)) return authMsg(1, 'err', 'ایمیل معتبر نیست.');
+  if (!password || password.length < 6) return authMsg(1, 'err', 'رمز عبور باید حداقل ۶ کاراکتر باشد.');
+
+  authMsg(1, 'info', 'در حال ورود / ثبت‌نام آنی… ⏳');
+
+  let r = await signInWithPassword(email, password);
+  if (!r.ok) {
+    const upRes = await signUpWithPassword(email, password);
+    if (upRes.ok) {
+      r = await signInWithPassword(email, password);
+    }
+  }
+
+  if (!r.ok) {
+    return authMsg(1, 'err', r.message || 'خطا در ورود. لطفاً رمز عبور را بررسی کنید.');
+  }
+
+  const u = currentUser(r.session);
+  if (!u) return authMsg(1, 'err', 'نشست ساخته نشد. دوباره تلاش کنید.');
+
+  const previousOwner = appState.user?.id || appState.ownerId || '';
+  const sameUser = Boolean(previousOwner && previousOwner === u.id && !appState.user?.local);
+  if (previousOwner && !sameUser) appState = getDefaultData();
+
+  appState.ownerId = u.id;
+  appState.user = {
+    id: u.id,
+    email: u.email,
+    name: u.name || 'عضو تیم اورست',
+    upline: u.upline || 'راهبر تیم اورست'
+  };
+  if (!appState.startTime) appState.startTime = Date.now();
+
+  await saveProfile({
+    full_name: appState.user.name,
+    upline: appState.user.upline,
+    current_stage: getHighestUnlockedStage(appState),
+    s2_streak: Number(appState.s2Streak) || 0,
+    crm_count: (appState.crm || []).length
+  });
+
+  try {
+    const cloud = await loadFromCloud();
+    if (cloud) {
+      appState = mergeWithDefaults(cloud);
+      appState.user = { id: u.id, email: u.email, name: appState.user?.name || u.name, upline: appState.user?.upline || u.upline };
+    }
+  } catch (_) {}
+  saveToStorage(appState);
+
+  document.getElementById('auth-screen').classList.add('hidden');
+  initApp();
+  authMsg(1, 'ok', 'ورود با موفقیت انجام شد! خوش آمدید. 🎉');
 }
 
 async function verifyOtpAndStart() {
@@ -1677,6 +1738,7 @@ if ('serviceWorker' in navigator) {
 // ===== دسترسی توابع از طریق onclick در HTML =====
 // (چون app.js یک ES Module است، توابع به‌صورت پیش‌فرض global نیستند)
 Object.assign(window, {
+  handlePasswordAuth,
   requestOtp,
   verifyOtpAndStart,
   backToEmailStep,
