@@ -1,0 +1,6 @@
+# Robots.txt for Everest 5x5 System on Cloudflare Pages
+User-agent: *
+Disallow: /
+
+# This is a private PWA for internal team use
+# No public crawling needed
