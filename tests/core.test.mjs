@@ -3,7 +3,9 @@ import assert from 'node:assert/strict';
 
 import {
   validateConfig, isConfigured, getSupabaseConfig, SUPABASE_CONFIG,
-  getN8nConfig, saveN8nConfig, clearN8nConfig, validateN8nConfig
+  getN8nConfig, saveN8nConfig, clearN8nConfig, validateN8nConfig,
+  getDeepSeekConfig, saveDeepSeekConfig, clearDeepSeekConfig, validateDeepSeekConfig,
+  isDeepSeekConfigured
 } from '../src/config.js';
 import {
   testConnection, mergeWithDefaults, stripNationalId,
@@ -51,16 +53,17 @@ test('isConfigured: اسلش انتهایی مهم نیست', () => {
   assert.equal(isConfigured({ url: URL_OK + '/', key: KEY_OK }), true);
 });
 
-test('getSupabaseConfig: در محیط بدون localStorage از SUPABASE_CONFIG می‌آید', () => {
+test('getSupabaseConfig: در محیط بدون localStorage پیش‌فرض خالی برمی‌گرداند', () => {
   assert.deepEqual(getSupabaseConfig(), {
-    url: SUPABASE_CONFIG.url,
-    key: SUPABASE_CONFIG.key
+    url: '',
+    key: ''
   });
 });
 
-test('config پیش‌فرض پروژه: معتبر است', () => {
-  assert.deepEqual(validateConfig(SUPABASE_CONFIG), []);
-  assert.equal(isConfigured(SUPABASE_CONFIG), true);
+test('config پیش‌فرض پروژه: خالی و غیرفعال است (امنیت)', () => {
+  assert.equal(SUPABASE_CONFIG.url, '');
+  assert.equal(SUPABASE_CONFIG.key, '');
+  assert.equal(isConfigured(SUPABASE_CONFIG), false);
 });
 
 test('config پیش‌فرض: هرگز کلید secret در کلاینت نیست', () => {
@@ -218,4 +221,32 @@ test('saveProfile: بدون نشست یا کانفیگ نامعتبر خطا م�
   const res = await saveProfile({ full_name: 'تست' }, { url: '', key: '' });
   assert.equal(res.ok, false);
   assert.equal(res.reason, 'not-configured');
+});
+
+/* ---------------- تست‌های DeepSeek ---------------- */
+
+test('validateDeepSeekConfig: کلید معتبر خطا ندارد', () => {
+  assert.deepEqual(validateDeepSeekConfig({ apiKey: 'sk-validkey123456789012345' }), []);
+});
+
+test('validateDeepSeekConfig: کلید خالی یا کوتاه خطا دارد', () => {
+  const errEmpty = validateDeepSeekConfig({ apiKey: '' });
+  assert.equal(errEmpty.length, 1);
+  assert.match(errEmpty[0], /وارد کن/);
+
+  const errShort = validateDeepSeekConfig({ apiKey: 'sk-short' });
+  assert.equal(errShort.length, 1);
+  assert.match(errShort[0], /نامعتبر/);
+});
+
+test('getDeepSeekConfig: در غیاب مقدار محلی پیش‌فرض خالی است', () => {
+  const cfg = getDeepSeekConfig();
+  assert.equal(cfg.apiKey, '');
+  assert.equal(cfg.model, 'deepseek-chat');
+  assert.equal(cfg.endpoint, 'https://api.deepseek.com/chat/completions');
+});
+
+test('isDeepSeekConfigured: بدون کلید false است', () => {
+  assert.equal(isDeepSeekConfigured({ apiKey: '' }), false);
+  assert.equal(isDeepSeekConfigured({ apiKey: 'short' }), false);
 });

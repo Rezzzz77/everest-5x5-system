@@ -157,9 +157,16 @@ test('sendOtp: redirect_to به آدرس فعلی اپ فرستاده می‌ش�
     return { ok: true, status: 200, text: async () => '' };
   };
   try {
-    const r = await sendOtp('sara@example.com');
-    assert.equal(r.ok, true);
-    assert.match(calledUrl, /\/auth\/v1\/otp\?redirect_to=https%3A%2F%2Fapp\.test%2Feverest%2F/);
+    await withMemoryStorage(async (map) => {
+      // پیکربندی معتبر برای تست
+      map.set('everest_supabase_cfg', JSON.stringify({
+        url: 'https://abcdefghijkl.supabase.co',
+        key: 'sb_publishable_veUWJ1FuR3qaBMQCJ0oh3w_HxtUGSeJ'
+      }));
+      const r = await sendOtp('sara@example.com');
+      assert.equal(r.ok, true);
+      assert.match(calledUrl, /\/auth\/v1\/otp\?redirect_to=https%3A%2F%2Fapp\.test%2Feverest%2F/);
+    });
   } finally {
     if (hadLoc) globalThis.location = prevLoc;
     else delete globalThis.location;
