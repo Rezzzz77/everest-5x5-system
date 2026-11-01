@@ -1,15 +1,19 @@
 {
   "name": "everest-5x5-system",
   "version": "0.9.3",
-  "private": true,
+  "description": "سیستم ۵×۵ تیم اورست — PWA مدیریت رشد فروش",
   "type": "module",
-  "description": "سیستم ۵×۵ تیم اورست — PWA مدیریت رشد فروش و تیم",
   "scripts": {
     "test": "node --test tests/*.test.mjs",
     "check": "python3 tools/check_contracts.py",
     "graph": "python3 tools/build_graph.py",
-    "icons": "python3 tools/make_icons.py",
-    "serve": "python3 -m http.server 8080"
+    "serve": "python3 -m http.server 8080",
+    "deploy": "wrangler pages deploy . --project-name=everest-5x5-system --branch=main --commit-dirty=true"
   },
-  "license": "MIT"
+  "devDependencies": {
+    "wrangler": "^4.156.0"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
 }
