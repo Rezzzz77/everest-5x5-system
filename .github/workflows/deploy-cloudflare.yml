@@ -1,0 +1,54 @@
+# Cloudflare Pages Deployment for Everest 5x5 System
+#
+# پیش‌نیازها:
+# 1. Cloudflare Account ID (در Dashboards → Workers & Pages → Overview)
+# 2. Cloudflare API Token با مجوز: Account > Cloudflare Pages > Edit
+# 3. Project Name در Cloudflare Pages (مثال: everest-5x5-system)
+#
+# مراحل راه‌اندازی:
+# 1. در GitHub Repo → Settings → Secrets and variables → Actions
+# 2. Add repository secrets:
+#    - CF_ACCOUNT_ID: <Account ID از Cloudflare>
+#    - CF_API_TOKEN: <API Token با مجوز Pages Edit>
+#    - CF_PROJECT_NAME: everest-5x5-system (یا نام پروژه شما در Pages)
+# 3. در Cloudflare Dashboard → Workers & Pages → Create Pages project
+#    - Connect to Git → GitHub → Select this repo
+#    - Build command: (خالی - static site)
+#    - Build output directory: / (root)
+#    - Branch: main
+# 4. Push به main → خودکار Deploy می‌شود
+
+name: deploy-cloudflare-pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  deployments: write
+
+jobs:
+  deploy:
+    name: Deploy to Cloudflare Pages
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Cloudflare Pages
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          projectName: ${{ secrets.CF_PROJECT_NAME }}
+          directory: .
+          branch: main
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify Deployment
+        if: success()
+        run: |
+          echo "✅ Deployed to Cloudflare Pages"
+          echo "🌐 Check: https://${{ secrets.CF_PROJECT_NAME }}.pages.dev"
