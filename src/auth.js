@@ -93,9 +93,10 @@ export function currentUser(session = loadSession()) {
 
 /** آدرس بازگشتی که لینک ایمیل باید به آن برگردد (همان صفحه اپ) */
 function redirectTarget() {
-  if (typeof location === 'undefined') return '';
-  if (!/^https?:$/.test(location.protocol)) return '';
-  return location.origin + location.pathname;
+  const loc = typeof globalThis !== 'undefined' ? globalThis.location : (typeof location !== 'undefined' ? location : null);
+  if (!loc) return '';
+  if (!/^https?:$/.test(loc.protocol)) return '';
+  return loc.origin + loc.pathname;
 }
 
 /**

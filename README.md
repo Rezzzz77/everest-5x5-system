@@ -38,8 +38,10 @@ python3 -m http.server 8080
 
 ## ☁️ اتصال به Supabase
 
-> پروژه فعلی: `https://cupcijeqqiyhqaifjzbl.supabase.co` (کلید در `src/config.js` ثبت شده).
-> تنها قدم باقی‌مانده: اجرای `supabase/schema.sql` در SQL Editor.
+> **هیچ کلید پیش‌فرضی در کد وجود ندارد** — امنیت کامل.
+> شما باید پروژه Supabase خود را بسازید و کلیدها را در اپ وارد کنید.
+
+**پیش‌نیاز:** اجرای `supabase/schema.sql` در SQL Editor پروژه‌ی خودتان.
 
 ### ۰. ورود امن (Supabase Auth — OTP ایمیل)
 اپ با **لینک/کد یک‌بارمصرف ایمیل** وارد می‌شود؛ رمزی ذخیره نمی‌شود.
@@ -54,18 +56,21 @@ python3 -m http.server 8080
 سپس با [`supabase/verify.sql`](supabase/verify.sql) تأیید کن:
 `rowsecurity=true` و هیچ دسترسی برای `anon`.
 
-### ۲. گرفتن کلیدها
-**Project Settings → API**:
-- `Project URL`
-- `anon public key`
+### ۲. ساخت پروژه Supabase و گرفتن کلیدها
+1. در [Supabase Dashboard](https://supabase.com/dashboard) پروژه جدید بسازید
+2. **SQL Editor** → محتوای `supabase/schema.sql` را اجرا کنید
+3. **Authentication → Providers → Email** → فعال‌سازی *Enable email OTP / Magic Link*
+4. **Project Settings → API** → کپی کنید:
+   - `Project URL` (مثال: `https://xxxxxxxxxx.supabase.co`)
+   - `anon public key` (شروع با `sb_publishable_` یا `eyJ...`)
 
 ### ۳. وارد کردن در اپ (بدون دست‌زدن به کد)
 در اپ دکمه **☁️** بالای صفحه را بزن و دو مقدار را وارد کن:
 
-1. **تست اتصال** — اگر جدول نبود، پیام دقیق می‌دهد.
-2. **ذخیره و همگام‌سازی** — کلیدها در `localStorage` همان دستگاه می‌مانند.
+1. **تست اتصال** — اگر جدول/RLS درست باشد، سبز می‌شود
+2. **ذخیره و همگام‌سازی** — کلیدها در `localStorage` همان دستگاه می‌مانند ( رمزنگاری شده )
 
-> جایگزین: می‌توانی مقادیر را در `src/config.js` هم بگذاری (برای انتشار ثابت).
+> **هیچ‌کدام از کلیدها در کد/گیت‌هاب نیستند** — فقط در localStorage دستگاه کاربر.
 > بدون این مقادیر، اپ کاملاً آفلاین با `localStorage` کار می‌کند و هیچ خطایی نمی‌دهد.
 
 ---
