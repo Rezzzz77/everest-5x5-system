@@ -5,13 +5,19 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { existsSync, readFileSync, statSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 import {
   resolveAnimationMode, nextAnimationMode, shouldAnimateParticles,
   sceneClass, snowFlakes, stars, sceneMarkup,
   ANIM_FULL, ANIM_REDUCED, ANIM_OFF,
   LEOPARD_STAGES, leopardStageFor, leopardStageForProgress, avatarMarkup, faDigits,
-  shouldCelebrate, celebrationText, celebrationMarkup, buildShareCard, escapeXml, avatarImageFor
+  shouldCelebrate, celebrationText, celebrationMarkup, buildShareCard, escapeXml, avatarImageFor,
+  initLeopardAvatar
 } from '../src/leopard.js';
 
 test('leopard: پیش‌فرض روشن است', () => {
@@ -234,9 +240,20 @@ test('share: مرحله در کارت با عنوان فارسی و کد می‌
   assert.match(card, /۱۰۰/);
 });
 
-test('avatar image: به‌طور پیش‌فرض تصویری تنظیم نشده است', () => {
+test('avatar image: هر پنج مرحله تصویر واقعی دارند', () => {
   for (const stage of [1, 2, 3, 4, 5]) {
-    assert.equal(avatarImageFor(stage), null);
+    assert.equal(avatarImageFor(stage), `./assets/leopards/stage-${stage}.png`);
+  }
+});
+
+test('avatar image: فایل هر پنج تصویر موجود و PNG معتبر است', () => {
+  for (const stage of [1, 2, 3, 4, 5]) {
+    const rel = avatarImageFor(stage).replace('./', '');
+    const abs = join(ROOT, rel);
+    assert.ok(existsSync(abs), `فایل ${rel} پیدا نشد`);
+    assert.ok(statSync(abs).size > 10_000, `فایل ${rel} خیلی کوچک است`);
+    const head = readFileSync(abs).subarray(0, 8).toString('hex');
+    assert.equal(head, '89504e470d0a1a0a', `فایل ${rel} امضای PNG ندارد`);
   }
 });
 
@@ -247,7 +264,82 @@ test('avatar image: نام فایل نسبی به پوشهٔ آواتارها و
   assert.equal(avatarImageFor(9, { 9: 'z.png' }), null, 'مرحلهٔ خارج از بازه → پلهٔ اول');
 });
 
+test('avatar DOM: مرحلهٔ فعلی تصویر خودش را در آواتار می‌گذارد', () => {
+  const nodes = mkFakeDoc(['leopard-avatar', 'leopard-progress', 'leopard-level-label']);
+  const avatar = initLeopardAvatar(nodes);
+  assert.ok(avatar, 'initLeopardAvatar باید نمونه بسازد');
+  assert.equal(nodes['leopard-avatar'].firstElementChild?.tagName, 'img');
+  assert.equal(nodes['leopard-avatar'].firstElementChild?.getAttribute('src'), './assets/leopards/stage-1.png');
+
+  avatar.render(4, 55);
+  assert.equal(nodes['leopard-avatar'].firstElementChild?.getAttribute('src'), './assets/leopards/stage-4.png');
+  assert.equal(nodes['leopard-progress'].attrs['aria-valuenow'], '55');
+  assert.match(nodes['leopard-level-label'].textContent, /جوان بالغ/);
+});
+
+test('avatar DOM: خطای بارگذاری تصویر → بازگشت به سیلوئت SVG', () => {
+  const nodes = mkFakeDoc(['leopard-avatar', 'leopard-progress', 'leopard-level-label']);
+  const avatar = initLeopardAvatar(nodes);
+  avatar.render(3, 0);
+  const img = nodes['leopard-avatar'].firstElementChild;
+  img.dispatch('error');
+  assert.equal(nodes['leopard-avatar'].firstElementChild?.tagName, 'svg');
+});
+
 test('escapeXml: کاراکترهای خطرناک XML خنثی می‌شوند', () => {
   assert.equal(escapeXml('<&>"\''), '&lt;&amp;&gt;&quot;&apos;');
   assert.equal(escapeXml(null), '');
 });
+
+/* ---------------- ابزار تست: DOM قلابی کوچک ---------------- */
+
+function mkFakeDoc(ids) {
+  const nodes = {};
+  for (const id of ids) nodes[id] = new FakeNode(id);
+  return {
+    ...nodes,
+    getElementById: (id) => nodes[id] ?? null,
+    addEventListener() {},
+    removeEventListener() {}
+  };
+}
+
+class FakeNode {
+  constructor(id) {
+    this.id = id;
+    this._html = '';
+    this.attrs = {};
+    this.style = { setProperty() {} };
+    this.textContent = '';
+    this.tagName = null;
+    const set = new Set();
+    this.classList = {
+      add: (...c) => c.forEach((x) => set.add(x)),
+      remove: (...c) => c.forEach((x) => set.delete(x)),
+      contains: (c) => set.has(c)
+    };
+  }
+
+  // مثل DOM واقعی: نوشتن innerHTML فرزند قبلی را دور می‌ریزد
+  set innerHTML(v) { this._html = String(v); this._child = null; }
+  get innerHTML() { return this._html; }
+
+  get firstElementChild() {
+    if (this._child) return this._child;
+    const tag = /^<(svg|img)/i.exec(this.innerHTML)?.[1]?.toLowerCase();
+    if (!tag) return null;
+    const m = new FakeNode(`${this.id}-child`);
+    m.tagName = tag;
+    m._src = /src="([^"]+)"/.exec(this.innerHTML)?.[1] ?? null;
+    m.getAttribute = (name) => (name === 'src' ? m._src : this.attrs[name] ?? null);
+    m.setAttribute = (name, v) => { this.attrs[name] = v; };
+    m.addEventListener = (type, fn) => { m._on = m._on || {}; m._on[type] = fn; };
+    m.dispatch = (type) => m._on?.[type]?.();
+    this._child = m;
+    return m;
+  }
+
+  setAttribute(name, value) { this.attrs[name] = String(value); }
+  getAttribute(name) { return this.attrs[name] ?? null; }
+  querySelector() { return null; }
+}

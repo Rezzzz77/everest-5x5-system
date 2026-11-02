@@ -91,7 +91,13 @@
       box-shadow: inset 0 0 12px rgba(255,255,255,.10);
       animation: lp-pop .42s cubic-bezier(.2,.9,.3,1) both;
     }
+    /* تایل آواتار لبه‌اش را می‌برد تا بیرون‌زدگی تصویر داخل قاب بماند */
+    .leopard-avatar, .celebrate-avatar { overflow: hidden; }
     #leopard-avatar svg { width: 100%; height: 100%; display: block; }
+    /* آواتار تصویری: PNG شفاف جای سیلوئت می‌نشیند */
+    #leopard-avatar img { width: 100%; height: 100%; display: block; object-fit: contain; }
+    /* بیرون‌زدگی ملایم: حاشیهٔ امن ۶٪ داخل PNG جبران می‌شود تا سوژه قاب را پر کند */
+    #leopard-avatar .leopard-avatar-img { transform: scale(1.14); transform-origin: 50% 54%; }
     #leopard-avatar .av-eye { animation: lp-blink 7s steps(1, end) infinite; }
     /* مرحله ۵: هاله روی حلقه می‌رود تا ۲px از سیلوئت ۴۲px کم نکند */
     .leopard-ring.level-5,
@@ -165,6 +171,8 @@
       animation: celebrate-float 2.6s ease-in-out infinite;
     }
     .celebrate-avatar svg { width: 100%; height: 100%; display: block; }
+    .celebrate-avatar img { width: 100%; height: 100%; display: block; object-fit: contain; }
+    .celebrate-avatar .leopard-avatar-img { transform: scale(1.08); transform-origin: 50% 54%; }
     .celebrate-title { position: relative; color: #e0f2fe; font-size: 18px; font-weight: 800; margin: 0 0 6px; }
     .celebrate-body { position: relative; color: #a5f3fc; font-size: 12px; font-weight: 700; margin: 0 0 4px; }
     .celebrate-hint { position: relative; color: #94a3b8; font-size: 11px; margin: 0 0 14px; }
@@ -1038,6 +1046,6 @@
   <!-- اورلی جشن ارتقای مرحله -->
   <div id="celebrate-root" class="celebrate-root" aria-hidden="true"></div>
 
-  <script type="module" src="./app.js?v=0.9.3"></script>
+  <script type="module" src="./app.js?v=0.9.4"></script>
 </body>
 </html>
