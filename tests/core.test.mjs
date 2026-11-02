@@ -53,21 +53,34 @@ test('isConfigured: اسلش انتهایی مهم نیست', () => {
   assert.equal(isConfigured({ url: URL_OK + '/', key: KEY_OK }), true);
 });
 
-test('getSupabaseConfig: در محیط بدون localStorage پیش‌فرض خالی برمی‌گرداند', () => {
+test('getSupabaseConfig: بدون localStorage به پیش‌فرض عمومی پروژه برمی‌گردد', () => {
   assert.deepEqual(getSupabaseConfig(), {
-    url: '',
-    key: ''
+    url: SUPABASE_CONFIG.url,
+    key: SUPABASE_CONFIG.key
   });
+  assert.equal(isConfigured(getSupabaseConfig()), true);
 });
 
-test('config پیش‌فرض پروژه: خالی و غیرفعال است (امنیت)', () => {
-  assert.equal(SUPABASE_CONFIG.url, '');
-  assert.equal(SUPABASE_CONFIG.key, '');
-  assert.equal(isConfigured(SUPABASE_CONFIG), false);
+test('config پیش‌فرض پروژه: پروژه عمومی متصل است (نه خالی)', () => {
+  assert.match(SUPABASE_CONFIG.url, /^https:\/\/[a-z0-9-]+\.supabase\.(co|in)$/);
+  assert.ok(SUPABASE_CONFIG.key.length > 40);
+  assert.equal(isConfigured(SUPABASE_CONFIG), true);
 });
 
 test('config پیش‌فرض: هرگز کلید secret در کلاینت نیست', () => {
   assert.doesNotMatch(SUPABASE_CONFIG.key, /^sb_secret_/i);
+  assert.doesNotMatch(SUPABASE_CONFIG.key, /^sbp_/i);
+});
+
+test('config پیش‌فرض: کلید anon است، نه service_role', () => {
+  const payload = SUPABASE_CONFIG.key.split('.')[1];
+  const claims = JSON.parse(Buffer.from(payload, 'base64url').toString('utf-8'));
+  assert.equal(claims.role, 'anon');
+  assert.notEqual(claims.role, 'service_role');
+});
+
+test('validateConfig: پیش‌فرض پروژه بدون خطاست', () => {
+  assert.deepEqual(validateConfig(SUPABASE_CONFIG), []);
 });
 
 test('testConnection: پیکربندی ناقص → not-configured بدون درخواست شبکه', async () => {

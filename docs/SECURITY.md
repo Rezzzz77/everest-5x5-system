@@ -27,6 +27,21 @@
 - هیچ ردیفی با `grantee = anon` نباید برگردد
 - هر دو تریگر باید موجود باشند
 
+### وضعیت واقعی پروژه متصل (`trdzchlrzxnwnubdotxq`)
+با اسکریپت‌های خود ریپو و روی دیتابیس واقعی تأیید شد:
+
+| بررسی | نتیجه |
+|-------|-------|
+| `user_state` / `profiles` با RLS | ✅ موجود و `rowsecurity = true` |
+| grant برای `anon` | ✅ هیچ (خالی) |
+| grant برای `authenticated` | ✅ فقط SELECT/INSERT/UPDATE/DELETE |
+| تریگرها | ✅ `touch_updated_at`، `protect_profile_role`، `sync_profile_progress`، `link_upline` |
+| REST بدون نشست | ✅ `42501 permission denied` (نه ۲۰۰) |
+| `auth/v1/health` با کلید anon | ✅ ۲۰۰ |
+
+> کلید anon پروژه در `src/env.js` است و **عمومی** است. مرز امنیت، RLS است.
+> کلید `service_role` و `sb_secret_*` هرگز در کلاینت نیست.
+
 ## ریسک‌های باقی‌مانده
 
 | ریسک | شدت | توضیح و راه‌حل |
