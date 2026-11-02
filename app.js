@@ -23,7 +23,10 @@ import {
 import { generateCoachCard, getStageTheme, getOverallProgress } from './src/coach.js';
 import { getHighestUnlockedStage, isStageUnlocked, getCriteriaStage, isWaitingForApproval } from './src/stages.js';
 import { escapeHtml, phoneDigits, resetDailyCounters, calculateMemberHealth, isEveningReportTime, contactsToCsv, teamToCsv, initialList30ToCsv } from './src/utils.js';
-import { initLeopardScene, initLeopardAvatar } from './src/leopard.js';
+import {
+  initLeopardScene, initLeopardAvatar, shouldCelebrate, showCelebration,
+  shareCard, SEEN_STAGE_KEY
+} from './src/leopard.js';
 
 export { getHighestUnlockedStage };
 
@@ -128,9 +131,12 @@ let leopardScene = null;
 let leopardAvatar = null;
 
 /** نصب صحنه و آواتار (مستقل از ورود کاربر، تا روی صفحهٔ لاگین هم دیده شود) */
+let leopardAuthAvatar = null;
+
 function mountLeopardUi() {
   if (!leopardScene) leopardScene = initLeopardScene(document, window);
   if (!leopardAvatar) leopardAvatar = initLeopardAvatar(document);
+  if (!leopardAuthAvatar) leopardAuthAvatar = initLeopardAvatar(document, { hostId: 'leopard-avatar-auth', ringId: null, labelId: null });
 }
 
 /** روشن/خاموش کردن انیمیشن کوهستان (از هدر) */
@@ -149,7 +155,45 @@ function renderLeopardAvatar() {
     const stage = getHighestUnlockedStage(appState);
     const progress = getOverallProgress(appState);
     leopardAvatar?.render(stage, progress);
+    leopardAuthAvatar?.render(stage, progress);
+    celebrateIfStageUp(stage);
   } catch (_) { /* هرگز نباید رندر اصلی را بشکند */ }
+}
+
+/** اگر کاربر به مرحلهٔ تازه‌ای رسیده باشد، یک‌بار جشن می‌گیریم. */
+function celebrateIfStageUp(stage) {
+  let seen = 0;
+  try { seen = Number(localStorage.getItem(SEEN_STAGE_KEY) || 0) || 0; } catch (_) { seen = 0; }
+  if (!shouldCelebrate(seen, stage)) return;
+  try { localStorage.setItem(SEEN_STAGE_KEY, String(stage)); } catch (_) { /* بی‌اهمیت */ }
+  showCelebration(stage, document);
+}
+
+/** ساخت و اشتراک‌گذاری کارت پیشرفت (PNG در صورت پشتیبانی، وگرنه SVG). */
+async function shareProgress() {
+  try {
+    const stage = getHighestUnlockedStage(appState);
+    const progress = getOverallProgress(appState);
+    const date = new Date().toLocaleDateString('fa-IR');
+    const r = await shareCard({
+      name: appState.user?.name || 'عضو تیم اورست',
+      stage,
+      progress,
+      date
+    }, window);
+    if (r?.method === 'svg' && r.svg) {
+      // مرورگر از PNG پشتیبانی نکرد: همان SVG را دانلود می‌کنیم.
+      const blob = new Blob([r.svg], { type: 'image/svg+xml;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'everest-progress.svg';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+  } catch (e) {
+    console.error('خطا در ساخت کارت پیشرفت:', e);
+  }
 }
 
 /* ---------------- وضعیت اتصال ابری ---------------- */
@@ -2254,6 +2298,7 @@ Object.assign(window, {
   verifyOtpAndStart,
   toggleLeopard,
   renderLeopardAvatar,
+  shareProgress,
   backToEmailStep,
   toggleLocalMode,
   signOutUser,

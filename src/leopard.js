@@ -363,15 +363,18 @@ export function avatarMarkup(input = 1) {
  * نصب آواتار در هدر.
  * `render(stage, progress)` — درصد پیشرفت اختیاری است.
  */
-export function initLeopardAvatar(doc = typeof document !== 'undefined' ? document : null) {
+export function initLeopardAvatar(
+  doc = typeof document !== 'undefined' ? document : null,
+  { hostId = 'leopard-avatar', ringId = 'leopard-progress', labelId = 'leopard-level-label', interactive = true } = {}
+) {
   if (!doc) return null;
-  const host = doc.getElementById('leopard-avatar');
+  const host = doc.getElementById(hostId);
   if (!host) return null;
 
   let lastStage = -1;
 
   const paintRing = (progress) => {
-    const ring = doc.getElementById('leopard-progress');
+    const ring = ringId ? doc.getElementById(ringId) : null;
     if (!ring) return 0;
     const raw = Number(progress);
     const pct = Number.isFinite(raw) ? Math.min(100, Math.max(0, Math.round(raw))) : 0;
@@ -393,13 +396,24 @@ export function initLeopardAvatar(doc = typeof document !== 'undefined' ? docume
     if (item.stage === lastStage) return item;
     lastStage = item.stage;
 
-    host.innerHTML = avatarMarkup(item);
+    // اگر تصویر واقعی برای این مرحله تنظیم شده باشد، جای سیلوئت نمایش داده
+    // می‌شود؛ در صورت خطای بارگذاری، خودکار به سیلوئت برمی‌گردیم.
+    const image = avatarImageFor(item.stage);
+    if (image) {
+      host.innerHTML = `<img class="leopard-avatar-img" src="${image}" alt="" loading="lazy" decoding="async">`;
+      const img = host.firstElementChild;
+      img?.addEventListener?.('error', () => {
+        host.innerHTML = avatarMarkup(item);
+      }, { once: true });
+    } else {
+      host.innerHTML = avatarMarkup(item);
+    }
     host.classList.remove('level-1', 'level-2', 'level-3', 'level-4', 'level-5');
     host.classList.add('leopard-avatar', `level-${item.stage}`);
     host.setAttribute('data-level', String(item.level));
     host.setAttribute('title', `${item.titleFa} — سطح ${faDigits(item.level)} (${item.code})`);
 
-    const label = doc.getElementById('leopard-level-label');
+    const label = labelId ? doc.getElementById(labelId) : null;
     if (label) {
       label.textContent = `${item.titleFa} · ${faDigits(item.stage)}`;
       label.setAttribute('aria-label', `مرحلهٔ ${faDigits(item.stage)} از ۵ — ${item.titleFa}`);
@@ -409,5 +423,225 @@ export function initLeopardAvatar(doc = typeof document !== 'undefined' ? docume
   };
 
   render(1, 0);
-  return { render, getStage: () => lastStage };
+  return { render, getStage: () => lastStage, interactive };
+}
+
+
+/* =====================================================================
+ * تصویر واقعی آواتار (اختیاری)
+ * ---------------------------------------------------------------------
+ * اگر تصاویر پنج مرحله در `assets/leopards/stage-N.png` موجود باشند،
+ * جای سیلوئت SVG نمایش داده می‌شوند. اگر فایل نبود یا خراب بود، خودکار
+ * به سیلوئت برمی‌گردیم تا UI هرگز خالی نماند.
+ * ===================================================================== */
+
+export const LEOPARD_IMG_DIR = './assets/leopards/';
+
+/** نقشهٔ مرحله → فایل تصویر. برای فعال‌سازی، مقدار را به نام فایل بدهید. */
+export const LEOPARD_IMAGES = { 1: null, 2: null, 3: null, 4: null, 5: null };
+
+/**
+ * آدرس تصویر آواتار برای یک مرحله (یا null اگر تصویری تنظیم نشده است).
+ * @param {number} stage
+ * @param {Record<number,string|null>} [images]
+ */
+export function avatarImageFor(stage, images = LEOPARD_IMAGES) {
+  const item = leopardStageFor(stage);
+  const file = images?.[item.stage] ?? null;
+  if (!file) return null;
+  if (/^(https?:)?\/\//i.test(file)) return file;
+  return file.startsWith('./') || file.startsWith('/') ? file : LEOPARD_IMG_DIR + file;
+}
+
+/* =====================================================================
+ * جشن ارتقای مرحله
+ * ===================================================================== */
+
+export const SEEN_STAGE_KEY = 'everest_leopard_seen_stage';
+
+/**
+ * آیا باید جشن گرفت؟ فقط وقتی مرحله واقعاً بالا رفته باشد.
+ * @param {number} previous آخرین مرحله‌ای که کاربر دیده است
+ * @param {number} current مرحلهٔ فعلی
+ */
+export function shouldCelebrate(previous, current) {
+  const prev = Math.trunc(Number(previous));
+  const cur = Math.trunc(Number(current));
+  if (!Number.isFinite(prev) || !Number.isFinite(cur)) return false;
+  return cur > prev && cur >= 2 && cur <= LEOPARD_STAGES.length;
+}
+
+/** متن فارسی جشن برای یک پله. */
+export function celebrationText(item) {
+  const stage = item ?? LEOPARD_STAGES[0];
+  return {
+    title: `${stage.titleFa} شدی!`,
+    body: `به سطح ${faDigits(stage.level)} رسیدی — ${stage.code}`,
+    hint: 'ادامه بده؛ پلهٔ بعد نزدیک است.'
+  };
+}
+
+/** مارک‌آپ اورلی جشن. */
+export function celebrationMarkup(stage) {
+  const item = leopardStageFor(stage);
+  const text = celebrationText(item);
+  return `<div class="celebrate-card" role="dialog" aria-modal="true" aria-labelledby="celebrate-title">
+  <div class="celebrate-glow" aria-hidden="true"></div>
+  <div class="celebrate-avatar" aria-hidden="true">${avatarMarkup(item)}</div>
+  <h2 id="celebrate-title" class="celebrate-title">${text.title}</h2>
+  <p class="celebrate-body">${text.body}</p>
+  <p class="celebrate-hint">${text.hint}</p>
+  <button type="button" class="celebrate-btn" data-celebrate-close="1">ادامه می‌دهم 🚀</button>
+</div>`;
+}
+
+/**
+ * نمایش جشن در صفحه. با کلیک روی دکمه یا بعد از `ttl` میلی‌ثانیه بسته می‌شود.
+ * در محیط بدون DOM بی‌خطر است.
+ */
+export function showCelebration(stage, doc = typeof document !== 'undefined' ? document : null, ttl = 5200) {
+  if (!doc) return false;
+  const host = doc.getElementById('celebrate-root');
+  if (!host) return false;
+  host.innerHTML = celebrationMarkup(stage);
+  host.classList.add('is-open');
+  host.setAttribute('aria-hidden', 'false');
+
+  let timer = null;
+  const close = () => {
+    if (timer) clearTimeout(timer);
+    host.classList.remove('is-open');
+    host.setAttribute('aria-hidden', 'true');
+    host.innerHTML = '';
+    doc.removeEventListener?.('click', onClick);
+    doc.removeEventListener?.('keydown', onKey);
+  };
+  const onClick = (e) => {
+    if (e?.target?.closest?.('[data-celebrate-close]') || e?.target === host) close();
+  };
+  const onKey = (e) => {
+    if (e?.key === 'Escape' || e?.key === 'Enter') close();
+  };
+  doc.addEventListener?.('click', onClick);
+  doc.addEventListener?.('keydown', onKey);
+  timer = setTimeout(close, ttl);
+  return true;
+}
+
+/* =====================================================================
+ * کارت اشتراک‌گذاری پیشرفت
+ * ===================================================================== */
+
+/** فرار دادن متن برای قرار گرفتن داخل SVG/XML. */
+export function escapeXml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
+/**
+ * ساخت کارت پیشرفت به‌صورت SVG (بدون هیچ منبع خارجی).
+ * @param {{name?:string, stage?:number, progress?:number, date?:string}} [opts]
+ */
+export function buildShareCard({ name = 'عضو تیم اورست', stage = 1, progress = 0, date = '' } = {}) {
+  const item = leopardStageFor(stage);
+  const rawPct = Number(progress);
+  const pct = Number.isFinite(rawPct) ? Math.min(100, Math.max(0, Math.round(rawPct))) : 0;
+  const barW = Math.round((pct / 100) * 300);
+  const safeName = escapeXml(name);
+  const safeDate = escapeXml(date);
+
+  // آواتار SVG را داخل کارت جاسازی می‌کنیم (بدون <svg> تودرتو معتبر نیست،
+  // پس محتوای گروه را جدا می‌گیریم).
+  const avatarInner = avatarMarkup(item)
+    .replace(/^<svg[^>]*>/, '')
+    .replace(/<\/svg>$/, '');
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 460" width="360" height="460" dir="rtl" font-family="Vazirmatn, system-ui, sans-serif">
+  <defs>
+    <linearGradient id="card-bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0b1220"></stop>
+      <stop offset="100%" stop-color="#122544"></stop>
+    </linearGradient>
+    <linearGradient id="card-bar" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#22d3ee"></stop>
+      <stop offset="100%" stop-color="#38bdf8"></stop>
+    </linearGradient>
+  </defs>
+  <rect width="360" height="460" fill="url(#card-bg)"></rect>
+  <text x="180" y="46" text-anchor="middle" fill="#93c5fd" font-size="12" letter-spacing="2">EVEREST 5&#215;5</text>
+  <text x="180" y="76" text-anchor="middle" fill="#e2e8f0" font-size="17" font-weight="700">${safeName}</text>
+
+  <circle cx="180" cy="180" r="78" fill="#0f172a" stroke="#22d3ee" stroke-opacity="0.35" stroke-width="1.5"></circle>
+  <g transform="translate(120 120) scale(2)">${avatarInner}</g>
+
+  <text x="180" y="292" text-anchor="middle" fill="#a5f3fc" font-size="15" font-weight="700">${escapeXml(item.titleFa)}</text>
+  <text x="180" y="314" text-anchor="middle" fill="#94a3b8" font-size="11">${escapeXml(item.code)} &#183; سطح ${escapeXml(faDigits(item.level))}</text>
+
+  <rect x="30" y="342" width="300" height="12" rx="6" fill="#1e293b"></rect>
+  <rect x="30" y="342" width="${barW}" height="12" rx="6" fill="url(#card-bar)"></rect>
+  <text x="330" y="376" text-anchor="end" fill="#cbd5e1" font-size="11">${escapeXml(faDigits(pct))}٪ پیشرفت</text>
+  ${safeDate ? `<text x="30" y="376" text-anchor="start" fill="#64748b" font-size="10">${safeDate}</text>` : ''}
+  <text x="180" y="428" text-anchor="middle" fill="#475569" font-size="9">سیستم ۵&#215;۵ تیم اورست — نیوشانیک</text>
+</svg>`.trim();
+}
+
+/**
+ * آماده‌سازی کارت برای اشتراک‌گذاری/دانلود: SVG → PNG با canvas.
+ * در مرورگر قدیمی یا خطای canvas، همان SVG را برمی‌گرداند.
+ */
+export async function shareCard({ name, stage, progress, date } = {}, win = typeof window !== 'undefined' ? window : null) {
+  const svg = buildShareCard({ name, stage, progress, date });
+  if (!win?.document) return { ok: false, reason: 'no-dom' };
+
+  let file = null;
+  try {
+    const blob = new win.Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+    const url = win.URL.createObjectURL(blob);
+    file = await new Promise((resolve) => {
+      const img = new win.Image();
+      img.onload = () => {
+        try {
+          const canvas = win.document.createElement('canvas');
+          canvas.width = 720;
+          canvas.height = 920;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          canvas.toBlob((b) => resolve(b), 'image/png');
+        } catch (_) { resolve(null); }
+        finally { win.URL.revokeObjectURL(url); }
+      };
+      img.onerror = () => { win.URL.revokeObjectURL(url); resolve(null); };
+      img.src = url;
+    });
+  } catch (_) {
+    file = null;
+  }
+
+  if (file && typeof win.navigator?.share === 'function' && typeof win.File === 'function') {
+    try {
+      const f = new win.File([file], 'everest-progress.png', { type: 'image/png' });
+      if (!win.navigator.canShare || win.navigator.canShare({ files: [f] })) {
+        await win.navigator.share({ files: [f], title: 'پیشرفت من در سیستم ۵×۵', text: 'مسیر رشد من در تیم اورست' });
+        return { ok: true, method: 'share' };
+      }
+    } catch (_) { /* کاربر لغو کرد یا پشتیبانی نیست */ }
+  }
+
+  if (file) {
+    try {
+      const a = win.document.createElement('a');
+      a.href = win.URL.createObjectURL(file);
+      a.download = 'everest-progress.png';
+      win.document.body.appendChild(a);
+      a.click();
+      a.remove();
+      return { ok: true, method: 'download' };
+    } catch (_) { /* ادامه به SVG */ }
+  }
+
+  return { ok: true, method: 'svg', svg };
 }
