@@ -20,8 +20,8 @@
  */
 
 export const DEFAULT_SUPABASE = {
-  url: 'https://trdzchlrzxnwnubdotxq.supabase.co',
-  key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRyZHpjaGxyenhud251YmRvdHhxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIwMjY2ODYsImV4cCI6MjA3NzYwMjY4Nn0.R-7JShiJvWsDlRNSoJvML4CqyZV564SOXtyMyZYCIiw'
+  url: 'https://cupcijeqqiyhqaifjzbl.supabase.co',
+  key: 'sb_publishable_vRdBCZtD7BZErzJmQ8m6jg_DPTmi8ZR'
 };
 
 /** پیش‌فرض n8n (خالی = غیرفعال) */

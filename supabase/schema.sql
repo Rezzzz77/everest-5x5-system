@@ -270,6 +270,22 @@ create policy "leaders can view downline profiles"
     or (upline_email is not null and lower(upline_email) = lower(auth.jwt()->>'email'))
   );
 
+-- لیدر بالاسری می‌تواند «مرحله تأییدشده» اعضای زیرمجموعه‌اش را ثبت کند (فقط UPDATE).
+-- بدون این policy، approveMemberStage() روی پروژه تازه بی‌صدا شکست می‌خورد.
+drop policy if exists "leaders can update downline approved stage" on public.profiles;
+create policy "leaders can update downline approved stage"
+  on public.profiles
+  for update
+  to authenticated
+  using (
+    upline_id = (select auth.uid())
+    or (upline_email is not null and lower(upline_email) = lower(auth.jwt()->>'email'))
+  )
+  with check (
+    upline_id = (select auth.uid())
+    or (upline_email is not null and lower(upline_email) = lower(auth.jwt()->>'email'))
+  );
+
 -- ------------------------------------------------------------
 -- ۵) دسترسی‌ها
 --    anon: هیچ. authenticated: فقط CRUD (بدون TRUNCATE/TRIGGER/REFERENCES)

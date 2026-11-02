@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 
 import {
@@ -72,11 +73,26 @@ test('config پیش‌فرض: هرگز کلید secret در کلاینت نیس�
   assert.doesNotMatch(SUPABASE_CONFIG.key, /^sbp_/i);
 });
 
-test('config پیش‌فرض: کلید anon است، نه service_role', () => {
-  const payload = SUPABASE_CONFIG.key.split('.')[1];
-  const claims = JSON.parse(Buffer.from(payload, 'base64url').toString('utf-8'));
+test('config پیش‌فرض: کلید عمومی کلاینت است (publishable یا anon)، نه service_role', () => {
+  const key = SUPABASE_CONFIG.key;
+  if (key.startsWith('sb_publishable_')) {
+    assert.ok(key.length >= 25, 'کلید publishable خیلی کوتاه است');
+    return;
+  }
+  const claims = JSON.parse(Buffer.from(key.split('.')[1], 'base64url').toString('utf-8'));
   assert.equal(claims.role, 'anon');
   assert.notEqual(claims.role, 'service_role');
+});
+
+test('env.js: فقط کلید عمومی دارد و هیچ کلید مدیریتی/سرویس نیست', () => {
+  const src = readFileSync(new URL('../src/env.js', import.meta.url), 'utf-8');
+  // کامنت‌ها توضیح می‌دهند «چه چیزی نباید اینجا باشد»، پس از بررسی حذف می‌شوند.
+  const code = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  assert.doesNotMatch(code, /sb_secret_/);
+  assert.doesNotMatch(code, /sbp_[a-f0-9]{20,}/);
+  const keys = [...code.matchAll(/key:\s*'([^']+)'/g)].map((m) => m[1]).filter(Boolean);
+  assert.equal(keys.length, 1, 'باید دقیقاً یک کلید عمومی (DeepSeek خالی است) باشد');
+  assert.match(keys[0], /^(sb_publishable_|eyJ)/);
 });
 
 test('validateConfig: پیش‌فرض پروژه بدون خطاست', () => {
