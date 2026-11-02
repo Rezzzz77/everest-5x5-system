@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#1d4ed8">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 rx=%2714%27 fill=%27%231d4ed8%27/%3E%3Ctext x=%2732%27 y=%2743%27 font-size=%2724%27 font-family=%27sans-serif%27 font-weight=%27bold%27 fill=%27white%27 text-anchor=%27middle%27%3E5%C3%975%3C/text%3E%3C/svg%3E">
+  <title>اپلیکیشن سیستم ۵×۵ تیم اورست | نیوشانیک</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css">
+  <style>
+    body { font-family: 'Vazirmatn', sans-serif; background-color: #090d16; color: #f8fafc; -webkit-tap-highlight-color: transparent; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    body.light-mode { background-color: #f1f5f9 !important; color: #0f172a !important; }
+    body.light-mode .bg-slate-950 { background-color: #f8fafc !important; }
+    body.light-mode .bg-slate-900 { background-color: #ffffff !important; color: #0f172a !important; }
+    body.light-mode .bg-slate-800, body.light-mode .bg-slate-800\/90 { background-color: #f8fafc !important; border-color: #cbd5e1 !important; }
+    body.light-mode .border-slate-800, body.light-mode .border-slate-700 { border-color: #cbd5e1 !important; }
+    body.light-mode .text-slate-400 { color: #64748b !important; }
+    body.light-mode .text-slate-300 { color: #334155 !important; }
+    body.light-mode .text-slate-200 { color: #1e293b !important; }
+    body.light-mode .text-white { color: #0f172a !important; }
+    body.light-mode input, body.light-mode select { background-color: #f1f5f9 !important; color: #0f172a !important; border-color: #cbd5e1 !important; }
+
+    /* ===== صحنهٔ کوهستان اورست + ببر برفی (SVG + CSS، بدون شبکه) ===== */
+    #leopard-bg {
+      position: absolute; inset: 0; z-index: 0; overflow: hidden;
+      pointer-events: none; opacity: .5;
+      mask-image: linear-gradient(to bottom, black 0%, black 55%, transparent 88%);
+      -webkit-mask-image: linear-gradient(to bottom, black 0%, black 55%, transparent 88%);
+    }
+    #leopard-bg .leopard-svg { width: 100%; height: 100%; display: block; }
+    #leopard-bg.is-off { display: none; }
+    #leopard-bg.is-paused * { animation-play-state: paused !important; }
+
+    /* محتوای اپ بالای صحنه */
+    #app-header, main { position: relative; z-index: 1; }
+
+    #leopard-bg .star { fill: #dbeafe; animation: lp-twinkle 4.5s ease-in-out infinite; animation-delay: var(--delay, 0s); }
+    #leopard-bg .moon { animation: lp-moonglow 9s ease-in-out infinite; transform-origin: 308px 46px; }
+    #leopard-bg .ridge-far  { animation: lp-drift-far 46s ease-in-out infinite alternate; }
+    #leopard-bg .ridge-mid  { animation: lp-drift-mid 34s ease-in-out infinite alternate; }
+    #leopard-bg .ridge-near { animation: lp-drift-near 24s ease-in-out infinite alternate; }
+    #leopard-bg .snow { fill: #eaf2ff; opacity: .85; animation: lp-snowfall var(--dur, 9s) linear infinite; animation-delay: var(--delay, 0s); }
+
+    #leopard-bg .leopard { animation: lp-prowl 22s ease-in-out infinite alternate; }
+    #leopard-bg .leopard-body { transform-origin: 145px 168px; animation: lp-breathe 3.4s ease-in-out infinite; }
+    #leopard-bg .lp-tail { transform-origin: 121px 164px; animation: lp-tail 2.6s ease-in-out infinite; }
+    #leopard-bg .lp-ear  { transform-origin: 170px 155px; animation: lp-ear 5.5s ease-in-out infinite; }
+    #leopard-bg .lp-eye  { animation: lp-blink 6s steps(1, end) infinite; }
+    #leopard-bg .lp-leg-a { transform-origin: 127px 168px; animation: lp-step 1.5s ease-in-out infinite; }
+    #leopard-bg .lp-leg-b { transform-origin: 141px 168px; animation: lp-step 1.5s ease-in-out infinite reverse; }
+    #leopard-bg .lp-leg-c { transform-origin: 153px 168px; animation: lp-step 1.5s ease-in-out infinite reverse; }
+    #leopard-bg .lp-leg-d { transform-origin: 165px 168px; animation: lp-step 1.5s ease-in-out infinite; }
+
+    /* حالت «کاهش حرکت»: صحنه هست، ولی ساکن */
+    #leopard-bg.is-still *, #leopard-bg.is-still { animation: none !important; }
+
+    @keyframes lp-twinkle { 0%,100% { opacity: .25; } 50% { opacity: 1; } }
+    @keyframes lp-moonglow { 0%,100% { opacity: .85; transform: scale(1); } 50% { opacity: 1; transform: scale(1.04); } }
+    @keyframes lp-drift-far  { from { transform: translateX(-6px); } to { transform: translateX(6px); } }
+    @keyframes lp-drift-mid  { from { transform: translateX(8px); }  to { transform: translateX(-8px); } }
+    @keyframes lp-drift-near { from { transform: translateX(-3px); } to { transform: translateX(5px); } }
+    @keyframes lp-snowfall {
+      from { transform: translate3d(0, 0, 0); }
+      to   { transform: translate3d(var(--drift, 8px), 215px, 0); }
+    }
+    @keyframes lp-prowl {
+      from { transform: translate(-18px, 1px); }
+      to   { transform: translate(26px, -1px); }
+    }
+    @keyframes lp-breathe { 0%,100% { transform: scaleY(1); } 50% { transform: scaleY(1.035); } }
+    @keyframes lp-tail { 0%,100% { transform: rotate(-9deg); } 50% { transform: rotate(13deg); } }
+    @keyframes lp-ear  { 0%,88%,100% { transform: rotate(0deg); } 92% { transform: rotate(-16deg); } 96% { transform: rotate(6deg); } }
+    @keyframes lp-blink { 0%,96%,100% { opacity: 1; } 97%,99% { opacity: .1; } }
+    @keyframes lp-step { 0%,100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-1.6px) rotate(9deg); } }
+
+    @media (prefers-reduced-motion: reduce) {
+      #leopard-bg * { animation: none !important; }
+    }
+
+    /* ===== آواتار پیشرفت پلنگ برفی (۵ پله) ===== */
+    /* شعاع هم‌مرکز: r_بیرونی ۱۶px − padding ۲.۵px → r_درونی ۱۳.۵px */
+    #leopard-avatar {
+      box-sizing: border-box; width: 100%; height: 100%; border-radius: 13.5px; flex: none;
+      /* تایل تیره: کنتراست خز روشن از ~۲.۵:۱ به ~۱۲:۱ می‌رسد */
+      background: radial-gradient(120% 120% at 30% 20%, #1e3a8a, #0f172a 72%);
+      border: 1px solid rgba(255,255,255,.28);
+      box-shadow: inset 0 0 12px rgba(255,255,255,.10);
+      animation: lp-pop .42s cubic-bezier(.2,.9,.3,1) both;
+    }
+    #leopard-avatar svg { width: 100%; height: 100%; display: block; }
+    #leopard-avatar .av-eye { animation: lp-blink 7s steps(1, end) infinite; }
+    /* مرحله ۵: هاله روی حلقه می‌رود تا ۲px از سیلوئت ۴۲px کم نکند */
+    .leopard-ring.level-5,
+    .leopard-avatar.level-5 ~ * { /* fallback */ }
+    .leopard-ring:has(> .leopard-avatar.level-5) {
+      box-shadow: 0 0 0 1.5px rgba(34,211,238,.55), 0 0 10px rgba(34,211,238,.35);
+    }
+    .leopard-level-chip {
+      font-size: 11px; font-weight: 700; letter-spacing: 0;
+      padding: 1px 6px; border-radius: 999px;
+      background: rgba(0,0,0,.28); color: #a5f3fc; border: 1px solid rgba(165,243,252,.35);
+      font-variant-numeric: tabular-nums;
+    }
+    /* بازخورد لمسی: فشردن ۴٪ کوچک‌تر، ۱۵۰ms */
+    #leopard-btn { transition: transform .15s ease, background-color .2s ease; }
+    #leopard-btn:active { transform: scale(.96); }
+    @keyframes lp-pop {
+      from { opacity: 0; transform: scale(.9) translateY(2px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      #leopard-avatar, #leopard-avatar * { animation: none !important; }
+    }
+
+    /* حلقهٔ پیشرفت دور آواتار (conic-gradient با متغیر --p) */
+    /* --p با @property ثبت می‌شود تا انتقال نرم باشد (در مرورگرهای قدیمی بی‌اثر است) */
+    @property --p { syntax: '<percentage>'; inherits: false; initial-value: 0%; }
+    .leopard-ring {
+      --p: 0%;
+      width: 47px; height: 47px; border-radius: 50%; padding: 2.5px; flex: none;
+      display: grid; place-items: center;
+      background: conic-gradient(#38bdf8 var(--p), rgba(255,255,255,.14) 0);
+      transition: --p .6s ease;
+    }
+    .leopard-ring > #leopard-avatar { width: 100%; height: 100%; }
+  </style>
+<style>*, ::before, ::after{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }::backdrop{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }/* ! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com */*,::after,::before{box-sizing:border-box;border-width:0;border-style:solid;border-color:#e5e7eb}::after,::before{--tw-content:''}:host,html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;tab-size:4;font-family:ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}body{margin:0;line-height:inherit}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:transparent;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dd,dl,figure,h1,h2,h3,h4,h5,h6,hr,p,pre{margin:0}fieldset{margin:0;padding:0}legend{padding:0}menu,ol,ul{list-style:none;margin:0;padding:0}dialog{padding:0}textarea{resize:vertical}input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}[role=button],button{cursor:pointer}:disabled{cursor:default}audio,canvas,embed,iframe,img,object,svg,video{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}[hidden]:where(:not([hidden=until-found])){display:none}.absolute{position:absolute}.relative{position:relative}.inset-0{inset:0px}.bottom-0{bottom:0px}.left-0{left:0px}.right-0{right:0px}.z-50{z-index:50}.z-30{z-index:30}.col-span-1{grid-column:span 1 / span 1}.col-span-3{grid-column:span 3 / span 3}.col-span-4{grid-column:span 4 / span 4}.col-span-5{grid-column:span 5 / span 5}.col-span-7{grid-column:span 7 / span 7}.mx-4{margin-left:1rem;margin-right:1rem}.mx-auto{margin-left:auto;margin-right:auto}.mb-1{margin-bottom:0.25rem}.mb-3{margin-bottom:0.75rem}.mt-0\.5{margin-top:0.125rem}.mt-1{margin-top:0.25rem}.mt-2{margin-top:0.5rem}.mt-3{margin-top:0.75rem}.block{display:block}.flex{display:flex}.grid{display:grid}.hidden{display:none}.h-16{height:4rem}.h-2{height:0.5rem}.h-full{height:100%}.h-7{height:1.75rem}.h-9{height:2.25rem}.max-h-80{max-height:20rem}.max-h-52{max-height:13rem}.max-h-64{max-height:16rem}.max-h-\[90vh\]{max-height:90vh}.min-h-screen{min-height:100vh}.w-16{width:4rem}.w-full{width:100%}.w-7{width:1.75rem}.w-9{width:2.25rem}.min-w-\[92px\]{min-width:92px}.max-w-md{max-width:28rem}.max-w-\[88\%\]{max-width:88%}.max-w-sm{max-width:24rem}.flex-1{flex:1 1 0%}.shrink-0{flex-shrink:0}@keyframes pulse{50%{opacity:.5}}.animate-pulse{animation:pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite}.list-inside{list-style-position:inside}.list-disc{list-style-type:disc}.grid-cols-1{grid-template-columns:repeat(1, minmax(0, 1fr))}.grid-cols-12{grid-template-columns:repeat(12, minmax(0, 1fr))}.grid-cols-5{grid-template-columns:repeat(5, minmax(0, 1fr))}.grid-cols-7{grid-template-columns:repeat(7, minmax(0, 1fr))}.grid-cols-2{grid-template-columns:repeat(2, minmax(0, 1fr))}.grid-cols-3{grid-template-columns:repeat(3, minmax(0, 1fr))}.grid-cols-4{grid-template-columns:repeat(4, minmax(0, 1fr))}.flex-col{flex-direction:column}.items-start{align-items:flex-start}.items-center{align-items:center}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.justify-around{justify-content:space-around}.gap-1{gap:0.25rem}.gap-1\.5{gap:0.375rem}.gap-2{gap:0.5rem}.gap-2\.5{gap:0.625rem}.space-y-1 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.25rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.25rem * var(--tw-space-y-reverse))}.space-y-2 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.5rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.5rem * var(--tw-space-y-reverse))}.space-y-2\.5 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.625rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.625rem * var(--tw-space-y-reverse))}.space-y-3 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.75rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.75rem * var(--tw-space-y-reverse))}.space-y-3\.5 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.875rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.875rem * var(--tw-space-y-reverse))}.space-y-4 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1rem * var(--tw-space-y-reverse))}.space-y-5 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1.25rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1.25rem * var(--tw-space-y-reverse))}.space-y-1\.5 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.375rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.375rem * var(--tw-space-y-reverse))}.overflow-hidden{overflow:hidden}.overflow-x-auto{overflow-x:auto}.overflow-y-auto{overflow-y:auto}.truncate{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.whitespace-nowrap{white-space:nowrap}.rounded-2xl{border-radius:1rem}.rounded-full{border-radius:9999px}.rounded-lg{border-radius:0.5rem}.rounded-xl{border-radius:0.75rem}.rounded-tr-none{border-top-right-radius:0px}.border{border-width:1px}.border-b{border-bottom-width:1px}.border-t{border-top-width:1px}.border-amber-400\/60{border-color:rgb(251 191 36 / 0.6)}.border-blue-400\/40{border-color:rgb(96 165 250 / 0.4)}.border-blue-400\/50{border-color:rgb(96 165 250 / 0.5)}.border-blue-500\/40{border-color:rgb(59 130 246 / 0.4)}.border-blue-500\/50{border-color:rgb(59 130 246 / 0.5)}.border-blue-600\/40{border-color:rgb(37 99 235 / 0.4)}.border-emerald-500\/40{border-color:rgb(16 185 129 / 0.4)}.border-emerald-600\/40{border-color:rgb(5 150 105 / 0.4)}.border-orange-500\/40{border-color:rgb(249 115 22 / 0.4)}.border-orange-600\/40{border-color:rgb(234 88 12 / 0.4)}.border-slate-700{--tw-border-opacity:1;border-color:rgb(51 65 85 / var(--tw-border-opacity, 1))}.border-slate-700\/60{border-color:rgb(51 65 85 / 0.6)}.border-slate-700\/80{border-color:rgb(51 65 85 / 0.8)}.border-slate-800{--tw-border-opacity:1;border-color:rgb(30 41 59 / var(--tw-border-opacity, 1))}.border-amber-500\/30{border-color:rgb(245 158 11 / 0.3)}.border-amber-500\/40{border-color:rgb(245 158 11 / 0.4)}.border-amber-700\/50{border-color:rgb(180 83 9 / 0.5)}.border-blue-700\/40{border-color:rgb(29 78 216 / 0.4)}.border-blue-700\/50{border-color:rgb(29 78 216 / 0.5)}.border-purple-400\/40{border-color:rgb(192 132 252 / 0.4)}.border-purple-500\/30{border-color:rgb(168 85 247 / 0.3)}.border-purple-500\/40{border-color:rgb(168 85 247 / 0.4)}.border-purple-500\/50{border-color:rgb(168 85 247 / 0.5)}.border-purple-600\/40{border-color:rgb(147 51 234 / 0.4)}.border-purple-700\/40{border-color:rgb(126 34 206 / 0.4)}.border-purple-700\/50{border-color:rgb(126 34 206 / 0.5)}.border-sky-700\/40{border-color:rgb(3 105 161 / 0.4)}.border-white\/25{border-color:rgb(255 255 255 / 0.25)}.bg-black\/25{background-color:rgb(0 0 0 / 0.25)}.bg-black\/30{background-color:rgb(0 0 0 / 0.3)}.bg-blue-500{--tw-bg-opacity:1;background-color:rgb(59 130 246 / var(--tw-bg-opacity, 1))}.bg-blue-600{--tw-bg-opacity:1;background-color:rgb(37 99 235 / var(--tw-bg-opacity, 1))}.bg-blue-600\/70{background-color:rgb(37 99 235 / 0.7)}.bg-blue-900\/80{background-color:rgb(30 58 138 / 0.8)}.bg-blue-950\/70{background-color:rgb(23 37 84 / 0.7)}.bg-emerald-600{--tw-bg-opacity:1;background-color:rgb(5 150 105 / var(--tw-bg-opacity, 1))}.bg-emerald-700{--tw-bg-opacity:1;background-color:rgb(4 120 87 / var(--tw-bg-opacity, 1))}.bg-emerald-900\/80{background-color:rgb(6 78 59 / 0.8)}.bg-emerald-950\/70{background-color:rgb(2 44 34 / 0.7)}.bg-orange-600{--tw-bg-opacity:1;background-color:rgb(234 88 12 / var(--tw-bg-opacity, 1))}.bg-orange-900\/80{background-color:rgb(124 45 18 / 0.8)}.bg-orange-950\/70{background-color:rgb(67 20 7 / 0.7)}.bg-slate-700\/60{background-color:rgb(51 65 85 / 0.6)}.bg-slate-800{--tw-bg-opacity:1;background-color:rgb(30 41 59 / var(--tw-bg-opacity, 1))}.bg-slate-800\/90{background-color:rgb(30 41 59 / 0.9)}.bg-slate-900{--tw-bg-opacity:1;background-color:rgb(15 23 42 / var(--tw-bg-opacity, 1))}.bg-slate-900\/90{background-color:rgb(15 23 42 / 0.9)}.bg-slate-950{--tw-bg-opacity:1;background-color:rgb(2 6 23 / var(--tw-bg-opacity, 1))}.bg-slate-950\/95{background-color:rgb(2 6 23 / 0.95)}.bg-white\/20{background-color:rgb(255 255 255 / 0.2)}.bg-amber-500{--tw-bg-opacity:1;background-color:rgb(245 158 11 / var(--tw-bg-opacity, 1))}.bg-amber-600{--tw-bg-opacity:1;background-color:rgb(217 119 6 / var(--tw-bg-opacity, 1))}.bg-amber-950\/70{background-color:rgb(69 26 3 / 0.7)}.bg-black\/80{background-color:rgb(0 0 0 / 0.8)}.bg-black\/85{background-color:rgb(0 0 0 / 0.85)}.bg-blue-950\/60{background-color:rgb(23 37 84 / 0.6)}.bg-purple-600{--tw-bg-opacity:1;background-color:rgb(147 51 234 / var(--tw-bg-opacity, 1))}.bg-purple-600\/30{background-color:rgb(147 51 234 / 0.3)}.bg-purple-900\/60{background-color:rgb(88 28 135 / 0.6)}.bg-purple-950\/70{background-color:rgb(59 7 100 / 0.7)}.bg-purple-950\/80{background-color:rgb(59 7 100 / 0.8)}.bg-sky-600{--tw-bg-opacity:1;background-color:rgb(2 132 199 / var(--tw-bg-opacity, 1))}.bg-sky-950\/50{background-color:rgb(8 47 73 / 0.5)}.bg-slate-700{--tw-bg-opacity:1;background-color:rgb(51 65 85 / var(--tw-bg-opacity, 1))}.bg-slate-900\/80{background-color:rgb(15 23 42 / 0.8)}.bg-slate-900\/95{background-color:rgb(15 23 42 / 0.95)}.bg-slate-950\/60{background-color:rgb(2 6 23 / 0.6)}.bg-transparent{background-color:transparent}.bg-white\/15{background-color:rgb(255 255 255 / 0.15)}.bg-gradient-to-br{background-image:linear-gradient(to bottom right, var(--tw-gradient-stops))}.bg-gradient-to-l{background-image:linear-gradient(to left, var(--tw-gradient-stops))}.bg-gradient-to-r{background-image:linear-gradient(to right, var(--tw-gradient-stops))}.from-amber-600{--tw-gradient-from:#d97706 var(--tw-gradient-from-position);--tw-gradient-to:rgb(217 119 6 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), var(--tw-gradient-to)}.from-blue-500{--tw-gradient-from:#3b82f6 var(--tw-gradient-from-position);--tw-gradient-to:rgb(59 130 246 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), var(--tw-gradient-to)}.from-blue-700{--tw-gradient-from:#1d4ed8 var(--tw-gradient-from-position);--tw-gradient-to:rgb(29 78 216 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), var(--tw-gradient-to)}.from-purple-600{--tw-gradient-from:#9333ea var(--tw-gradient-from-position);--tw-gradient-to:rgb(147 51 234 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), var(--tw-gradient-to)}.from-purple-800{--tw-gradient-from:#6b21a8 var(--tw-gradient-from-position);--tw-gradient-to:rgb(107 33 168 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), var(--tw-gradient-to)}.to-amber-800{--tw-gradient-to:#92400e var(--tw-gradient-to-position)}.to-blue-800{--tw-gradient-to:#1e40af var(--tw-gradient-to-position)}.to-blue-900{--tw-gradient-to:#1e3a8a var(--tw-gradient-to-position)}.to-emerald-400{--tw-gradient-to:#34d399 var(--tw-gradient-to-position)}.to-indigo-600{--tw-gradient-to:#4f46e5 var(--tw-gradient-to-position)}.to-indigo-900{--tw-gradient-to:#312e81 var(--tw-gradient-to-position)}.p-0{padding:0px}.p-1{padding:0.25rem}.p-2\.5{padding:0.625rem}.p-3{padding:0.75rem}.p-3\.5{padding:0.875rem}.p-4{padding:1rem}.p-6{padding:1.5rem}.p-1\.5{padding:0.375rem}.p-2{padding:0.5rem}.p-5{padding:1.25rem}.px-1\.5{padding-left:0.375rem;padding-right:0.375rem}.px-2{padding-left:0.5rem;padding-right:0.5rem}.px-2\.5{padding-left:0.625rem;padding-right:0.625rem}.px-3{padding-left:0.75rem;padding-right:0.75rem}.px-4{padding-left:1rem;padding-right:1rem}.py-0\.5{padding-top:0.125rem;padding-bottom:0.125rem}.py-1{padding-top:0.25rem;padding-bottom:0.25rem}.py-1\.5{padding-top:0.375rem;padding-bottom:0.375rem}.py-2{padding-top:0.5rem;padding-bottom:0.5rem}.py-2\.5{padding-top:0.625rem;padding-bottom:0.625rem}.py-3{padding-top:0.75rem;padding-bottom:0.75rem}.px-3\.5{padding-left:0.875rem;padding-right:0.875rem}.pb-2{padding-bottom:0.5rem}.pb-2\.5{padding-bottom:0.625rem}.pb-24{padding-bottom:6rem}.pr-0\.5{padding-right:0.125rem}.pt-1{padding-top:0.25rem}.pb-1\.5{padding-bottom:0.375rem}.pt-0\.5{padding-top:0.125rem}.pt-2{padding-top:0.5rem}.pt-3{padding-top:0.75rem}.text-left{text-align:left}.text-center{text-align:center}.font-mono{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}.text-2xl{font-size:1.5rem;line-height:2rem}.text-\[10px\]{font-size:10px}.text-\[11px\]{font-size:11px}.text-\[9px\]{font-size:9px}.text-base{font-size:1rem;line-height:1.5rem}.text-lg{font-size:1.125rem;line-height:1.75rem}.text-sm{font-size:0.875rem;line-height:1.25rem}.text-xl{font-size:1.25rem;line-height:1.75rem}.text-xs{font-size:0.75rem;line-height:1rem}.font-black{font-weight:900}.font-bold{font-weight:700}.font-extrabold{font-weight:800}.leading-relaxed{line-height:1.625}.tracking-\[0\.4em\]{letter-spacing:0.4em}.text-amber-100{--tw-text-opacity:1;color:rgb(254 243 199 / var(--tw-text-opacity, 1))}.text-amber-200{--tw-text-opacity:1;color:rgb(253 230 138 / var(--tw-text-opacity, 1))}.text-amber-300{--tw-text-opacity:1;color:rgb(252 211 77 / var(--tw-text-opacity, 1))}.text-blue-200{--tw-text-opacity:1;color:rgb(191 219 254 / var(--tw-text-opacity, 1))}.text-blue-200\/80{color:rgb(191 219 254 / 0.8)}.text-blue-300{--tw-text-opacity:1;color:rgb(147 197 253 / var(--tw-text-opacity, 1))}.text-blue-400{--tw-text-opacity:1;color:rgb(96 165 250 / var(--tw-text-opacity, 1))}.text-emerald-200{--tw-text-opacity:1;color:rgb(167 243 208 / var(--tw-text-opacity, 1))}.text-emerald-200\/80{color:rgb(167 243 208 / 0.8)}.text-emerald-400{--tw-text-opacity:1;color:rgb(52 211 153 / var(--tw-text-opacity, 1))}.text-orange-200{--tw-text-opacity:1;color:rgb(254 215 170 / var(--tw-text-opacity, 1))}.text-orange-200\/80{color:rgb(254 215 170 / 0.8)}.text-orange-400{--tw-text-opacity:1;color:rgb(251 146 60 / var(--tw-text-opacity, 1))}.text-slate-200{--tw-text-opacity:1;color:rgb(226 232 240 / var(--tw-text-opacity, 1))}.text-slate-300{--tw-text-opacity:1;color:rgb(203 213 225 / var(--tw-text-opacity, 1))}.text-slate-400{--tw-text-opacity:1;color:rgb(148 163 184 / var(--tw-text-opacity, 1))}.text-white{--tw-text-opacity:1;color:rgb(255 255 255 / var(--tw-text-opacity, 1))}.text-white\/80{color:rgb(255 255 255 / 0.8)}.text-amber-100\/80{color:rgb(254 243 199 / 0.8)}.text-amber-400{--tw-text-opacity:1;color:rgb(251 191 36 / var(--tw-text-opacity, 1))}.text-emerald-300{--tw-text-opacity:1;color:rgb(110 231 183 / var(--tw-text-opacity, 1))}.text-purple-200{--tw-text-opacity:1;color:rgb(233 213 255 / var(--tw-text-opacity, 1))}.text-purple-200\/80{color:rgb(233 213 255 / 0.8)}.text-purple-200\/90{color:rgb(233 213 255 / 0.9)}.text-purple-300{--tw-text-opacity:1;color:rgb(216 180 254 / var(--tw-text-opacity, 1))}.text-purple-400{--tw-text-opacity:1;color:rgb(192 132 252 / var(--tw-text-opacity, 1))}.text-red-400{--tw-text-opacity:1;color:rgb(248 113 113 / var(--tw-text-opacity, 1))}.text-rose-400{--tw-text-opacity:1;color:rgb(251 113 133 / var(--tw-text-opacity, 1))}.text-sky-200{--tw-text-opacity:1;color:rgb(186 230 253 / var(--tw-text-opacity, 1))}.text-sky-400{--tw-text-opacity:1;color:rgb(56 189 248 / var(--tw-text-opacity, 1))}.text-slate-500{--tw-text-opacity:1;color:rgb(100 116 139 / var(--tw-text-opacity, 1))}.text-slate-950{--tw-text-opacity:1;color:rgb(2 6 23 / var(--tw-text-opacity, 1))}.shadow{--tw-shadow:0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);--tw-shadow-colored:0 1px 3px 0 var(--tw-shadow-color), 0 1px 2px -1px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-2xl{--tw-shadow:0 25px 50px -12px rgb(0 0 0 / 0.25);--tw-shadow-colored:0 25px 50px -12px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-inner{--tw-shadow:inset 0 2px 4px 0 rgb(0 0 0 / 0.05);--tw-shadow-colored:inset 0 2px 4px 0 var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-lg{--tw-shadow:0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);--tw-shadow-colored:0 10px 15px -3px var(--tw-shadow-color), 0 4px 6px -4px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-md{--tw-shadow:0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);--tw-shadow-colored:0 4px 6px -1px var(--tw-shadow-color), 0 2px 4px -2px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-sm{--tw-shadow:0 1px 2px 0 rgb(0 0 0 / 0.05);--tw-shadow-colored:0 1px 2px 0 var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.backdrop-blur{--tw-backdrop-blur:blur(8px);-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.backdrop-blur-md{--tw-backdrop-blur:blur(12px);-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.backdrop-blur-sm{--tw-backdrop-blur:blur(4px);-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.transition{transition-property:color, background-color, border-color, fill, stroke, opacity, box-shadow, transform, filter, -webkit-text-decoration-color, -webkit-backdrop-filter;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter, -webkit-text-decoration-color, -webkit-backdrop-filter;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.transition-all{transition-property:all;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.duration-300{transition-duration:300ms}.hover\:bg-blue-500:hover{--tw-bg-opacity:1;background-color:rgb(59 130 246 / var(--tw-bg-opacity, 1))}.hover\:bg-emerald-500:hover{--tw-bg-opacity:1;background-color:rgb(16 185 129 / var(--tw-bg-opacity, 1))}.hover\:bg-emerald-600:hover{--tw-bg-opacity:1;background-color:rgb(5 150 105 / var(--tw-bg-opacity, 1))}.hover\:bg-emerald-800:hover{--tw-bg-opacity:1;background-color:rgb(6 95 70 / var(--tw-bg-opacity, 1))}.hover\:bg-orange-500:hover{--tw-bg-opacity:1;background-color:rgb(249 115 22 / var(--tw-bg-opacity, 1))}.hover\:bg-red-600\/60:hover{background-color:rgb(220 38 38 / 0.6)}.hover\:bg-slate-700:hover{--tw-bg-opacity:1;background-color:rgb(51 65 85 / var(--tw-bg-opacity, 1))}.hover\:bg-slate-900:hover{--tw-bg-opacity:1;background-color:rgb(15 23 42 / var(--tw-bg-opacity, 1))}.hover\:bg-white\/30:hover{background-color:rgb(255 255 255 / 0.3)}.hover\:bg-amber-400:hover{--tw-bg-opacity:1;background-color:rgb(251 191 36 / var(--tw-bg-opacity, 1))}.hover\:bg-amber-500:hover{--tw-bg-opacity:1;background-color:rgb(245 158 11 / var(--tw-bg-opacity, 1))}.hover\:bg-amber-900:hover{--tw-bg-opacity:1;background-color:rgb(120 53 15 / var(--tw-bg-opacity, 1))}.hover\:bg-blue-900:hover{--tw-bg-opacity:1;background-color:rgb(30 58 138 / var(--tw-bg-opacity, 1))}.hover\:bg-purple-500:hover{--tw-bg-opacity:1;background-color:rgb(168 85 247 / var(--tw-bg-opacity, 1))}.hover\:bg-purple-800:hover{--tw-bg-opacity:1;background-color:rgb(107 33 168 / var(--tw-bg-opacity, 1))}.hover\:bg-purple-900:hover{--tw-bg-opacity:1;background-color:rgb(88 28 135 / var(--tw-bg-opacity, 1))}.hover\:bg-rose-600\/60:hover{background-color:rgb(225 29 72 / 0.6)}.hover\:bg-sky-500:hover{--tw-bg-opacity:1;background-color:rgb(14 165 233 / var(--tw-bg-opacity, 1))}.hover\:bg-slate-600:hover{--tw-bg-opacity:1;background-color:rgb(71 85 105 / var(--tw-bg-opacity, 1))}.hover\:bg-white\/25:hover{background-color:rgb(255 255 255 / 0.25)}.hover\:from-purple-500:hover{--tw-gradient-from:#a855f7 var(--tw-gradient-from-position);--tw-gradient-to:rgb(168 85 247 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), var(--tw-gradient-to)}.hover\:to-indigo-500:hover{--tw-gradient-to:#6366f1 var(--tw-gradient-to-position)}.hover\:text-slate-200:hover{--tw-text-opacity:1;color:rgb(226 232 240 / var(--tw-text-opacity, 1))}.hover\:text-white:hover{--tw-text-opacity:1;color:rgb(255 255 255 / var(--tw-text-opacity, 1))}.hover\:text-purple-300:hover{--tw-text-opacity:1;color:rgb(216 180 254 / var(--tw-text-opacity, 1))}.hover\:text-red-300:hover{--tw-text-opacity:1;color:rgb(252 165 165 / var(--tw-text-opacity, 1))}.hover\:underline:hover{-webkit-text-decoration-line:underline;text-decoration-line:underline}.focus\:border-blue-500:focus{--tw-border-opacity:1;border-color:rgb(59 130 246 / var(--tw-border-opacity, 1))}.focus\:border-emerald-500:focus{--tw-border-opacity:1;border-color:rgb(16 185 129 / var(--tw-border-opacity, 1))}.focus\:border-amber-500:focus{--tw-border-opacity:1;border-color:rgb(245 158 11 / var(--tw-border-opacity, 1))}.focus\:border-purple-500:focus{--tw-border-opacity:1;border-color:rgb(168 85 247 / var(--tw-border-opacity, 1))}.focus\:border-sky-500:focus{--tw-border-opacity:1;border-color:rgb(14 165 233 / var(--tw-border-opacity, 1))}.focus\:outline-none:focus{outline:2px solid transparent;outline-offset:2px}@media (min-width: 640px){.sm\:col-span-4{grid-column:span 4 / span 4}.sm\:col-span-8{grid-column:span 8 / span 8}.sm\:min-h-\[880px\]{min-height:880px}.sm\:grid-cols-12{grid-template-columns:repeat(12, minmax(0, 1fr))}.sm\:grid-cols-2{grid-template-columns:repeat(2, minmax(0, 1fr))}.sm\:rounded-3xl{border-radius:1.5rem}.sm\:p-4{padding:1rem}}</style></head>
+<body class="min-h-screen flex justify-center bg-slate-950 p-0 sm:p-4">
+
+  <!-- قاب اصلی موبایل -->
+  <div class="w-full max-w-md bg-slate-900 min-h-screen sm:min-h-[880px] sm:rounded-3xl shadow-2xl border border-slate-800 flex flex-col overflow-hidden relative">
+
+    <!-- صحنهٔ تزئینی کوهستان اورست (SVG درون‌برنامه‌ای) -->
+    <div id="leopard-bg" class="leopard-scene" aria-hidden="true"><svg class="leopard-svg" viewBox="0 0 400 200" preserveAspectRatio="xMidYMax slice" role="presentation" focusable="false" data-mode="full">
+  <defs>
+    <linearGradient id="lp-sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#050a18"></stop>
+      <stop offset="55%" stop-color="#0a1730"></stop>
+      <stop offset="100%" stop-color="#122544"></stop>
+    </linearGradient>
+    <radialGradient id="lp-moon" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#e8f1ff" stop-opacity="0.95"></stop>
+      <stop offset="60%" stop-color="#bcd4ff" stop-opacity="0.35"></stop>
+      <stop offset="100%" stop-color="#bcd4ff" stop-opacity="0"></stop>
+    </radialGradient>
+    <linearGradient id="lp-far" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#9fb8d8" stop-opacity="0.55"></stop>
+      <stop offset="100%" stop-color="#5c7ba6" stop-opacity="0.25"></stop>
+    </linearGradient>
+    <linearGradient id="lp-mid" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#7b97bd" stop-opacity="0.5"></stop>
+      <stop offset="100%" stop-color="#2c4666" stop-opacity="0.35"></stop>
+    </linearGradient>
+    <linearGradient id="lp-near" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#16233a"></stop>
+      <stop offset="100%" stop-color="#080e1a"></stop>
+    </linearGradient>
+  </defs>
+
+  <rect width="400" height="200" fill="url(#lp-sky)"></rect>
+  <g class="stars"><circle class="star" cx="7" cy="8" r="1.1" style="--delay:0s"></circle><circle class="star" cx="60" cy="37" r="0.7" style="--delay:1.7s"></circle><circle class="star" cx="113" cy="66" r="0.7" style="--delay:3.4s"></circle><circle class="star" cx="166" cy="25" r="0.7" style="--delay:5.1s"></circle><circle class="star" cx="219" cy="54" r="0.7" style="--delay:0.8s"></circle><circle class="star" cx="272" cy="13" r="1.1" style="--delay:2.5s"></circle><circle class="star" cx="325" cy="42" r="0.7" style="--delay:4.2s"></circle><circle class="star" cx="378" cy="71" r="0.7" style="--delay:5.9s"></circle><circle class="star" cx="31" cy="30" r="0.7" style="--delay:1.6s"></circle><circle class="star" cx="84" cy="59" r="0.7" style="--delay:3.3s"></circle><circle class="star" cx="137" cy="18" r="1.1" style="--delay:5s"></circle><circle class="star" cx="190" cy="47" r="0.7" style="--delay:0.7s"></circle><circle class="star" cx="243" cy="76" r="0.7" style="--delay:2.4s"></circle><circle class="star" cx="296" cy="35" r="0.7" style="--delay:4.1s"></circle><circle class="star" cx="349" cy="64" r="0.7" style="--delay:5.8s"></circle><circle class="star" cx="2" cy="23" r="1.1" style="--delay:1.5s"></circle><circle class="star" cx="55" cy="52" r="0.7" style="--delay:3.2s"></circle><circle class="star" cx="108" cy="11" r="0.7" style="--delay:4.9s"></circle><circle class="star" cx="161" cy="40" r="0.7" style="--delay:0.6s"></circle><circle class="star" cx="214" cy="69" r="0.7" style="--delay:2.3s"></circle><circle class="star" cx="267" cy="28" r="1.1" style="--delay:4s"></circle><circle class="star" cx="320" cy="57" r="0.7" style="--delay:5.7s"></circle></g>
+
+  <g class="moon">
+    <circle cx="308" cy="46" r="46" fill="url(#lp-moon)"></circle>
+    <circle cx="308" cy="46" r="13" fill="#eaf2ff" opacity="0.9"></circle>
+  </g>
+
+  <g class="ridge ridge-far">
+    <path d="M-20 132 L34 96 L62 116 L96 74 L128 112 L160 88 L196 122 L232 92 L268 124 L304 98 L340 126 L380 104 L420 132 L420 200 L-20 200 Z" fill="url(#lp-far)"></path>
+  </g>
+  <g class="ridge ridge-mid">
+    <path d="M-20 160 L26 130 L58 148 L92 118 L126 146 L164 126 L204 154 L242 128 L282 156 L320 132 L360 158 L420 138 L420 200 L-20 200 Z" fill="url(#lp-mid)"></path>
+  </g>
+  <g class="ridge ridge-near">
+    <path d="M-20 186 L40 168 L84 178 L124 164 L168 180 L214 168 L258 182 L300 170 L344 184 L400 172 L420 200 L-20 200 Z" fill="url(#lp-near)"></path>
+  </g>
+
+  <g class="leopard">
+    <g class="leopard-body">
+      <path class="lp-tail" d="M118 168 C104 166 96 158 92 148 C89 141 92 136 97 137 C102 138 101 143 103 149 C106 157 112 163 121 164 Z" fill="#dfe9f7" opacity="0.92"></path>
+      <path class="lp-leg" d="M126 168 L124 178 L128 178 L130 168 Z" fill="#e6eefb"></path>
+      <path class="lp-leg" d="M140 168 L139 178 L143 178 L144 168 Z" fill="#e6eefb"></path>
+      <path class="lp-leg" d="M152 168 L151 178 L155 178 L156 168 Z" fill="#dfe8f6"></path>
+      <path class="lp-leg" d="M164 168 L163 178 L167 178 L168 168 Z" fill="#dfe8f6"></path>
+      <path class="lp-torso" d="M122 166 C128 154 150 152 162 158 C170 162 170 168 164 169 L126 169 C121 169 120 168 122 166 Z" fill="#eef4ff"></path>
+      <path class="lp-head" d="M166 158 C172 152 180 152 183 157 C185 161 182 165 176 166 L168 166 C164 164 164 160 166 158 Z" fill="#eef4ff"></path>
+      <path class="lp-ear" d="M168 156 L169 151 L173 155 Z" fill="#eef4ff"></path>
+      <circle class="lp-eye" cx="178" cy="158.4" r="1.05" fill="#7ce6c4"></circle>
+      <circle class="lp-spot" cx="132" cy="161" r="1.05" fill="#93a9c8" opacity="0.7"></circle>
+      <circle class="lp-spot" cx="141" cy="158" r="0.95" fill="#93a9c8" opacity="0.65"></circle>
+      <circle class="lp-spot" cx="150" cy="161" r="0.9" fill="#93a9c8" opacity="0.6"></circle>
+    </g>
+  </g>
+
+  <g class="snowfall"><circle class="snow" cx="11" cy="-6" r="1" style="--delay:0s;--dur:7s;--drift:6px"></circle><circle class="snow" cx="48" cy="-6" r="1.6" style="--delay:1.3s;--dur:14s;--drift:-9px"></circle><circle class="snow" cx="85" cy="-6" r="2.2" style="--delay:2.6s;--dur:12s;--drift:12px"></circle><circle class="snow" cx="122" cy="-6" r="1" style="--delay:3.9s;--dur:10s;--drift:-15px"></circle><circle class="snow" cx="159" cy="-6" r="1.6" style="--delay:5.2s;--dur:8s;--drift:18px"></circle><circle class="snow" cx="196" cy="-6" r="2.2" style="--delay:6.5s;--dur:15s;--drift:-6px"></circle><circle class="snow" cx="233" cy="-6" r="1" style="--delay:7.8s;--dur:13s;--drift:9px"></circle><circle class="snow" cx="270" cy="-6" r="1.6" style="--delay:0.1s;--dur:11s;--drift:-12px"></circle><circle class="snow" cx="307" cy="-6" r="2.2" style="--delay:1.4s;--dur:9s;--drift:15px"></circle><circle class="snow" cx="344" cy="-6" r="1" style="--delay:2.7s;--dur:7s;--drift:-18px"></circle><circle class="snow" cx="381" cy="-6" r="1.6" style="--delay:4s;--dur:14s;--drift:6px"></circle><circle class="snow" cx="18" cy="-6" r="2.2" style="--delay:5.3s;--dur:12s;--drift:-9px"></circle><circle class="snow" cx="55" cy="-6" r="1" style="--delay:6.6s;--dur:10s;--drift:12px"></circle><circle class="snow" cx="92" cy="-6" r="1.6" style="--delay:7.9s;--dur:8s;--drift:-15px"></circle><circle class="snow" cx="129" cy="-6" r="2.2" style="--delay:0.2s;--dur:15s;--drift:18px"></circle><circle class="snow" cx="166" cy="-6" r="1" style="--delay:1.5s;--dur:13s;--drift:-6px"></circle><circle class="snow" cx="203" cy="-6" r="1.6" style="--delay:2.8s;--dur:11s;--drift:9px"></circle><circle class="snow" cx="240" cy="-6" r="2.2" style="--delay:4.1s;--dur:9s;--drift:-12px"></circle></g>
+</svg></div>
+
+    <!-- ================= صفحه ثبت نام و ورود اولیه ================= -->
+    <div id="auth-screen" class="absolute inset-0 bg-slate-950/95 backdrop-blur-md z-50 p-6 flex flex-col justify-center space-y-5">
+      <div class="text-center space-y-2">
+        <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-800 rounded-2xl mx-auto flex items-center justify-center font-black text-2xl shadow-lg border border-blue-400/40">5×5</div>
+        <h1 class="text-xl font-extrabold text-white">سیستم ۵×۵ تیم اورست</h1>
+        <p class="text-xs text-slate-400">تکرار کارهای ساده = ساخت عادت‌های قدرتمند</p>
+      </div>
+      <!-- مرحله ۱: ورود با ایمیل و رمز عبور یا لینک -->
+      <div id="auth-step-email" class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-inner">
+        <div>
+          <label class="text-xs text-slate-300 font-bold">نام و نام خانوادگی</label>
+          <input id="reg-name-input" type="text" placeholder="مثال: سارا محمدی" class="w-full mt-1 bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-white focus:border-blue-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="text-xs text-slate-300 font-bold">نقش شما در تیم اورست *</label>
+          <select id="reg-role-select" onchange="toggleRoleUplineField()" class="w-full mt-1 bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-white focus:border-blue-500 focus:outline-none">
+            <option value="member">🎯 عضو تیم / مشاور فروش (پیشروی با تأیید راهبر)</option>
+            <option value="leader">👑 راهبر / لیدر تیم (سرپرست و ناظر تیم)</option>
+          </select>
+        </div>
+        <div id="reg-upline-box">
+          <label class="text-xs text-slate-300 font-bold">نام یا ایمیل راهبر / معرف شما *</label>
+          <input id="reg-upline-input" type="text" placeholder="مثال: leader@gmail.com یا نام راهبر" class="w-full mt-1 bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-white focus:border-blue-500 focus:outline-none">
+          <p class="text-[10px] text-slate-400 mt-1">تأیید ورود شما به مراحل بعدی توسط این راهبر انجام خواهد شد.</p>
+        </div>
+        <div>
+          <label class="text-xs text-slate-300 font-bold">ایمیل شما *</label>
+          <input id="reg-email" type="email" dir="ltr" autocomplete="email" placeholder="you@example.com" onkeydown="if(event.key==='Enter') document.getElementById('reg-password').focus()" class="w-full mt-1 bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-white text-left focus:border-blue-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="text-xs text-slate-300 font-bold">رمز عبور (ورود آنی بدون معطلی ایمیل) *</label>
+          <input id="reg-password" type="password" dir="ltr" placeholder="حداقل ۶ کاراکتر" onkeydown="if(event.key==='Enter') handlePasswordAuth()" class="w-full mt-1 bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-white text-left focus:border-emerald-500 focus:outline-none font-mono">
+          <p class="text-[10px] text-emerald-400 mt-1">✓ ورود آنی بدون معطلی و بدون نیاز به دریافت ایمیل</p>
+        </div>
+        <button id="btn-password-auth" onclick="handlePasswordAuth()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold py-3 rounded-xl text-xs shadow-lg transition">
+          ورود / ثبت‌نام آنی با رمز عبور 🚀
+        </button>
+        <button onclick="requestOtp(event)" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2 rounded-xl text-xs transition border border-slate-700">
+          یا ارسال لینک به ایمیل 📧
+        </button>
+        <button onclick="toggleLocalMode()" class="w-full text-[11px] text-slate-400 hover:text-slate-200 py-1">
+          فعلاً بدون حساب (ذخیره فقط روی همین گوشی)
+        </button>
+        <div id="auth-msg-1" class="text-[11px] leading-relaxed"></div>
+      </div>
+
+      <!-- مرحله ۲: کد و مشخصات -->
+      <div id="auth-step-code" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-inner">
+        <div class="flex justify-between items-center">
+          <span class="text-[11px] text-slate-300">ایمیل به <b id="auth-email-show" dir="ltr" class="text-blue-300"></b> ارسال شد</span>
+          <button onclick="backToEmailStep()" class="text-[10px] text-slate-400 hover:text-white">تغییر ایمیل</button>
+        </div>
+        <div>
+          <label class="text-xs text-slate-300 font-bold">کد ورود (۶ تا ۱۰ رقم) — اگر ایمیل کد دارد</label>
+          <input id="reg-code" type="tel" inputmode="numeric" maxlength="10" dir="ltr" autocomplete="one-time-code" placeholder="123456" class="w-full mt-1 bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-center tracking-[0.4em] font-mono text-base text-white focus:border-blue-500 focus:outline-none">
+          <p class="text-[10px] text-slate-400 mt-1">اگر ایمیل فقط لینک دارد، روی همان لینک بزن؛ ورود خودکار انجام می‌شود.</p>
+        </div>
+        <div>
+          <label class="text-xs text-slate-300 font-bold">نام و نام خانوادگی *</label>
+          <input id="reg-name" type="text" placeholder="مثال: سارا محمدی" class="w-full mt-1 bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-white focus:border-blue-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="text-xs text-slate-300 font-bold">کد ملی / کد واحد بازاریابی نیوشانیک</label>
+          <input id="reg-id" type="text" inputmode="numeric" placeholder="کد ۱۰ رقمی" class="w-full mt-1 bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-white focus:border-blue-500 focus:outline-none">
+          <p class="text-[10px] text-slate-400 mt-1">فقط برای پروفایل شخصی؛ در سرور با سطح دسترسی خودت ذخیره می‌شود.</p>
+        </div>
+        <div>
+          <label class="text-xs text-slate-300 font-bold">ایمیل یا نام راهبر / معرف شما (جهت اتصال به تیم)</label>
+          <input id="reg-upline" type="text" placeholder="مثال: leader@gmail.com یا نام راهبر" class="w-full mt-1 bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-white focus:border-blue-500 focus:outline-none">
+          <p class="text-[10px] text-slate-400 mt-1">با وارد کردن ایمیل راهبر، وضعیت پیشرفت شما به صورت خودکار در داشبورد تیم ثبت می‌شود.</p>
+        </div>
+        <button onclick="verifyOtpAndStart()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold py-3 rounded-xl text-xs shadow-lg transition">
+          ورود و استارت ۷۲ ساعت اول 🚀
+        </button>
+        <button onclick="requestOtp(event)" class="w-full text-[11px] text-slate-400 hover:text-slate-200 py-1">ارسال دوباره کد</button>
+        <div id="auth-msg-2" class="text-[11px] leading-relaxed"></div>
+      </div>
+    </div>
+
+    <!-- ================= هدر پویا ================= -->
+    <header id="app-header" class="p-4 bg-gradient-to-l from-blue-700 to-blue-900 transition-all duration-300 shadow-lg">
+      <div class="flex justify-between items-center mb-3">
+        <div class="flex items-center gap-2.5">
+          <div id="leopard-progress" data-progress="0" class="leopard-ring" title="پیشرفت کل" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" style="--p: 0%;">
+              <div id="leopard-avatar" class="leopard-avatar level-1" data-level="1" title="تولهٔ نوزاد — سطح ۱ (CUBLING)"><svg class="leopard-avatar-svg" viewBox="2 14 48 44" aria-hidden="true" focusable="false" data-stage="1">
+  <g transform="translate(8 6) scale(0.88)">
+    <path class="av-tail" d="M22 48 C14 47 10 42 9 36 C8.4 33 10 31.5 12 32.2 C14 33 13.4 35.6 14.4 38.6 C15.4 41.6 18 44.8 22.6 45.4 Z" fill="#e2ebf8"></path>
+    <ellipse class="av-body" cx="32" cy="44" rx="14" ry="9" fill="#eef4ff"></ellipse>
+    <path class="av-leg" d="M22 51 L21.4 56 L24.6 56 L25.4 51 Z" fill="#e6eefb"></path>
+    <path class="av-leg" d="M29 52 L28.6 56 L31.6 56 L32 52 Z" fill="#dfe8f6"></path>
+    <path class="av-leg" d="M38 52 L38 56 L41 56 L41.2 52 Z" fill="#e6eefb"></path>
+    <path class="av-leg" d="M44 51 L44.6 56 L47.6 56 L47 51 Z" fill="#dfe8f6"></path>
+    <circle class="av-head" cx="35" cy="32" r="13.4" fill="#f3f8ff"></circle>
+    <path class="av-ear" d="M27.4 23 L26 16.8 L32.4 21 Z" fill="#eef4ff"></path>
+    <path class="av-ear" d="M42 23 L44 17 L37.6 21 Z" fill="#eef4ff"></path>
+    <path class="av-ear-inner" d="M28.4 22.4 L27.8 19.4 L30.8 21.6 Z" fill="#bcd0e8"></path>
+    <path class="av-ear-inner" d="M41.2 22.4 L43 18.8 L39.4 21.6 Z" fill="#bcd0e8"></path>
+    <circle class="av-eye" cx="31.6" cy="31" r="2.4" fill="#0f172a"></circle>
+    <circle class="av-eye" cx="39.2" cy="31" r="2.4" fill="#0f172a"></circle>
+    <circle class="av-eye-shine" cx="32.2" cy="30.4" r="0.8" fill="#e0f2fe"></circle>
+    <circle class="av-eye-shine" cx="39.8" cy="30.4" r="0.8" fill="#e0f2fe"></circle>
+    <path class="av-nose" d="M34.6 35.4 L37.2 35.4 L35.9 37.2 Z" fill="#94a3b8"></path>
+    
+    <g class="av-spots"><circle class="av-spot" cx="30" cy="39" r="2.2" opacity="0.7"></circle></g>
+    
+  </g>
+</svg></div>
+            </div>
+          <div>
+            <div class="flex items-center gap-1.5">
+              <h1 id="user-display-name" class="font-extrabold text-sm">عضو تیم اورست</h1>
+              <span id="user-role-badge" class="text-[10px] bg-blue-600/70 border border-blue-400/50 px-2 py-0.5 rounded-full font-bold">🎯 مشاور</span>
+              <span id="user-stage-badge" class="text-[10px] bg-black/30 px-2 py-0.5 rounded-full text-amber-300 font-bold">مرحله ۱</span>
+              <span id="leopard-level-label" class="leopard-level-chip" aria-label="مرحلهٔ ۱ از ۵ — تولهٔ نوزاد" title="CUBLING — سطح ۱">تولهٔ نوزاد · ۱</span>
+              <span id="cloud-badge" class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-slate-700/60 text-slate-300">آفلاین</span>
+            </div>
+            <p class="text-[10px] text-white/80 mt-0.5">حامی: <span id="upline-display">راهبر اورست</span></p>
+          </div>
+        </div>
+        <div class="flex gap-1 items-center">
+          <button onclick="toggleLeopard()" id="leopard-btn" aria-pressed="true" title="توقف انیمیشن کوهستان" class="text-[11px] bg-white/20 hover:bg-white/30 px-2 py-1.5 rounded-xl backdrop-blur">🐆</button>
+          <button onclick="toggleDarkMode()" id="dark-mode-btn" title="تغییر حالت شب/روز" class="text-[11px] bg-white/20 hover:bg-white/30 px-2 py-1.5 rounded-xl backdrop-blur">🌙</button>
+          <button onclick="requestNotificationPermission()" id="notif-btn" title="یادآور اعلان شبانه" class="text-[11px] bg-white/20 hover:bg-white/30 px-2 py-1.5 rounded-xl backdrop-blur">🔔</button>
+          <button onclick="toggleGoalModal()" class="text-[11px] bg-white/20 hover:bg-white/30 px-2.5 py-1.5 rounded-xl font-bold backdrop-blur">🎯 هدف</button>
+          <button onclick="openCloudModal()" title="اتصال ابری" class="text-[11px] bg-white/20 hover:bg-white/30 px-2 py-1.5 rounded-xl backdrop-blur">☁️</button>
+          <button onclick="resetDemo()" title="خروج / ریست" class="text-[11px] bg-black/25 hover:bg-red-600/60 px-2 py-1.5 rounded-xl">⚙️</button>
+        </div>
+      </div>
+
+      <!-- تب‌های ۵ مرحله (با وضعیت قفل یا باز) -->
+      <div class="grid grid-cols-5 gap-1 bg-black/30 p-1 rounded-2xl" id="stage-tabs-bar"></div>
+    </header>
+
+    <!-- ================= بنر هوشمند یادآور گزارش شبانه ================= -->
+    <div id="evening-reminder-banner" class="hidden mx-4 mt-2 p-2.5 bg-gradient-to-l from-amber-600 to-amber-800 border border-amber-400/60 rounded-2xl flex items-center justify-between text-xs text-amber-100 shadow-lg">
+      <div class="flex items-center gap-2">
+        <span class="text-lg">🌙</span>
+        <div>
+          <span class="font-extrabold text-white text-[11px]">زمان ثبت گزارش شبانه است!</span>
+          <span class="text-[9px] block text-amber-200">زنجیره ۷ روزه امروزت رو ثبت کن تا استریک نسوزه.</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <button onclick="switchStage(2)" class="bg-slate-950 text-amber-300 font-extrabold px-2.5 py-1 rounded-xl text-[10px] hover:bg-slate-900 shadow">ثبت گزارش</button>
+        <button onclick="dismissEveningReminder()" title="بستن" class="text-white/80 hover:text-white px-1.5 py-0.5 text-xs font-bold">✕</button>
+      </div>
+    </div>
+
+    <!-- ================= Coach Card (همیشه قابل مشاهده) ================= -->
+    <div id="coach-card" class="px-4 pb-2" aria-live="polite"></div>
+
+    <!-- ================= بدنه اصلی مراحل ================= -->
+    <main class="flex-1 overflow-y-auto p-4 space-y-4 pb-24 no-scrollbar">
+
+      <!-- 🔵 مرحله ۱: شروع | ۷۲ ساعت اول -->
+      <section id="stage-1" class="stage-content space-y-3.5">
+        <div class="bg-blue-950/70 border border-blue-600/40 rounded-2xl p-3.5 flex justify-between items-center">
+          <div>
+            <span class="text-[10px] bg-blue-600 text-white px-2 py-0.5 rounded-full font-bold">مرحله ۱: شروع | ۷۲ ساعت اول</span>
+            <h2 class="text-sm font-extrabold mt-1">سریع از «آموزش دیدن» وارد عمل شو!</h2>
+            <p class="text-[11px] text-blue-200/80 mt-0.5">۵ اقدام، دقیقاً با همین ترتیب:</p>
+          </div>
+          <div class="text-center bg-slate-900/90 px-3 py-2 rounded-xl border border-blue-500/40 min-w-[92px]">
+            <div id="live-timer-72" class="font-mono font-black text-sm text-blue-300">72:00:00</div>
+            <div class="text-[9px] text-slate-400">تایمر ۷۲ ساعت</div>
+          </div>
+        </div>
+
+        <div id="s1-steps-container" class="space-y-2.5"></div>
+
+        <!-- کارت لیست اولیه ۳۰ نفره (فرم رسمی اورست) -->
+        <div id="s1-list30-card" class="bg-slate-800/90 border border-blue-500/50 rounded-2xl p-3.5 space-y-3 shadow-lg">
+          <div class="flex justify-between items-center border-b border-slate-700/80 pb-2.5">
+            <div class="flex items-center gap-2">
+              <span class="text-lg">🏔️</span>
+              <div>
+                <h3 class="text-xs font-black text-blue-300">📋 لیست اولیه ۳۰ نفره (فرم رسمی اورست)</h3>
+                <p class="text-[10px] text-slate-400">نام آشنایان و اطرافیان را بدون پیش‌داوری ثبت کن؛ سرمایه اصلی تو این لیست است.</p>
+              </div>
+            </div>
+            <span id="s1-list30-badge" class="text-[11px] bg-blue-900/80 text-blue-200 border border-blue-500/40 px-2.5 py-0.5 rounded-full font-bold">۰ / ۳۰ نفر</span>
+          </div>
+
+          <!-- نوار پیشرفت تکمیل ۳۰ نفر -->
+          <div class="space-y-1">
+            <div class="w-full bg-slate-950 h-2 rounded-full overflow-hidden">
+              <div id="s1-list30-progress-bar" class="bg-gradient-to-r from-blue-500 to-emerald-400 h-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+            <div class="flex justify-between items-center text-[10px] text-slate-400">
+              <span id="s1-list30-progress-text">۰٪ تکمیل شده</span>
+              <span>هدف قدم ۳: حداقل ۳۰ نفر</span>
+            </div>
+          </div>
+
+          <!-- فرم ورود اطلاعات فرد جدید (مطابق فیلدهای فرم چاپی اورست) -->
+          <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-700/80 space-y-2.5">
+            <div class="flex justify-between items-center text-[11px] font-bold text-slate-200">
+              <span>➕ افزودن فرد جدید به لیست</span>
+              <span class="text-[10px] text-blue-400">ردیف بعدی: <b id="s1-list30-next-row">۱</b></span>
+            </div>
+
+            <!-- ردیف ۱: نام و نسبت با ما -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div>
+                <label class="text-[10px] text-slate-300 font-bold block mb-1">نام و نام خانوادگی *</label>
+                <input id="l30-name" type="text" placeholder="مثال: علی رضایی" onkeydown="if(event.key==='Enter') addInitialList30Member()" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-white focus:border-blue-500 focus:outline-none">
+              </div>
+              <div>
+                <label class="text-[10px] text-slate-300 font-bold block mb-1">نسبت شخص با ما *</label>
+                <select id="l30-relation" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-white focus:border-blue-500 focus:outline-none">
+                  <option value="دوست">دوست</option>
+                  <option value="خانواده / فامیل نزدیک">خانواده / فامیل نزدیک</option>
+                  <option value="فامیل دور">فامیل دور</option>
+                  <option value="همکار">همکار</option>
+                  <option value="هم‌دانشگاهی / هم‌کلاسی">هم‌دانشگاهی / هم‌کلاسی</option>
+                  <option value="همسایه / آشنا">همسایه / آشنا</option>
+                  <option value="سایر ارتباطات">سایر ارتباطات</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- ردیف ۲: سطح ارتباط و نوع شخصیت شخص -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div>
+                <label class="text-[10px] text-slate-300 font-bold block mb-1">سطح ارتباط *</label>
+                <select id="l30-level" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-white focus:border-blue-500 focus:outline-none">
+                  <option value="گرم (صمیمی / ارتباط هفتگی)">🔥 گرم (صمیمی / ارتباط هفتگی)</option>
+                  <option value="ولرم (معمولی / ارتباط گاه‌به‌گاه)">🌤 ولرم (معمولی / ارتباط گاه‌به‌گاه)</option>
+                  <option value="سرد (دور / ارتباط خیلی کم)">❄️ سرد (دور / ارتباط خیلی کم)</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-[10px] text-slate-300 font-bold block mb-1">نوع شخصیت شخص *</label>
+                <select id="l30-personality" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-white focus:border-blue-500 focus:outline-none">
+                  <option value="قرمز (قاطع، رهبر، نتیجه‌گرا)">🔴 قرمز (قاطع، هدفمند، لیدر)</option>
+                  <option value="زرد (صمیمی، حامی، اهل کمک)">🟡 زرد (صمیمی، حامی، مهربان)</option>
+                  <option value="سبز (تحلیلی، دقیق، منطقی)">🟢 سبز (تحلیلی، دقیق، منطقی)</option>
+                  <option value="آبی (شاد، پرانرژی، اجتماعی)">🔵 آبی (شاد، اجتماعی، خوش‌صحبت)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- ردیف ۳: زمینه همکاری و زمان اولین ارتباط‌گیری -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div>
+                <label class="text-[10px] text-slate-300 font-bold block mb-1">همکاری در زمینه کار یا معرفی محصول *</label>
+                <select id="l30-category" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-white focus:border-blue-500 focus:outline-none">
+                  <option value="همکاری کاری (بیزنس / فرصت)">💼 همکاری کاری (بیزنس / فرصت درآمدی)</option>
+                  <option value="معرفی محصول (مشتری / سلامتی)">📦 معرفی محصول (مشتری سلامت‌محور)</option>
+                  <option value="هر دو (کار و محصول)">🌟 هر دو (محصول + فرصت کاری)</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-[10px] text-slate-300 font-bold block mb-1">زمان اولین ارتباط‌گیری</label>
+                <input id="l30-time" type="text" placeholder="مثال: شنبه ساعت ۱۸ یا تاریخ" onkeydown="if(event.key==='Enter') addInitialList30Member()" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-white focus:border-blue-500 focus:outline-none">
+              </div>
+            </div>
+
+            <!-- ردیف ۴: تلفن اختیاری + دکمه افزودن -->
+            <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 pt-1">
+              <div class="sm:col-span-8">
+                <input id="l30-phone" type="tel" dir="ltr" placeholder="شماره تماس (اختیاری جهت تماس سریع / واتساپ)" onkeydown="if(event.key==='Enter') addInitialList30Member()" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-white text-left focus:border-blue-500 focus:outline-none font-mono">
+              </div>
+              <div class="sm:col-span-4">
+                <button onclick="addInitialList30Member()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-extrabold py-2 px-3 rounded-xl text-xs shadow-md transition flex items-center justify-center gap-1">
+                  <span>+ افزودن به لیست ۳۰ نفره</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ابزارهای جستجو و خروجی اکسل -->
+          <div class="flex items-center justify-between gap-2 pt-1 border-t border-slate-700/60">
+            <input id="l30-search" oninput="renderInitialList30()" type="text" placeholder="🔍 جستجو در نام، نسبت یا زمینه..." class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1 text-[10px] text-white">
+            <button onclick="exportInitialList30Csv()" title="دانلود خروجی اکسل / CSV لیست ۳۰ نفره" class="bg-emerald-700 hover:bg-emerald-600 text-white font-bold px-2.5 py-1 rounded-xl text-[10px] flex items-center gap-1 transition shadow">
+              <span>📊 خروجی اکسل</span>
+            </button>
+          </div>
+
+          <!-- لیست نفرات ثبت‌شده با شماره ردیف مطابق فرم چاپی -->
+          <div id="initial-list-30-container" class="space-y-2 max-h-80 overflow-y-auto pr-0.5"></div>
+        </div>
+
+        <!-- کارت معیار عبور مرحله ۱ -->
+        <div class="bg-slate-800/90 border border-slate-700 rounded-2xl p-3.5 space-y-2">
+          <div class="flex justify-between items-center">
+            <span class="text-xs font-extrabold text-blue-400">🏆 معیار عبور به مرحله ۲</span>
+            <span id="s1-progress-label" class="text-[11px] font-bold text-blue-200">۰ از ۵ اقدام</span>
+          </div>
+          <div class="w-full bg-slate-950 h-2 rounded-full overflow-hidden">
+            <div id="s1-progress-bar" class="bg-blue-500 h-full transition-all duration-300" style="width: 0%"></div>
+          </div>
+          <p class="text-[11px] text-slate-400">هر ۵ قدم را انجام بده و تیک بزن؛ ورود به مرحله ۲ پس از تکمیل ۵ قدم، با تأیید راهبر فعال می‌شود.</p>
+          <div id="s1-approval-box"></div>
+        </div>
+      </section>
+
+      <!-- 🟢 مرحله ۲: حرکت | ۷ روز -->
+      <section id="stage-2" class="stage-content hidden space-y-3.5">
+        <div class="bg-emerald-950/70 border border-emerald-600/40 rounded-2xl p-3.5">
+          <div class="flex justify-between items-center">
+            <div>
+              <span class="text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded-full font-bold">مرحله ۲: حرکت | ۷ روز</span>
+              <h2 class="text-sm font-extrabold mt-1">قانون: «کامل نباش؛ منظم باش.»</h2>
+              <p class="text-[10px] text-emerald-200/80 mt-0.5">تداوم &gt; انگیزه | نظم &gt; استعداد (هر روز فقط ۵ کار)</p>
+            </div>
+            <div class="bg-slate-900/90 px-3 py-1.5 rounded-xl border border-emerald-500/40 text-center">
+              <div id="s2-streak-badge" class="font-black text-base text-emerald-400">0 / 7</div>
+              <div class="text-[9px] text-slate-400">روز متوالی</div>
+            </div>
+          </div>
+          <div id="s2-days-bar" class="grid grid-cols-7 gap-1 mt-3"></div>
+        </div>
+
+        <div id="s2-counters-list" class="space-y-2"></div>
+
+        <!-- فرم گزارش شبانه با قابلیت تایپ صوتی -->
+        <div class="bg-slate-800/90 border border-emerald-600/40 rounded-2xl p-3.5 space-y-2.5">
+          <div class="flex justify-between items-center">
+            <h3 class="text-xs font-extrabold text-emerald-400">📝 ۵. ثبت گزارش شبانه و نتیجه امروز</h3>
+            <button onclick="startVoiceInput('s2-note')" class="text-[10px] bg-emerald-900/80 hover:bg-emerald-800 text-emerald-200 px-2.5 py-1 rounded-lg border border-emerald-600/40">
+              🎙 ثبت با ویس
+            </button>
+          </div>
+          <textarea id="s2-note" rows="2" placeholder="نتیجه امروز، بازخوردها و آموخته‌هایت را بنویس..." class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white focus:border-emerald-500 focus:outline-none"></textarea>
+          <button onclick="submitDailyReport(2)" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold py-2.5 rounded-xl text-xs shadow-lg transition">
+            ثبت گزارش شبانه و تکمیل روز ✅
+          </button>
+          <p class="text-[10px] text-slate-400 text-center">اگر یک روز ضعیف بود، مسیر را رها نکن؛ فردا ادامه بده!</p>
+        </div>
+
+        <!-- کارت معیار عبور مرحله ۲ -->
+        <div class="bg-slate-800/90 border border-slate-700 rounded-2xl p-3.5 space-y-2">
+          <div class="flex justify-between items-center text-xs font-extrabold text-emerald-400">
+            <span>🏆 معیار عبور به مرحله ۳</span>
+            <span>۷ روز استریک متوالی</span>
+          </div>
+          <p class="text-[11px] text-slate-400">پس از تکمیل زنجیره ۷ روزه، ورود به مرحله ۳ با تأیید راهبر باز می‌شود.</p>
+          <div id="s2-approval-box"></div>
+        </div>
+      </section>
+
+      <!-- 🟠 مرحله ۳: ساخت | ۳۰ روز -->
+      <section id="stage-3" class="stage-content hidden space-y-3.5">
+        <div class="bg-orange-950/70 border border-orange-600/40 rounded-2xl p-3.5 flex justify-between items-center">
+          <div>
+            <span class="text-[10px] bg-orange-600 text-white px-2 py-0.5 rounded-full font-bold">مرحله ۳: ساخت | ۳۰ روز</span>
+            <h2 class="text-sm font-extrabold mt-1">قانون: «به‌جای کامل بودن، هر روز بهتر شو.»</h2>
+            <p class="text-[10px] text-orange-200/80 mt-0.5">تبدیل شدن از فروشنده به سازنده کسب‌وکار مستقل</p>
+          </div>
+          <div class="bg-slate-900/90 px-3 py-1.5 rounded-xl border border-orange-500/40 text-center">
+            <div id="s3-days-badge" class="font-black text-base text-orange-400">12 / 30</div>
+            <div class="text-[9px] text-slate-400">روز ساخت</div>
+          </div>
+        </div>
+
+        <!-- ۵ مهارت پایه روزانه مرحله ۳ -->
+        <div id="s3-counters-list" class="space-y-2"></div>
+
+        <!-- بانک لیست مخاطبین ۱۰۰+ نفره با لینک تماس و واتساپ -->
+        <div class="bg-slate-800/90 border border-orange-600/40 rounded-2xl p-3.5 space-y-2.5">
+          <div class="flex justify-between items-center">
+            <h3 class="text-xs font-extrabold text-orange-400">📋 ۳. لیست فعال و پویا (معیار: ۱۰۰+ نفر)</h3>
+            <span id="crm-total-badge" class="text-[10px] bg-orange-900/80 text-orange-200 px-2.5 py-0.5 rounded-full font-bold">۰ / ۱۰۰ نفر</span>
+          </div>
+          <div class="grid grid-cols-12 gap-1.5">
+            <input id="crm-name" type="text" placeholder="نام مخاطب..." class="col-span-4 bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-white">
+            <input id="crm-phone" type="tel" placeholder="0912..." class="col-span-4 bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-white text-left" dir="ltr">
+            <select id="crm-source" class="col-span-3 bg-slate-900 border border-slate-700 rounded-xl px-1.5 py-2 text-[10px] text-slate-300">
+              <option value="ارتباط روزمره">روزمره</option>
+              <option value="مشتری">مشتری</option>
+              <option value="معرفی دیگران">معرفی</option>
+              <option value="شبکه اجتماعی">سوشال</option>
+            </select>
+            <button onclick="addCRMContact()" class="col-span-1 bg-orange-600 hover:bg-orange-500 text-white rounded-xl font-bold text-sm">+</button>
+          </div>
+          <!-- جزئیات تکمیلی پیگیری -->
+          <div class="grid grid-cols-12 gap-1.5 pt-0.5">
+            <input id="crm-followup" type="date" title="تاریخ پیگیری بعدی" class="col-span-5 bg-slate-900 border border-slate-700 rounded-xl px-2 py-1.5 text-[10px] text-slate-300">
+            <input id="crm-notes" type="text" placeholder="یادداشت پیگیری (اختیاری)..." class="col-span-7 bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-[11px] text-white">
+          </div>
+          <!-- نوار فیلتر و جستجو و خروجی اکسل -->
+          <div class="flex items-center gap-1.5 pt-1 border-t border-slate-700/60">
+            <input id="crm-search-input" oninput="filterCRMList()" type="text" placeholder="🔍 جستجو در نام/شماره..." class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1 text-[10px] text-white">
+            <select id="crm-filter-status" onchange="filterCRMList()" class="bg-slate-900 border border-slate-700 rounded-xl px-2 py-1 text-[9px] text-slate-300">
+              <option value="all">همه وضعیت‌ها</option>
+              <option value="تازه اضافه‌شده">تازه اضافه‌شده</option>
+              <option value="دعوت شده">دعوت شده</option>
+              <option value="ارائه شده">ارائه شده</option>
+              <option value="در حال پیگیری">در حال پیگیری</option>
+              <option value="مشتری / عضو تیم">مشتری / عضو تیم</option>
+            </select>
+            <button onclick="exportCRMToExcel()" title="دانلود لیست اکسل CRM" class="bg-emerald-700 hover:bg-emerald-600 text-white font-bold px-2.5 py-1 rounded-xl text-[10px] flex items-center gap-1 whitespace-nowrap shadow">
+              <span>📊</span> اکسل
+            </button>
+          </div>
+          <div id="crm-contacts-container" class="space-y-2 max-h-52 overflow-y-auto pr-0.5"></div>
+        </div>
+
+        <!-- معیار عبور مرحله ۳ -->
+        <div class="bg-slate-800/90 border border-slate-700 rounded-2xl p-3.5 space-y-2">
+          <div class="text-xs font-extrabold text-orange-400">🏆 ۵ معیار عبور از مرحله ۳ (ساخت ۳۰ روزه):</div>
+          <div id="s3-pass-criteria" class="space-y-1.5 text-xs text-slate-300"></div>
+          <div id="s3-approval-box"></div>
+        </div>
+      </section>
+
+      <!-- 🟣 مرحله ۴: تکثیر | ۹۰ روز -->
+      <section id="stage-4" class="stage-content hidden space-y-3.5">
+        <div class="bg-purple-950/70 border border-purple-600/40 rounded-2xl p-3.5">
+          <span class="text-[10px] bg-purple-600 text-white px-2 py-0.5 rounded-full font-bold">مرحله ۴: تکثیر | ۹۰ روز</span>
+          <h2 class="text-sm font-extrabold mt-1">قانون: «کاری را که نمی‌توانی منتقل کنی، هنوز تبدیل به سیستم نکرده‌ای.»</h2>
+          <p class="text-[10px] text-purple-200/80 mt-0.5">تکثیر یعنی دیگران بدون وابستگی به تو رشد کنند.</p>
+        </div>
+
+        <!-- ۵ گام چرخه تکثیر -->
+        <div class="grid grid-cols-5 gap-1 bg-slate-800/90 p-2 rounded-2xl text-center text-[10px] border border-slate-700">
+          <div class="bg-purple-950/80 p-1.5 rounded-xl border border-purple-700/40"><div class="font-extrabold text-purple-300">۱. یاد بگیر</div><div class="text-[9px] text-slate-400">تسلط عمیق</div></div>
+          <div class="bg-purple-950/80 p-1.5 rounded-xl border border-purple-700/40"><div class="font-extrabold text-purple-300">۲. انجام بده</div><div class="text-[9px] text-slate-400">الگوی عملی</div></div>
+          <div class="bg-purple-950/80 p-1.5 rounded-xl border border-purple-700/40"><div class="font-extrabold text-purple-300">۳. نشان بده</div><div class="text-[9px] text-slate-400">آموزش در عمل</div></div>
+          <div class="bg-purple-950/80 p-1.5 rounded-xl border border-purple-700/40"><div class="font-extrabold text-purple-300">۴. همراهی کن</div><div class="text-[9px] text-slate-400">اصلاح و بازخورد</div></div>
+          <div class="bg-purple-950/80 p-1.5 rounded-xl border border-purple-700/40"><div class="font-extrabold text-purple-300">۵. واگذار کن</div><div class="text-[9px] text-slate-400">فرد مستقل</div></div>
+        </div>
+
+        <!-- افزودن و مدیریت اعضای تیم در چرخه تکثیر -->
+        <div class="bg-slate-800/90 border border-purple-600/40 rounded-2xl p-3.5 space-y-2.5">
+          <div class="flex justify-between items-center">
+            <h3 class="text-xs font-extrabold text-purple-300">👥 ماتریس تکثیر نفرات مستقیم من</h3>
+          </div>
+          <div class="flex gap-2">
+            <input id="dup-member-name" type="text" placeholder="نام عضو جدید تیم..." class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white">
+            <button onclick="addDuplicationMember()" class="bg-purple-600 hover:bg-purple-500 text-white px-3.5 py-2 rounded-xl text-xs font-bold">+ افزودن عضو</button>
+          </div>
+          <div id="duplication-members-container" class="space-y-2"></div>
+        </div>
+
+        <!-- پایش آنلاین اعضای سازمان برای بالاسری -->
+        <div class="bg-slate-800/90 border border-purple-500/50 rounded-2xl p-3.5 space-y-3 shadow-lg">
+          <div class="flex justify-between items-center border-b border-slate-700/80 pb-2">
+            <div>
+              <span class="text-[10px] bg-purple-600 text-white px-2 py-0.5 rounded-full font-bold">دیده‌بانی آنلاین</span>
+              <h3 class="text-xs font-extrabold text-purple-300 mt-1">👥 پایش اعضای تیم من (زنده و آنلاین)</h3>
+            </div>
+            <button onclick="refreshOnlineTeam()" class="text-[10px] bg-purple-900/60 hover:bg-purple-800 text-purple-200 px-2.5 py-1 rounded-xl border border-purple-500/40 font-bold flex items-center gap-1 transition">
+              <span>⟳</span> بروزرسانی
+            </button>
+          </div>
+
+          <!-- لینک دعوت اختصاصی راهبر -->
+          <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-700 space-y-1.5">
+            <div class="flex justify-between items-center text-[10px]">
+              <span class="text-slate-300 font-bold">🔗 لینک اختصاصی شما برای عضویت مستقیم در تیم:</span>
+              <button onclick="copyMyInviteLink()" id="copy-invite-btn" class="text-purple-400 hover:text-purple-300 font-bold">کپی لینک</button>
+            </div>
+            <div id="my-invite-link-preview" class="text-[9px] font-mono text-slate-400 bg-slate-950 p-2 rounded-lg truncate text-left" dir="ltr"></div>
+          </div>
+
+          <!-- کارت خلاصه وضعیت سلامت تیم -->
+          <div id="online-team-summary" class="grid grid-cols-4 gap-1.5 text-center text-[10px]">
+            <div class="bg-slate-900/80 p-2 rounded-xl border border-slate-800">
+              <span class="text-slate-400 block text-[9px]">کل تیم</span>
+              <span id="team-stat-total" class="font-extrabold text-white text-xs">۰</span>
+            </div>
+            <div class="bg-slate-900/80 p-2 rounded-xl border border-slate-800">
+              <span class="text-emerald-400 block text-[9px]">🟢 فعال</span>
+              <span id="team-stat-active" class="font-extrabold text-emerald-400 text-xs">۰</span>
+            </div>
+            <div class="bg-slate-900/80 p-2 rounded-xl border border-slate-800">
+              <span class="text-amber-400 block text-[9px]">🟡 پیگیری</span>
+              <span id="team-stat-attention" class="font-extrabold text-amber-400 text-xs">۰</span>
+            </div>
+            <div class="bg-slate-900/80 p-2 rounded-xl border border-slate-800">
+              <span class="text-rose-400 block text-[9px]">🔴 در خطر</span>
+              <span id="team-stat-risk" class="font-extrabold text-rose-400 text-xs">۰</span>
+            </div>
+          </div>
+
+          <!-- فیلتر و جستجوی اعضای تیم و خروجی اکسل -->
+          <div class="flex items-center gap-1.5 pt-1 border-t border-slate-700/60">
+            <input id="team-search-input" oninput="filterTeamList()" type="text" placeholder="🔍 نام یا ایمیل عضو..." class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1 text-[10px] text-white">
+            <select id="team-filter-stage" onchange="filterTeamList()" class="bg-slate-900 border border-slate-700 rounded-xl px-2 py-1 text-[9px] text-slate-300">
+              <option value="all">همه مراحل</option>
+              <option value="1">مرحله ۱</option>
+              <option value="2">مرحله ۲</option>
+              <option value="3">مرحله ۳</option>
+              <option value="4">مرحله ۴</option>
+              <option value="5">مرحله ۵</option>
+            </select>
+            <select id="team-filter-health" onchange="filterTeamList()" class="bg-slate-900 border border-slate-700 rounded-xl px-2 py-1 text-[9px] text-slate-300">
+              <option value="all">همه وضعیت‌ها</option>
+              <option value="active">🟢 فقط فعال</option>
+              <option value="attention">🟡 نیازمند توجه</option>
+              <option value="risk">🔴 در خطر توقف</option>
+            </select>
+            <button onclick="exportTeamToExcel()" title="دانلود خروجی اکسل تیم" class="bg-emerald-700 hover:bg-emerald-600 text-white font-bold px-2 py-1 rounded-xl text-[10px] flex items-center gap-1 whitespace-nowrap shadow">
+              <span>📊</span> اکسل
+            </button>
+          </div>
+
+          <!-- کانتینر نمایش اعضا و مراحل آن‌ها -->
+          <div id="online-team-container" class="space-y-2 max-h-64 overflow-y-auto pr-0.5">
+            <div class="text-[11px] text-slate-400 text-center py-3">در حال بارگذاری اعضای تیم…</div>
+          </div>
+        </div>
+
+        <!-- معیار عبور مرحله ۴ -->
+        <div class="bg-slate-800/90 border border-slate-700 rounded-2xl p-3.5 space-y-2">
+          <div class="text-xs font-extrabold text-purple-400">🏆 سؤال اصلی عبور به راهبری: «آیا بدون حضور من، سیستم در عمق سازمان اجرا می‌شود؟»</div>
+          <div id="s4-pass-criteria" class="space-y-1.5 text-xs text-slate-300"></div>
+          <div id="s4-approval-box"></div>
+        </div>
+      </section>
+
+      <!-- 🟡 مرحله ۵: راهبری | مستمر -->
+      <section id="stage-5" class="stage-content hidden space-y-3.5">
+        <div class="bg-amber-950/70 border border-amber-500/40 rounded-2xl p-3.5">
+          <span class="text-[10px] bg-amber-500 text-slate-950 px-2 py-0.5 rounded-full font-extrabold">مرحله ۵: راهبری مستمر (بدون پایان)</span>
+          <h2 class="text-sm font-extrabold mt-1 text-amber-300">«راهبری یعنی آدم بساز، سیستم بساز، میراث بساز»</h2>
+          <p class="text-[10px] text-amber-100/80 mt-0.5">ساخت تیمی که حتی وقتی تو آنجا نیستی، رشد ادامه داشته باشد.</p>
+        </div>
+
+        <!-- محور ۵: هدف‌گذاری و داشبورد عددی سازمان -->
+        <div class="bg-slate-800/90 border border-amber-500/40 rounded-2xl p-3.5 space-y-3">
+          <div class="flex justify-between items-center">
+            <h3 class="text-xs font-extrabold text-amber-400">📊 ۵. داشبورد عددی سازمان (مدیریت با عدد)</h3>
+            <span class="text-[10px] text-slate-400">به‌روزرسانی زنده</span>
+          </div>
+          <div class="grid grid-cols-3 gap-2 text-center">
+            <div class="bg-slate-900 p-2.5 rounded-xl border border-slate-700">
+              <div class="text-[10px] text-slate-400">فروش سازمان (م.ت)</div>
+              <input id="kpi-sales" type="number" onchange="saveKpi()" class="w-full bg-transparent text-center font-black text-sm text-amber-400 mt-0.5 focus:outline-none">
+            </div>
+            <div class="bg-slate-900 p-2.5 rounded-xl border border-slate-700">
+              <div class="text-[10px] text-slate-400">ورودی ماه (نفر)</div>
+              <input id="kpi-entries" type="number" onchange="saveKpi()" class="w-full bg-transparent text-center font-black text-sm text-emerald-400 mt-0.5 focus:outline-none">
+            </div>
+            <div class="bg-slate-900 p-2.5 rounded-xl border border-slate-700">
+              <div class="text-[10px] text-slate-400">اعضای فعال</div>
+              <input id="kpi-active" type="number" onchange="saveKpi()" class="w-full bg-transparent text-center font-black text-sm text-blue-400 mt-0.5 focus:outline-none">
+            </div>
+            <div class="bg-slate-900 p-2.5 rounded-xl border border-slate-700">
+              <div class="text-[10px] text-slate-400">لیدر در حال رشد</div>
+              <input id="kpi-leaders" type="number" onchange="saveKpi()" class="w-full bg-transparent text-center font-black text-sm text-purple-400 mt-0.5 focus:outline-none">
+            </div>
+            <div class="bg-slate-900 p-2.5 rounded-xl border border-slate-700">
+              <div class="text-[10px] text-slate-400">عمق فعال (سطح)</div>
+              <input id="kpi-depth" type="number" onchange="saveKpi()" class="w-full bg-transparent text-center font-black text-sm text-amber-300 mt-0.5 focus:outline-none">
+            </div>
+            <div class="bg-slate-900 p-2.5 rounded-xl border border-slate-700">
+              <div class="text-[10px] text-slate-400">نرخ تکثیر تیم</div>
+              <div id="kpi-rate" class="font-black text-sm text-emerald-300 mt-0.5">۰٪</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- محور ۳: ثبت جلسات هدفمند راهبری -->
+        <div class="bg-slate-800/90 border border-amber-500/30 rounded-2xl p-3.5 space-y-2.5">
+          <h3 class="text-xs font-extrabold text-amber-400">📅 ۳. مدیریت جلسات منظم و هدفمند تیم</h3>
+          <div class="flex gap-1.5">
+            <input id="meeting-title" type="text" placeholder="عنوان جلسه..." class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-white">
+            <select id="meeting-goal" class="bg-slate-900 border border-slate-700 rounded-xl px-2 py-2 text-[10px] text-amber-300">
+              <option value="آموزش">آموزش</option>
+              <option value="انگیزش">انگیزش</option>
+              <option value="حل مسئله">حل مسئله</option>
+              <option value="انتقال فرهنگ">انتقال فرهنگ</option>
+              <option value="بررسی عملکرد">بررسی عملکرد</option>
+              <option value="آماده‌سازی راهبران">آماده‌سازی راهبران</option>
+            </select>
+            <button onclick="addLeaderMeeting()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-3 rounded-xl text-xs">+</button>
+          </div>
+          <div id="meetings-list" class="space-y-1.5"></div>
+        </div>
+
+        <!-- ۵ استاندارد راهبر اورست -->
+        <div class="bg-slate-800/90 border border-slate-700 rounded-2xl p-3.5 space-y-2">
+          <div class="text-xs font-extrabold text-amber-400">👑 استانداردهای ۵گانه راهبر اورست (کنترل روزانه):</div>
+          <div id="s5-standards-list" class="space-y-1.5 text-xs text-slate-300"></div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- ================= نوار ابزار پایین (ابزارهای کمکی سیستم ۵×۵) ================= -->
+    <nav class="absolute bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur border-t border-slate-800 px-2 py-2 flex justify-around text-xs z-30">
+      <button onclick="openAIChatModal()" class="flex flex-col items-center text-purple-400 hover:text-purple-300 font-bold">
+        <span class="text-base animate-pulse">🤖</span>
+        <span class="text-[9px] mt-0.5">مربی هوشمند</span>
+      </button>
+      <button onclick="openHelperModal('invite')" class="flex flex-col items-center text-slate-300 hover:text-white">
+        <span class="text-base">💬</span>
+        <span class="text-[9px] mt-0.5">اسکریپت دعوت</span>
+      </button>
+      <button onclick="openHelperModal('product')" class="flex flex-col items-center text-slate-300 hover:text-white">
+        <span class="text-base">🍵</span>
+        <span class="text-[9px] mt-0.5">کاتالوگ نیوشا</span>
+      </button>
+      <button onclick="openHelperModal('packages')" class="flex flex-col items-center text-slate-300 hover:text-white">
+        <span class="text-base">📦</span>
+        <span class="text-[9px] mt-0.5">پک‌های مشاوره</span>
+      </button>
+      <button onclick="toggleGoalModal()" class="flex flex-col items-center text-slate-300 hover:text-white">
+        <span class="text-base">🎯</span>
+        <span class="text-[9px] mt-0.5">هدف من</span>
+      </button>
+    </nav>
+
+    <!-- ================= مودال اتصال ابری (Supabase) ================= -->
+    <div id="cloud-modal" class="hidden absolute inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+      <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4 w-full max-w-sm space-y-3 shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div class="flex justify-between items-center border-b border-slate-700 pb-2">
+          <h3 class="font-extrabold text-sm text-sky-400">☁️ اتصال ابری و پشتیبان‌گیری</h3>
+          <button onclick="closeCloudModal()" class="text-slate-400 hover:text-white text-sm">✕</button>
+        </div>
+
+        <div class="bg-sky-950/50 border border-sky-700/40 p-2.5 rounded-xl text-[11px] text-sky-200 leading-relaxed">
+          مقادیر را از داشبورد Supabase بگیر: <b>Project Settings → API</b>
+        </div>
+
+        <div>
+          <label class="text-[11px] font-bold text-slate-300">Project URL</label>
+          <input id="cloud-url" type="text" dir="ltr" placeholder="https://xxxxx.supabase.co" class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white text-left focus:border-sky-500 focus:outline-none">
+        </div>
+
+        <div>
+          <label class="text-[11px] font-bold text-slate-300">anon public key</label>
+          <textarea id="cloud-key" rows="2" dir="ltr" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6..." class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-[10px] text-white text-left focus:border-sky-500 focus:outline-none"></textarea>
+          <p class="text-[10px] text-slate-400 mt-1">این کلید برای استفاده در کلاینت طراحی شده؛ کلید service_role را هرگز اینجا نگذار.</p>
+        </div>
+
+        <div id="cloud-result" class="text-[11px] leading-relaxed"></div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <button onclick="testCloudConnection()" class="bg-slate-700 hover:bg-slate-600 text-white font-bold py-2.5 rounded-xl text-xs">تست اتصال</button>
+          <button onclick="saveCloudConfigAndSync()" class="bg-sky-600 hover:bg-sky-500 text-white font-extrabold py-2.5 rounded-xl text-xs">ذخیره و همگام‌سازی</button>
+        </div>
+        <button onclick="disconnectCloud()" class="w-full text-[11px] text-red-400 hover:text-red-300 py-1">قطع اتصال و برگشت به حالت آفلاین</button>
+
+        <!-- بخش پشتیبان‌گیری خودکار با وب‌هوک n8n -->
+        <div class="border-t border-slate-700 pt-3 space-y-2">
+          <h4 class="font-bold text-xs text-amber-400 flex items-center gap-1">
+            <span>⚡</span> پشتیبان‌گیری خودکار (n8n Webhook)
+          </h4>
+          <div>
+            <label class="text-[11px] font-bold text-slate-300">n8n Webhook URL</label>
+            <input id="n8n-url" type="text" dir="ltr" placeholder="https://n8n.your-domain.com/webhook/..." class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white text-left focus:border-amber-500 focus:outline-none">
+          </div>
+          <button onclick="triggerN8nBackup()" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-2 rounded-xl text-xs">ارسال نسخه پشتیبان به n8n</button>
+        </div>
+
+        <!-- بخش مربی هوش مصنوعی (DeepSeek API) -->
+        <div class="border-t border-slate-700 pt-3 space-y-2">
+          <h4 class="font-bold text-xs text-purple-400 flex items-center gap-1">
+            <span>🤖</span> مربی هوش مصنوعی (DeepSeek AI)
+          </h4>
+          <div>
+            <label class="text-[11px] font-bold text-slate-300">DeepSeek API Key</label>
+            <input id="cloud-deepseek-key" type="password" dir="ltr" placeholder="sk-..." class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white text-left font-mono focus:border-purple-500 focus:outline-none">
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <button onclick="testDeepSeekKey('cloud')" class="bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 rounded-xl text-[11px]">تست اتصال AI</button>
+            <button onclick="saveDeepSeekKey('cloud')" class="bg-purple-600 hover:bg-purple-500 text-white font-bold py-2 rounded-xl text-[11px]">ذخیره کلید AI</button>
+          </div>
+          <div id="cloud-deepseek-status" class="text-[11px] leading-relaxed"></div>
+        </div>
+
+        <!-- بخش پشتیبان‌گیری و بازیابی محلی -->
+        <div class="border-t border-slate-700 pt-3 space-y-2">
+          <h4 class="font-bold text-xs text-emerald-400 flex items-center gap-1">
+            <span>💾</span> پشتیبان‌گیری و بازیابی محلی (JSON)
+          </h4>
+          <div class="grid grid-cols-2 gap-2">
+            <button onclick="exportBackupFile()" class="bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 rounded-xl text-[11px]">دانلود فایل (Export)</button>
+            <button onclick="triggerImportBackup()" class="bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 rounded-xl text-[11px]">بازیابی از فایل (Import)</button>
+          </div>
+          <input id="import-backup-file" type="file" accept=".json" class="hidden" onchange="handleBackupFileSelect(event)">
+          <div id="backup-result" class="text-[11px] leading-relaxed"></div>
+        </div>
+
+        <button onclick="signOutUser()" class="w-full text-[11px] bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 rounded-xl mt-2">خروج از حساب</button>
+
+        <p class="text-[10px] text-slate-500 leading-relaxed border-t border-slate-700 pt-2">
+          اگر خطای «جدول user_state وجود ندارد» گرفتی، فایل
+          <code dir="ltr" class="text-slate-400">supabase/schema.sql</code>
+          را در SQL Editor اجرا کن.
+        </p>
+      </div>
+    </div>
+
+    <!-- ================= مودال هدف و داستان من (شارژ انگیزه) ================= -->
+    <div id="goal-modal" class="hidden absolute inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+      <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5 w-full max-w-sm space-y-3 shadow-2xl">
+        <div class="flex justify-between items-center">
+          <h3 class="font-extrabold text-sm text-blue-400">🎯 هدف و داستان من (مرحله ۱ و ۵)</h3>
+          <button onclick="toggleGoalModal()" class="text-slate-400 hover:text-white text-sm">✕</button>
+        </div>
+        <div class="bg-blue-950/60 border border-blue-700/40 p-2.5 rounded-xl text-[11px] text-blue-200">
+          ★ نکته مهم: هر بار که انگیزه‌ات کم شد، هدفت را بلند بخوان!
+        </div>
+        <div>
+          <label class="text-[11px] font-bold text-slate-300">چرا این مسیر را انتخاب کرده‌ام و هدف مالی من چیست؟</label>
+          <textarea id="my-why-input" rows="2" class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white"></textarea>
+        </div>
+        <div>
+          <div class="flex justify-between items-center">
+            <label class="text-[11px] font-bold text-slate-300">داستان کوتاه، ساده و صادقانه من:</label>
+            <button onclick="startVoiceInput('my-story-input')" class="text-[10px] text-blue-400">🎙 ضبط صوتی</button>
+          </div>
+          <textarea id="my-story-input" rows="3" class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white"></textarea>
+        </div>
+        <button onclick="saveGoalAndStory()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-extrabold py-2.5 rounded-xl text-xs">ذخیره و بستن</button>
+      </div>
+    </div>
+
+    <!-- ================= مودال ابزارهای کمکی (کاتالوگ / اسکریپت / پک‌ها) ================= -->
+    <div id="helper-modal" class="hidden absolute inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+      <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4 w-full max-w-sm space-y-3 shadow-2xl">
+        <div class="flex justify-between items-center border-b border-slate-700 pb-2">
+          <h3 id="helper-modal-title" class="font-extrabold text-sm text-emerald-400">ابزار کمکی</h3>
+          <button onclick="closeHelperModal()" class="text-slate-400 hover:text-white text-sm">✕</button>
+        </div>
+        <div id="helper-modal-body" class="text-xs text-slate-200 space-y-2.5 leading-relaxed"></div>
+        <button onclick="closeHelperModal()" class="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 rounded-xl text-xs">بستن</button>
+      </div>
+    </div>
+
+    <!-- ================= مودال مربی هوشمند (DeepSeek AI Coach) ================= -->
+    <div id="ai-chat-modal" class="hidden absolute inset-0 bg-black/85 backdrop-blur-md flex flex-col z-50 overflow-hidden">
+      <!-- هدر چت مربی هوشمند -->
+      <div class="p-3 bg-gradient-to-l from-purple-800 to-indigo-900 border-b border-purple-500/30 flex justify-between items-center shadow-md">
+        <div class="flex items-center gap-2">
+          <div class="w-9 h-9 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center text-lg border border-white/25">🤖</div>
+          <div>
+            <h3 class="font-extrabold text-xs text-white flex items-center gap-1.5">
+              <span>مربی هوشمند اورست</span>
+              <span class="text-[9px] bg-purple-950/80 text-purple-200 border border-purple-400/40 px-1.5 py-0.5 rounded-full font-mono">DeepSeek</span>
+            </h3>
+            <p id="ai-status-indicator" class="text-[9px] text-purple-200/90 mt-0.5">آماده پاسخ‌گویی به سؤالات فروش و تیم‌سازی</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-1">
+          <button onclick="toggleAIConfigSection()" title="تنظیم کلید API دیپ‌سیک" class="text-xs bg-white/15 hover:bg-white/25 text-white px-2 py-1.5 rounded-xl backdrop-blur">⚙️</button>
+          <button onclick="closeAIChatModal()" title="بستن پنجره" class="text-sm bg-black/25 hover:bg-rose-600/60 text-white px-2.5 py-1 rounded-xl font-bold">✕</button>
+        </div>
+      </div>
+
+      <!-- پنل کشویی تنظیم کلید API -->
+      <div id="ai-config-section" class="hidden bg-slate-900 border-b border-purple-500/30 p-3 space-y-2 text-xs">
+        <div class="flex justify-between items-center">
+          <span class="font-bold text-purple-300 text-[11px]">🔑 کلید DeepSeek API شما:</span>
+          <a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noopener" class="text-[10px] text-sky-400 hover:underline">دریافت کلید از پنل ↗</a>
+        </div>
+        <div class="flex gap-1.5">
+          <input id="ai-api-key" type="password" placeholder="sk-..." dir="ltr" class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-white text-left font-mono focus:border-purple-500 focus:outline-none">
+          <button onclick="saveDeepSeekKey()" class="bg-purple-600 hover:bg-purple-500 text-white font-bold px-3 py-1.5 rounded-xl text-xs whitespace-nowrap">ذخیره</button>
+          <button onclick="testDeepSeekKey()" class="bg-slate-800 hover:bg-slate-700 text-purple-300 font-bold px-2.5 py-1.5 rounded-xl text-xs whitespace-nowrap border border-slate-700">تست</button>
+        </div>
+        <div id="ai-key-status" class="text-[10px] text-slate-400">کلید به صورت امن در مرورگر شما نگهداری می‌شود و در گیت‌هاب قرار نمی‌گیرد.</div>
+      </div>
+
+      <!-- دکمه‌های پرامپت سریع -->
+      <div class="px-3 pt-2 pb-1.5 flex gap-1.5 overflow-x-auto no-scrollbar border-b border-slate-800 bg-slate-950/60">
+        <button onclick="triggerQuickAIPrompt('invite')" class="bg-purple-950/70 hover:bg-purple-900 text-purple-200 border border-purple-700/50 px-2.5 py-1 rounded-xl text-[10px] whitespace-nowrap flex items-center gap-1 font-bold">
+          <span>💬</span> متن سناریوی دعوت
+        </button>
+        <button onclick="triggerQuickAIPrompt('objection')" class="bg-amber-950/70 hover:bg-amber-900 text-amber-200 border border-amber-700/50 px-2.5 py-1 rounded-xl text-[10px] whitespace-nowrap flex items-center gap-1 font-bold">
+          <span>🛡️</span> پاسخ به بهانه مشتری
+        </button>
+        <button onclick="triggerQuickAIPrompt('review')" class="bg-blue-950/70 hover:bg-blue-900 text-blue-200 border border-blue-700/50 px-2.5 py-1 rounded-xl text-[10px] whitespace-nowrap flex items-center gap-1 font-bold">
+          <span>📊</span> اقدام بعدی بر اساس مرحله
+        </button>
+      </div>
+
+      <!-- فضای پیام‌های چت -->
+      <div id="ai-chat-messages" class="flex-1 overflow-y-auto p-3.5 space-y-3 no-scrollbar text-xs leading-relaxed">
+        <div class="flex items-start gap-2">
+          <div class="w-7 h-7 rounded-lg bg-purple-600/30 border border-purple-500/40 flex items-center justify-center text-sm shrink-0">🤖</div>
+          <div class="bg-slate-800/90 border border-slate-700 p-3 rounded-2xl rounded-tr-none text-slate-200 max-w-[88%] space-y-1.5 shadow-sm">
+            <div class="font-extrabold text-purple-300 text-[11px]">سلام همکار پرانرژی اورست! 👋</div>
+            <p>من مربی هوشمند سیستم ۵×۵ اورست مجهز به موتور هوش مصنوعی DeepSeek هستم. آماده‌ام تا بهت کمک کنم:</p>
+            <ul class="text-[10px] text-slate-300 space-y-1 list-disc list-inside pt-0.5">
+              <li>نوشتن سناریوی دعوت برای هر مخاطب خاص</li>
+              <li>پاسخ به بهانه‌های مشتری («قیمت گرونه»، «وقت ندارم»)</li>
+              <li>برنامه‌ریزی و اقدامات طلایی ۲۴ ساعت آینده بر اساس مرحله فعلی‌ات</li>
+            </ul>
+            <p class="text-[10px] text-purple-200 pt-0.5">سؤالت رو بنویس یا از دکمه‌های سریع بالا استفاده کن!</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- نوار ورودی پایین -->
+      <div class="p-2.5 bg-slate-900/95 border-t border-slate-800 flex items-center gap-1.5">
+        <button onclick="startAIVoiceInput()" id="ai-voice-btn" title="تایپ صوتی فارسی" class="w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 flex items-center justify-center shrink-0 text-sm transition">
+          🎤
+        </button>
+        <input id="ai-chat-input" onkeydown="handleAIChatKeyDown(event)" type="text" placeholder="سؤالت از مربی اورست رو بنویس..." class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-purple-500 focus:outline-none">
+        <button onclick="sendAIMessage()" id="ai-send-btn" class="bg-gradient-to-l from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold px-3.5 py-2 rounded-xl text-xs shrink-0 shadow flex items-center gap-1 transition">
+          <span>ارسال</span>
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <script type="module" src="./app.js?v=0.9.3"></script>
+
+</body></html>

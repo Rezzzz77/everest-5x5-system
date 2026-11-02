@@ -148,3 +148,27 @@ test('avatar: ارقام سطح فارسی نمایش داده می‌شوند',
   assert.equal(faDigits(1), '۱');
   assert.equal(faDigits(null), '');
 });
+
+test('leopard: انتخاب صریح «روشن» بر ترجیح سیستم اولویت دارد', () => {
+  assert.equal(resolveAnimationMode('full', true), ANIM_FULL);
+});
+
+test('leopard: ذخیرهٔ حالت کانونیک (full/reduced/off) قابل بازیابی است', () => {
+  assert.equal(resolveAnimationMode('full'), ANIM_FULL);
+  assert.equal(resolveAnimationMode('reduced'), ANIM_FULL);
+  assert.equal(resolveAnimationMode('reduced', true), ANIM_REDUCED);
+  assert.equal(resolveAnimationMode('off'), ANIM_OFF);
+});
+
+test('avatar: ورودی غیرصحیح بدون کرش به نزدیک‌ترین پله محدود می‌شود', () => {
+  assert.equal(leopardStageFor(1.7).stage, 1, 'گرد کردن به بالا نباید مرحله را جلو ببرد');
+  assert.equal(leopardStageFor('3').stage, 3);
+  assert.equal(leopardStageFor(null).stage, 1);
+  assert.equal(leopardStageFor(99).stage, 5, 'بیش از ۵ به پلهٔ آخر محدود شود');
+  assert.equal(leopardStageFor(NaN).stage, 1);
+});
+
+test('avatar: درصد کسری (۰ تا ۱) به درصد تفسیر می‌شود', () => {
+  assert.equal(leopardStageForProgress(0.5).code, 'VANGUARD');
+  assert.equal(leopardStageForProgress(1).code, 'GUARDIAN');
+});

@@ -134,6 +134,24 @@ python3 tools/check_contracts.py  # قرارداد HTML ↔ JS (۲۹ هندلر�
 python3 tools/build_graph.py      # گراف قطعی: ۶۲ گره / ۱۰۱ یال
 ```
 
+## ۶.۷ آواتار پیشرفت پلنگ برفی
+
+آواتار کاربر در هدر با ۵ مرحله رشد می‌کند (نقشهٔ تیم):
+
+| مرحله | کد | سطح | درصد | تفاوت ظاهری |
+|---|---|---|---|---|
+| ۱ | CUBLING | ۱ | ۰٪ | سرِ درشت، دُم کوتاه، ۱ خال |
+| ۲ | POUKLE | ۱۰ | ۱۰٪ | دُم حلقه‌ای، ۲ خال |
+| ۳ | TRAINEE | ۲۵ | ۲۵٪ | سِبیل، ۳ خال |
+| ۴ | VANGUARD | ۵۰ | ۵۰٪ | بدن بلندتر، ۴ خال |
+| ۵ | GUARDIAN | ۱۰۰ | ۱۰۰٪ | قلاده + نگین، هالهٔ حلقه |
+
+- منبع مرحله: `getHighestUnlockedStage(appState)`؛ درصد: `getOverallProgress(appState)`
+- فایل‌ها: `src/leopard.js` (منطق + SVG)، CSS در `index.html`
+- بدون منبع شبکه؛ `prefers-reduced-motion` → ساکن؛ تب پنهان → توقف
+- انتخاب روشن/خاموش در `localStorage` (`everest_leopard_anim`) با مقادیر `full|reduced|off`
+- تست: `tests/leopard.test.mjs`
+
 ## ۷. نکات محیطی (Termux)
 
 - `file://` کار نمی‌کند (ES Modules + CORS) → باید `python3 -m http.server` اجرا شود.
