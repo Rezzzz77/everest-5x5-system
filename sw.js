@@ -1,4 +1,4 @@
-const CACHE = 'everest-5x5-v17';
+const CACHE = 'everest-5x5-v18';
 
 const PRECACHE = [
   './',
@@ -14,7 +14,12 @@ const PRECACHE = [
   './src/coach.js',
   './src/ai.js',
   './src/stages.js',
-  './src/utils.js'
+  './src/utils.js',
+  './assets/leopards/stage-1.png',
+  './assets/leopards/stage-2.png',
+  './assets/leopards/stage-3.png',
+  './assets/leopards/stage-4.png',
+  './assets/leopards/stage-5.png'
 ];
 
 self.addEventListener('install', (event) => {

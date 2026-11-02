@@ -437,8 +437,14 @@ export function initLeopardAvatar(
 
 export const LEOPARD_IMG_DIR = './assets/leopards/';
 
-/** نقشهٔ مرحله → فایل تصویر. برای فعال‌سازی، مقدار را به نام فایل بدهید. */
-export const LEOPARD_IMAGES = { 1: null, 2: null, 3: null, 4: null, 5: null };
+/** نقشهٔ مرحله → فایل تصویر. برای خاموش‌کردن، همه را null کنید. */
+export const LEOPARD_IMAGES = {
+  1: 'stage-1.png',
+  2: 'stage-2.png',
+  3: 'stage-3.png',
+  4: 'stage-4.png',
+  5: 'stage-5.png'
+};
 
 /**
  * آدرس تصویر آواتار برای یک مرحله (یا null اگر تصویری تنظیم نشده است).
@@ -485,9 +491,13 @@ export function celebrationText(item) {
 export function celebrationMarkup(stage) {
   const item = leopardStageFor(stage);
   const text = celebrationText(item);
+  const image = avatarImageFor(item.stage);
+  const avatar = image
+    ? `<img class="leopard-avatar-img" src="${image}" alt="" width="512" height="512" decoding="async">`
+    : avatarMarkup(item);
   return `<div class="celebrate-card" role="dialog" aria-modal="true" aria-labelledby="celebrate-title">
   <div class="celebrate-glow" aria-hidden="true"></div>
-  <div class="celebrate-avatar" aria-hidden="true">${avatarMarkup(item)}</div>
+  <div class="celebrate-avatar" aria-hidden="true">${avatar}</div>
   <h2 id="celebrate-title" class="celebrate-title">${text.title}</h2>
   <p class="celebrate-body">${text.body}</p>
   <p class="celebrate-hint">${text.hint}</p>
@@ -506,6 +516,13 @@ export function showCelebration(stage, doc = typeof document !== 'undefined' ? d
   host.innerHTML = celebrationMarkup(stage);
   host.classList.add('is-open');
   host.setAttribute('aria-hidden', 'false');
+
+  // اگر تصویر جشن بارگذاری نشد، به سیلوئت SVG برمی‌گردیم (UI خالی نمی‌ماند).
+  const photo = host.querySelector('.celebrate-avatar img');
+  photo?.addEventListener?.('error', () => {
+    const box = host.querySelector('.celebrate-avatar');
+    if (box) box.innerHTML = avatarMarkup(leopardStageFor(stage));
+  }, { once: true });
 
   let timer = null;
   const close = () => {
