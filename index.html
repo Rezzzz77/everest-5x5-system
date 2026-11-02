@@ -89,9 +89,10 @@
       background: radial-gradient(120% 120% at 30% 20%, #1e3a8a, #0f172a 72%);
       border: 1px solid rgba(255,255,255,.28);
       box-shadow: inset 0 0 12px rgba(255,255,255,.10);
-      overflow: hidden;
       animation: lp-pop .42s cubic-bezier(.2,.9,.3,1) both;
     }
+    /* تایل آواتار لبه‌اش را می‌برد تا بیرون‌زدگی تصویر داخل قاب بماند */
+    .leopard-avatar, .celebrate-avatar { overflow: hidden; }
     #leopard-avatar svg { width: 100%; height: 100%; display: block; }
     /* آواتار تصویری: PNG شفاف جای سیلوئت می‌نشیند */
     #leopard-avatar img { width: 100%; height: 100%; display: block; object-fit: contain; }
