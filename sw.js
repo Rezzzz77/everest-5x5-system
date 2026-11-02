@@ -1,4 +1,4 @@
-const CACHE = 'everest-5x5-v15';
+const CACHE = 'everest-5x5-v16';
 
 const PRECACHE = [
   './',

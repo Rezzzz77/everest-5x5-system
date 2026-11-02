@@ -10,7 +10,8 @@ import {
   resolveAnimationMode, nextAnimationMode, shouldAnimateParticles,
   sceneClass, snowFlakes, stars, sceneMarkup,
   ANIM_FULL, ANIM_REDUCED, ANIM_OFF,
-  LEOPARD_STAGES, leopardStageFor, leopardStageForProgress, avatarMarkup, faDigits
+  LEOPARD_STAGES, leopardStageFor, leopardStageForProgress, avatarMarkup, faDigits,
+  shouldCelebrate, celebrationText, celebrationMarkup, buildShareCard, escapeXml, avatarImageFor
 } from '../src/leopard.js';
 
 test('leopard: پیش‌فرض روشن است', () => {
@@ -171,4 +172,82 @@ test('avatar: ورودی غیرصحیح بدون کرش به نزدیک‌تری
 test('avatar: درصد کسری (۰ تا ۱) به درصد تفسیر می‌شود', () => {
   assert.equal(leopardStageForProgress(0.5).code, 'VANGUARD');
   assert.equal(leopardStageForProgress(1).code, 'GUARDIAN');
+});
+
+/* ---------- جشن ارتقا، کارت اشتراک، تصویر واقعی ---------- */
+
+test('celebrate: فقط افزایش مرحله جشن می‌گیرد', () => {
+  assert.equal(shouldCelebrate(1, 2), true);
+  assert.equal(shouldCelebrate(4, 5), true);
+  assert.equal(shouldCelebrate(2, 2), false, 'بدون تغییر مرحله جشنی نیست');
+  assert.equal(shouldCelebrate(3, 1), false, 'نزول مرحله جشن ندارد');
+  assert.equal(shouldCelebrate(0, 1), false, 'شروع کار جشن ندارد');
+  assert.equal(shouldCelebrate(undefined, undefined), false);
+  assert.equal(shouldCelebrate(1, 9), false, 'مرحلهٔ خارج از بازه');
+});
+
+test('celebrate: متن جشن فارسی و نام مرحله را دارد', () => {
+  const text = celebrationText(leopardStageFor(5));
+  assert.match(text.title, /پلنگ نگهبان/);
+  assert.match(text.body, /۱۰۰/, 'سطح با ارقام فارسی');
+  assert.match(text.body, /GUARDIAN/);
+});
+
+test('celebrate: مارک‌آپ اورلی دکمهٔ بستن و نقش دیالوگ دارد', () => {
+  const html = celebrationMarkup(3);
+  assert.match(html, /role="dialog"/);
+  assert.match(html, /data-celebrate-close="1"/);
+  assert.match(html, /نوجوان/);
+});
+
+test('share: کارت SVG نام کاربر را فرار می‌دهد (بدون XSS)', () => {
+  const card = buildShareCard({ name: '<script>alert(1)</script>', stage: 3, progress: 42 });
+  assert.ok(!card.includes('<script>'), 'تگ خام نباید داخل کارت باشد');
+  assert.ok(card.includes('&lt;script&gt;'));
+});
+
+test('share: عرض نوار پیشرفت با درصد متناسب است', () => {
+  const card = buildShareCard({ stage: 2, progress: 50 });
+  assert.match(card, /width="150"/, '۵۰٪ از ۳۰۰ باید ۱۵۰ باشد');
+  assert.match(card, /۵۰٪ پیشرفت/);
+});
+
+test('share: درصد نامعتبر و خارج از بازه ایمن است', () => {
+  for (const bad of [NaN, undefined, -20, 400, 'abc']) {
+    const card = buildShareCard({ stage: 1, progress: bad });
+    assert.match(card, /^<svg/);
+    assert.ok(!/width="NaN"/.test(card));
+    assert.ok(!/width="-/.test(card));
+  }
+});
+
+test('share: کارت هیچ منبع شبکه‌ای ندارد', () => {
+  const card = buildShareCard({ name: 'علی', stage: 4, progress: 70, date: '۱۴۰۵/۰۸/۱۲' });
+  const withoutNs = card.replace(/xmlns="http:\/\/www\.w3\.org\/2000\/svg"/, '');
+  assert.ok(!/https?:\/\//.test(withoutNs), 'تصویر کارت باید کامل آفلاین باشد');
+});
+
+test('share: مرحله در کارت با عنوان فارسی و کد می‌آید', () => {
+  const card = buildShareCard({ stage: 5, progress: 100 });
+  assert.match(card, /پلنگ نگهبان/);
+  assert.match(card, /GUARDIAN/);
+  assert.match(card, /۱۰۰/);
+});
+
+test('avatar image: به‌طور پیش‌فرض تصویری تنظیم نشده است', () => {
+  for (const stage of [1, 2, 3, 4, 5]) {
+    assert.equal(avatarImageFor(stage), null);
+  }
+});
+
+test('avatar image: نام فایل نسبی به پوشهٔ آواتارها وصل می‌شود', () => {
+  assert.equal(avatarImageFor(2, { 2: 'stage-2.png' }), './assets/leopards/stage-2.png');
+  assert.equal(avatarImageFor(2, { 2: './x.png' }), './x.png');
+  assert.equal(avatarImageFor(2, { 2: 'https://cdn.test/a.png' }), 'https://cdn.test/a.png');
+  assert.equal(avatarImageFor(9, { 9: 'z.png' }), null, 'مرحلهٔ خارج از بازه → پلهٔ اول');
+});
+
+test('escapeXml: کاراکترهای خطرناک XML خنثی می‌شوند', () => {
+  assert.equal(escapeXml('<&>"\''), '&lt;&amp;&gt;&quot;&apos;');
+  assert.equal(escapeXml(null), '');
 });

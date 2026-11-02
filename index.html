@@ -127,6 +127,60 @@
       transition: --p .6s ease;
     }
     .leopard-ring > #leopard-avatar { width: 100%; height: 100%; }
+
+    /* ===== آواتار صفحهٔ ورود ===== */
+    .leopard-avatar.levauth {
+      width: 64px; height: 64px; border-radius: 20px; padding: 5px;
+      background: radial-gradient(120% 120% at 30% 20%, #1e3a8a, #0f172a 72%);
+      border: 1px solid rgba(255,255,255,.28);
+      box-shadow: 0 6px 18px rgba(2,6,23,.5);
+    }
+
+    /* ===== اورلی جشن ارتقای مرحله ===== */
+    .celebrate-root {
+      position: fixed; inset: 0; z-index: 90; display: none;
+      align-items: center; justify-content: center; padding: 20px;
+      background: radial-gradient(120% 100% at 50% 0%, rgba(2,6,23,.86), rgba(2,6,23,.96));
+    }
+    .celebrate-root.is-open { display: flex; animation: celebrate-in .28s ease-out both; }
+    .celebrate-card {
+      position: relative; overflow: hidden; width: 100%; max-width: 340px;
+      border-radius: 24px; padding: 22px 18px 18px; text-align: center;
+      background: linear-gradient(160deg, #0b1220, #122544);
+      border: 1px solid rgba(34,211,238,.28);
+      box-shadow: 0 24px 60px rgba(2,6,23,.6);
+      animation: celebrate-pop .4s cubic-bezier(.2,.9,.3,1) both;
+    }
+    .celebrate-glow {
+      position: absolute; inset: -40% -10% auto -10%; height: 220px;
+      background: radial-gradient(circle at 50% 30%, rgba(34,211,238,.35), transparent 65%);
+      pointer-events: none;
+    }
+    .celebrate-avatar {
+      position: relative; width: 108px; height: 108px; margin: 2px auto 12px;
+      border-radius: 28px; padding: 8px;
+      background: radial-gradient(120% 120% at 30% 20%, #1e3a8a, #0f172a 72%);
+      border: 1px solid rgba(34,211,238,.45);
+      box-shadow: 0 0 0 3px rgba(34,211,238,.18), 0 10px 30px rgba(34,211,238,.18);
+      animation: celebrate-float 2.6s ease-in-out infinite;
+    }
+    .celebrate-avatar svg { width: 100%; height: 100%; display: block; }
+    .celebrate-title { position: relative; color: #e0f2fe; font-size: 18px; font-weight: 800; margin: 0 0 6px; }
+    .celebrate-body { position: relative; color: #a5f3fc; font-size: 12px; font-weight: 700; margin: 0 0 4px; }
+    .celebrate-hint { position: relative; color: #94a3b8; font-size: 11px; margin: 0 0 14px; }
+    .celebrate-btn {
+      position: relative; width: 100%; padding: 11px; border-radius: 14px; border: none;
+      background: linear-gradient(160deg, #0891b2, #22d3ee); color: #04202b;
+      font-size: 12px; font-weight: 800; cursor: pointer;
+      transition: transform .15s ease, filter .2s ease;
+    }
+    .celebrate-btn:active { transform: scale(.96); filter: brightness(1.06); }
+    @keyframes celebrate-in { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes celebrate-pop { from { opacity: 0; transform: translateY(10px) scale(.96); } to { opacity: 1; transform: none; } }
+    @keyframes celebrate-float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+    @media (prefers-reduced-motion: reduce) {
+      .celebrate-root.is-open, .celebrate-card, .celebrate-avatar { animation: none !important; }
+    }
   </style>
 </head>
 <body class="min-h-screen flex justify-center bg-slate-950 p-0 sm:p-4">
@@ -140,7 +194,7 @@
     <!-- ================= صفحه ثبت نام و ورود اولیه ================= -->
     <div id="auth-screen" class="hidden absolute inset-0 bg-slate-950/95 backdrop-blur-md z-50 p-6 flex flex-col justify-center space-y-5">
       <div class="text-center space-y-2">
-        <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-800 rounded-2xl mx-auto flex items-center justify-center font-black text-2xl shadow-lg border border-blue-400/40">5×5</div>
+        <div class="w-16 h-16 mx-auto"><div id="leopard-avatar-auth" class="leopard-avatar levauth" data-level="1"></div></div>
         <h1 class="text-xl font-extrabold text-white">سیستم ۵×۵ تیم اورست</h1>
         <p class="text-xs text-slate-400">تکرار کارهای ساده = ساخت عادت‌های قدرتمند</p>
       </div>
@@ -240,6 +294,7 @@
           <button onclick="toggleDarkMode()" id="dark-mode-btn" title="تغییر حالت شب/روز" class="text-[11px] bg-white/20 hover:bg-white/30 px-2 py-1.5 rounded-xl backdrop-blur">🌙</button>
           <button onclick="requestNotificationPermission()" id="notif-btn" title="یادآور اعلان شبانه" class="text-[11px] bg-white/20 hover:bg-white/30 px-2 py-1.5 rounded-xl backdrop-blur">🔔</button>
           <button onclick="toggleGoalModal()" class="text-[11px] bg-white/20 hover:bg-white/30 px-2.5 py-1.5 rounded-xl font-bold backdrop-blur">🎯 هدف</button>
+          <button onclick="shareProgress()" id="share-btn" title="اشتراک‌گذاری کارت پیشرفت" class="text-[11px] bg-white/20 hover:bg-white/30 px-2 py-1.5 rounded-xl backdrop-blur">📤</button>
           <button onclick="openCloudModal()" title="اتصال ابری" class="text-[11px] bg-white/20 hover:bg-white/30 px-2 py-1.5 rounded-xl backdrop-blur">☁️</button>
           <button onclick="resetDemo()" title="خروج / ریست" class="text-[11px] bg-black/25 hover:bg-red-600/60 px-2 py-1.5 rounded-xl">⚙️</button>
         </div>
@@ -922,6 +977,9 @@
     </div>
 
   </div>
+
+  <!-- اورلی جشن ارتقای مرحله -->
+  <div id="celebrate-root" class="celebrate-root" aria-hidden="true"></div>
 
   <script type="module" src="./app.js?v=0.9.3"></script>
 </body>
