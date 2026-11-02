@@ -20,9 +20,10 @@ import {
   sendOtp, verifyOtp, signOut, loadSession, currentUser, isValidEmail, authErrorText, consumeAuthRedirect,
   signInWithPassword, signUpWithPassword
 } from './src/auth.js';
-import { generateCoachCard, getStageTheme } from './src/coach.js';
+import { generateCoachCard, getStageTheme, getOverallProgress } from './src/coach.js';
 import { getHighestUnlockedStage, isStageUnlocked, getCriteriaStage, isWaitingForApproval } from './src/stages.js';
 import { escapeHtml, phoneDigits, resetDailyCounters, calculateMemberHealth, isEveningReportTime, contactsToCsv, teamToCsv, initialList30ToCsv } from './src/utils.js';
+import { initLeopardScene, initLeopardAvatar } from './src/leopard.js';
 
 export { getHighestUnlockedStage };
 
@@ -94,6 +95,7 @@ function saveAll() {
   const persisted = saveToStorage(appState);
   if (!persisted) warnStorageUnavailable();
   renderCoachCard();
+  renderLeopardAvatar();
   clearTimeout(cloudTimer);
 
   if (!persisted && !isSupabaseConfigured()) return cloudLabel('storage');
@@ -119,6 +121,37 @@ function saveAll() {
     } catch (_) { cloudLabel('err'); }
   }, 400);
   return persisted;
+}
+
+/* ---------------- صحنهٔ کوهستان + آواتار پلنگ برفی ---------------- */
+let leopardScene = null;
+let leopardAvatar = null;
+
+/** نصب صحنه و آواتار (مستقل از ورود کاربر، تا روی صفحهٔ لاگین هم دیده شود) */
+function mountLeopardUi() {
+  if (!leopardScene) leopardScene = initLeopardScene(document, window);
+  if (!leopardAvatar) leopardAvatar = initLeopardAvatar(document);
+}
+
+/** روشن/خاموش کردن انیمیشن کوهستان (از هدر) */
+function toggleLeopard() {
+  if (!leopardScene) leopardScene = initLeopardScene(document, window);
+  leopardScene?.toggle();
+}
+
+/**
+ * آواتار بر اساس مرحلهٔ باز‌شده و درصد پیشرفت به‌روز می‌شود؛
+ * با هر بار ذخیره/ورود دوباره رندر می‌شود تا رشد کاربر دیده شود.
+ */
+function renderLeopardAvatar() {
+  if (!leopardAvatar) leopardAvatar = initLeopardAvatar(document);
+  try {
+    const stage = getHighestUnlockedStage(appState);
+    const progress = getOverallProgress(appState);
+    const ring = document.getElementById('leopard-progress');
+    if (ring) ring.setAttribute('data-progress', String(progress));
+    leopardAvatar?.render(stage);
+  } catch (_) { /* هرگز نباید رندر اصلی را بشکند */ }
 }
 
 /* ---------------- وضعیت اتصال ابری ---------------- */
@@ -2160,6 +2193,7 @@ function initApp() {
   renderKpi();
   renderCoachCard();
   renderOnlineTeam();
+  renderLeopardAvatar();
   updateCloudBadge();
   update72HourTimer();
   if (!timerId) timerId = setInterval(update72HourTimer, 1000);
@@ -2220,6 +2254,8 @@ Object.assign(window, {
   handlePasswordAuth,
   requestOtp,
   verifyOtpAndStart,
+  toggleLeopard,
+  renderLeopardAvatar,
   backToEmailStep,
   toggleLocalMode,
   signOutUser,
@@ -2285,6 +2321,8 @@ Object.assign(window, {
 
 // راه‌اندازی — اگر کاربر از لینک ایمیل برگشته باشد، اول نشست را بساز.
 (async () => {
+  // صحنه و آواتار مستقل از وضعیت ورود نصب می‌شوند.
+  try { mountLeopardUi(); } catch (_) { /* تزئینی است؛ نباید بوت را بشکند */ }
   let redirect = null;
   try { redirect = await consumeAuthRedirect(); } catch (_) { /* بی‌اهمیت */ }
   initApp();

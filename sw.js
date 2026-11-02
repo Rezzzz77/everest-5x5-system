@@ -1,4 +1,4 @@
-const CACHE = 'everest-5x5-v13';
+const CACHE = 'everest-5x5-v15';
 
 const PRECACHE = [
   './',
@@ -7,6 +7,7 @@ const PRECACHE = [
   './manifest.json',
   './src/config.js',
   './src/env.js',
+  './src/leopard.js',
   './src/db.js',
   './src/defaults.js',
   './src/auth.js',

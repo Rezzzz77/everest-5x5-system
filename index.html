@@ -23,12 +23,119 @@
     body.light-mode .text-slate-200 { color: #1e293b !important; }
     body.light-mode .text-white { color: #0f172a !important; }
     body.light-mode input, body.light-mode select { background-color: #f1f5f9 !important; color: #0f172a !important; border-color: #cbd5e1 !important; }
+
+    /* ===== صحنهٔ کوهستان اورست + ببر برفی (SVG + CSS، بدون شبکه) ===== */
+    #leopard-bg {
+      position: absolute; inset: 0; z-index: 0; overflow: hidden;
+      pointer-events: none; opacity: .5;
+      mask-image: linear-gradient(to bottom, black 0%, black 55%, transparent 88%);
+      -webkit-mask-image: linear-gradient(to bottom, black 0%, black 55%, transparent 88%);
+    }
+    #leopard-bg .leopard-svg { width: 100%; height: 100%; display: block; }
+    #leopard-bg.is-off { display: none; }
+    #leopard-bg.is-paused * { animation-play-state: paused !important; }
+
+    /* محتوای اپ بالای صحنه */
+    #app-header, main { position: relative; z-index: 1; }
+
+    #leopard-bg .star { fill: #dbeafe; animation: lp-twinkle 4.5s ease-in-out infinite; animation-delay: var(--delay, 0s); }
+    #leopard-bg .moon { animation: lp-moonglow 9s ease-in-out infinite; transform-origin: 308px 46px; }
+    #leopard-bg .ridge-far  { animation: lp-drift-far 46s ease-in-out infinite alternate; }
+    #leopard-bg .ridge-mid  { animation: lp-drift-mid 34s ease-in-out infinite alternate; }
+    #leopard-bg .ridge-near { animation: lp-drift-near 24s ease-in-out infinite alternate; }
+    #leopard-bg .snow { fill: #eaf2ff; opacity: .85; animation: lp-snowfall var(--dur, 9s) linear infinite; animation-delay: var(--delay, 0s); }
+
+    #leopard-bg .leopard { animation: lp-prowl 22s ease-in-out infinite alternate; }
+    #leopard-bg .leopard-body { transform-origin: 145px 168px; animation: lp-breathe 3.4s ease-in-out infinite; }
+    #leopard-bg .lp-tail { transform-origin: 121px 164px; animation: lp-tail 2.6s ease-in-out infinite; }
+    #leopard-bg .lp-ear  { transform-origin: 170px 155px; animation: lp-ear 5.5s ease-in-out infinite; }
+    #leopard-bg .lp-eye  { animation: lp-blink 6s steps(1, end) infinite; }
+    #leopard-bg .lp-leg-a { transform-origin: 127px 168px; animation: lp-step 1.5s ease-in-out infinite; }
+    #leopard-bg .lp-leg-b { transform-origin: 141px 168px; animation: lp-step 1.5s ease-in-out infinite reverse; }
+    #leopard-bg .lp-leg-c { transform-origin: 153px 168px; animation: lp-step 1.5s ease-in-out infinite reverse; }
+    #leopard-bg .lp-leg-d { transform-origin: 165px 168px; animation: lp-step 1.5s ease-in-out infinite; }
+
+    /* حالت «کاهش حرکت»: صحنه هست، ولی ساکن */
+    #leopard-bg.is-still *, #leopard-bg.is-still { animation: none !important; }
+
+    @keyframes lp-twinkle { 0%,100% { opacity: .25; } 50% { opacity: 1; } }
+    @keyframes lp-moonglow { 0%,100% { opacity: .85; transform: scale(1); } 50% { opacity: 1; transform: scale(1.04); } }
+    @keyframes lp-drift-far  { from { transform: translateX(-6px); } to { transform: translateX(6px); } }
+    @keyframes lp-drift-mid  { from { transform: translateX(8px); }  to { transform: translateX(-8px); } }
+    @keyframes lp-drift-near { from { transform: translateX(-3px); } to { transform: translateX(5px); } }
+    @keyframes lp-snowfall {
+      from { transform: translate3d(0, 0, 0); }
+      to   { transform: translate3d(var(--drift, 8px), 215px, 0); }
+    }
+    @keyframes lp-prowl {
+      from { transform: translate(-18px, 1px); }
+      to   { transform: translate(26px, -1px); }
+    }
+    @keyframes lp-breathe { 0%,100% { transform: scaleY(1); } 50% { transform: scaleY(1.035); } }
+    @keyframes lp-tail { 0%,100% { transform: rotate(-9deg); } 50% { transform: rotate(13deg); } }
+    @keyframes lp-ear  { 0%,88%,100% { transform: rotate(0deg); } 92% { transform: rotate(-16deg); } 96% { transform: rotate(6deg); } }
+    @keyframes lp-blink { 0%,96%,100% { opacity: 1; } 97%,99% { opacity: .1; } }
+    @keyframes lp-step { 0%,100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-1.6px) rotate(9deg); } }
+
+    @media (prefers-reduced-motion: reduce) {
+      #leopard-bg * { animation: none !important; }
+    }
+
+    /* ===== آواتار پیشرفت پلنگ برفی (۵ پله) ===== */
+    /* شعاع هم‌مرکز: r_بیرونی ۱۶px − padding ۲.۵px → r_درونی ۱۳.۵px */
+    #leopard-avatar {
+      width: 100%; height: 100%; border-radius: 13.5px; flex: none;
+      background: linear-gradient(160deg, #1e3a8a, #0ea5e9 140%);
+      border: 1px solid rgba(255,255,255,.35);
+      box-shadow: inset 0 0 12px rgba(255,255,255,.12);
+      animation: lp-pop .42s cubic-bezier(.2,.9,.3,1) both;
+    }
+    #leopard-avatar svg { width: 100%; height: 100%; display: block; animation: lp-float 5.5s ease-in-out infinite; }
+    #leopard-avatar .av-eye { animation: lp-blink 7s steps(1, end) infinite; }
+    #leopard-avatar .av-tail { transform-origin: 22px 46px; animation: lp-tail 3.2s ease-in-out infinite; }
+    #leopard-avatar.level-2 { background: linear-gradient(160deg, #1e40af, #38bdf8 140%); }
+    #leopard-avatar.level-3 { background: linear-gradient(160deg, #0e7490, #22d3ee 140%); }
+    #leopard-avatar.level-4 { background: linear-gradient(160deg, #0f766e, #5eead4 140%); }
+    #leopard-avatar.level-5 {
+      background: linear-gradient(160deg, #0f766e, #22d3ee 120%);
+      box-shadow: 0 0 0 2px rgba(34,211,238,.5), inset 0 0 14px rgba(255,255,255,.22);
+    }
+    .leopard-level-chip {
+      font-size: 9px; font-weight: 800; letter-spacing: .04em;
+      padding: 1px 6px; border-radius: 999px;
+      background: rgba(0,0,0,.28); color: #a5f3fc; border: 1px solid rgba(165,243,252,.35);
+      font-variant-numeric: tabular-nums;
+    }
+    /* بازخورد لمسی: فشردن ۴٪ کوچک‌تر، ۱۵۰ms */
+    #leopard-btn { transition: transform .15s ease, background-color .2s ease; }
+    #leopard-btn:active { transform: scale(.96); }
+    @keyframes lp-float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-1.5px); } }
+    @keyframes lp-pop {
+      from { opacity: 0; transform: scale(.9) translateY(2px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      #leopard-avatar, #leopard-avatar * { animation: none !important; }
+    }
+
+    /* حلقهٔ پیشرفت دور آواتار (conic-gradient با متغیر --p) */
+    .leopard-ring {
+      --p: 0%;
+      width: 47px; height: 47px; border-radius: 16px; padding: 2.5px; flex: none;
+      display: grid; place-items: center;
+      background: conic-gradient(#38bdf8 var(--p), rgba(255,255,255,.14) 0);
+      transition: background .6s ease;
+    }
+    .leopard-ring > #leopard-avatar { width: 100%; height: 100%; }
   </style>
 </head>
 <body class="min-h-screen flex justify-center bg-slate-950 p-0 sm:p-4">
 
   <!-- قاب اصلی موبایل -->
   <div class="w-full max-w-md bg-slate-900 min-h-screen sm:min-h-[880px] sm:rounded-3xl shadow-2xl border border-slate-800 flex flex-col overflow-hidden relative">
+
+    <!-- صحنهٔ تزئینی کوهستان اورست (SVG درون‌برنامه‌ای) -->
+    <div id="leopard-bg" class="leopard-scene" aria-hidden="true"></div>
 
     <!-- ================= صفحه ثبت نام و ورود اولیه ================= -->
     <div id="auth-screen" class="hidden absolute inset-0 bg-slate-950/95 backdrop-blur-md z-50 p-6 flex flex-col justify-center space-y-5">
@@ -114,18 +221,22 @@
     <header id="app-header" class="p-4 bg-gradient-to-l from-blue-700 to-blue-900 transition-all duration-300 shadow-lg">
       <div class="flex justify-between items-center mb-3">
         <div class="flex items-center gap-2.5">
-          <div class="w-10 h-10 rounded-xl bg-white/15 backdrop-blur flex items-center justify-center font-black text-base border border-white/25">5×5</div>
+          <div id="leopard-progress" data-progress="0" class="leopard-ring" title="پیشرفت کل">
+              <div id="leopard-avatar" class="leopard-avatar" data-level="1" aria-label="آواتار پیشرفت"></div>
+            </div>
           <div>
             <div class="flex items-center gap-1.5">
               <h1 id="user-display-name" class="font-extrabold text-sm">عضو تیم اورست</h1>
               <span id="user-role-badge" class="text-[10px] bg-blue-600/70 border border-blue-400/50 px-2 py-0.5 rounded-full font-bold">🎯 مشاور</span>
               <span id="user-stage-badge" class="text-[10px] bg-black/30 px-2 py-0.5 rounded-full text-amber-300 font-bold">مرحله ۱</span>
+              <span id="leopard-level-label" class="leopard-level-chip">CUBLING</span>
               <span id="cloud-badge" class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-slate-700/60 text-slate-300">آفلاین</span>
             </div>
             <p class="text-[10px] text-white/80 mt-0.5">حامی: <span id="upline-display">راهبر اورست</span></p>
           </div>
         </div>
         <div class="flex gap-1 items-center">
+          <button onclick="toggleLeopard()" id="leopard-btn" aria-pressed="true" title="توقف انیمیشن کوهستان" class="text-[11px] bg-white/20 hover:bg-white/30 px-2 py-1.5 rounded-xl backdrop-blur">🐆</button>
           <button onclick="toggleDarkMode()" id="dark-mode-btn" title="تغییر حالت شب/روز" class="text-[11px] bg-white/20 hover:bg-white/30 px-2 py-1.5 rounded-xl backdrop-blur">🌙</button>
           <button onclick="requestNotificationPermission()" id="notif-btn" title="یادآور اعلان شبانه" class="text-[11px] bg-white/20 hover:bg-white/30 px-2 py-1.5 rounded-xl backdrop-blur">🔔</button>
           <button onclick="toggleGoalModal()" class="text-[11px] bg-white/20 hover:bg-white/30 px-2.5 py-1.5 rounded-xl font-bold backdrop-blur">🎯 هدف</button>
