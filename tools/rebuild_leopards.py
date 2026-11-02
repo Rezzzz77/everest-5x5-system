@@ -175,6 +175,7 @@ def build(src_path, out_dir, report=False):
         alpha = compose(g['mask'], box)
         rgba = crop_color(rgb, box).resize((SIZE, SIZE), Image.LANCZOS).convert('RGBA')
         rgba.putalpha(alpha)
+        rgba = unmix_white(rgba)
         path = os.path.join(out_dir, f'stage-{i}.png')
         rgba.save(path)
         out.append((path, g, box))
@@ -195,6 +196,24 @@ def crop_color(rgb, box):
     sy1, sx1 = min(rgb.height, bottom), min(rgb.width, right)
     canvas.paste(rgb.crop((sx0, sy0, sx1, sy1)), (sx0 - left, sy0 - top))
     return canvas
+
+
+def unmix_white(rgba):
+    """حذف نشت سفیدیِ پس‌زمینه از لبه‌های نیمه‌شفاف (هالهٔ روشن روی تم تیره).
+
+    تصویر روی پس‌زمینهٔ سفید clave شده است، پس لبه‌ها آمیختهٔ خز و سفیدند:
+        C_obs = a * C_true + (1 - a) * 255
+    با حل معکوس، رنگ واقعیِ خز برمی‌گردد و هالهٔ سفید از بین می‌رود.
+    """
+    import numpy as np
+    arr = np.asarray(rgba).astype(np.float32)
+    alpha = arr[..., 3:4] / 255.0
+    edge = (alpha > 0.02) & (alpha < 0.99)
+    if edge.any():
+        safe = np.clip(alpha, 0.02, 1.0)
+        fixed = (arr[..., :3] - (1.0 - safe) * 255.0) / safe
+        arr[..., :3] = np.where(edge[..., 0:1], np.clip(fixed, 0, 255), arr[..., :3])
+    return Image.fromarray(arr.round().astype(np.uint8), 'RGBA')
 
 
 def box_for(mask, size=SIZE, margin=MARGIN):
