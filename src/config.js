@@ -5,14 +5,16 @@
  * هیچ کلید پیش‌فرضی در کد وجود ندارد — امنیت کامل
  */
 
+import { DEFAULT_SUPABASE, DEFAULT_N8N, DEFAULT_DEEPSEEK } from './env.js';
+
 const LS_KEY = 'everest_supabase_cfg';
 const N8N_LS_KEY = 'everest_n8n_cfg';
 const DEEPSEEK_LS_KEY = 'everest_deepseek_cfg';
 
-// هیچ مقادیر پیش‌فرضی — کاربر باید در اپ وارد کند
-export const SUPABASE_CONFIG = { url: '', key: '' };
-export const N8N_CONFIG = { webhookUrl: '' };
-export const DEEPSEEK_CONFIG = { apiKey: '', model: 'deepseek-chat', endpoint: 'https://api.deepseek.com/chat/completions' };
+// پیش‌فرض‌های عمومی پروژه (URL + کلید anon). کاربر می‌تواند در اپ جایگزین کند.
+export const SUPABASE_CONFIG = { url: DEFAULT_SUPABASE.url, key: DEFAULT_SUPABASE.key };
+export const N8N_CONFIG = { webhookUrl: DEFAULT_N8N.webhookUrl };
+export const DEEPSEEK_CONFIG = { apiKey: DEFAULT_DEEPSEEK.apiKey, model: DEFAULT_DEEPSEEK.model, endpoint: 'https://api.deepseek.com/chat/completions' };
 
 /** پیکربندی مؤثر: فقط از localStorage (تنظیمات کاربر) */
 export function getSupabaseConfig() {
@@ -22,8 +24,8 @@ export function getSupabaseConfig() {
   } catch (_) {
     over = null;
   }
-  const url = String(over?.url || '').trim().replace(/\/+$/, '');
-  const key = String(over?.key || '').trim();
+  const url = String(over?.url || SUPABASE_CONFIG.url || '').trim().replace(/\/+$/, '');
+  const key = String(over?.key || SUPABASE_CONFIG.key || '').trim();
   return { url, key };
 }
 
@@ -48,7 +50,7 @@ export function getN8nConfig() {
   } catch (_) {
     over = null;
   }
-  const webhookUrl = String(over?.webhookUrl || '').trim();
+  const webhookUrl = String(over?.webhookUrl || N8N_CONFIG.webhookUrl || '').trim();
   return { webhookUrl };
 }
 
@@ -81,7 +83,7 @@ export function getDeepSeekConfig() {
   } catch (_) {
     over = null;
   }
-  const apiKey = String(over?.apiKey || '').trim();
+  const apiKey = String(over?.apiKey || DEEPSEEK_CONFIG.apiKey || '').trim();
   const model = String(over?.model || 'deepseek-chat').trim();
   const endpoint = String(over?.endpoint || 'https://api.deepseek.com/chat/completions').trim();
   return { apiKey, model, endpoint };

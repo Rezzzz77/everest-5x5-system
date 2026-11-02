@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 
 import {
@@ -53,21 +54,49 @@ test('isConfigured: اسلش انتهایی مهم نیست', () => {
   assert.equal(isConfigured({ url: URL_OK + '/', key: KEY_OK }), true);
 });
 
-test('getSupabaseConfig: در محیط بدون localStorage پیش‌فرض خالی برمی‌گرداند', () => {
+test('getSupabaseConfig: بدون localStorage به پیش‌فرض عمومی پروژه برمی‌گردد', () => {
   assert.deepEqual(getSupabaseConfig(), {
-    url: '',
-    key: ''
+    url: SUPABASE_CONFIG.url,
+    key: SUPABASE_CONFIG.key
   });
+  assert.equal(isConfigured(getSupabaseConfig()), true);
 });
 
-test('config پیش‌فرض پروژه: خالی و غیرفعال است (امنیت)', () => {
-  assert.equal(SUPABASE_CONFIG.url, '');
-  assert.equal(SUPABASE_CONFIG.key, '');
-  assert.equal(isConfigured(SUPABASE_CONFIG), false);
+test('config پیش‌فرض پروژه: پروژه عمومی متصل است (نه خالی)', () => {
+  assert.match(SUPABASE_CONFIG.url, /^https:\/\/[a-z0-9-]+\.supabase\.(co|in)$/);
+  assert.ok(SUPABASE_CONFIG.key.length > 40);
+  assert.equal(isConfigured(SUPABASE_CONFIG), true);
 });
 
 test('config پیش‌فرض: هرگز کلید secret در کلاینت نیست', () => {
   assert.doesNotMatch(SUPABASE_CONFIG.key, /^sb_secret_/i);
+  assert.doesNotMatch(SUPABASE_CONFIG.key, /^sbp_/i);
+});
+
+test('config پیش‌فرض: کلید عمومی کلاینت است (publishable یا anon)، نه service_role', () => {
+  const key = SUPABASE_CONFIG.key;
+  if (key.startsWith('sb_publishable_')) {
+    assert.ok(key.length >= 25, 'کلید publishable خیلی کوتاه است');
+    return;
+  }
+  const claims = JSON.parse(Buffer.from(key.split('.')[1], 'base64url').toString('utf-8'));
+  assert.equal(claims.role, 'anon');
+  assert.notEqual(claims.role, 'service_role');
+});
+
+test('env.js: فقط کلید عمومی دارد و هیچ کلید مدیریتی/سرویس نیست', () => {
+  const src = readFileSync(new URL('../src/env.js', import.meta.url), 'utf-8');
+  // کامنت‌ها توضیح می‌دهند «چه چیزی نباید اینجا باشد»، پس از بررسی حذف می‌شوند.
+  const code = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  assert.doesNotMatch(code, /sb_secret_/);
+  assert.doesNotMatch(code, /sbp_[a-f0-9]{20,}/);
+  const keys = [...code.matchAll(/key:\s*'([^']+)'/g)].map((m) => m[1]).filter(Boolean);
+  assert.equal(keys.length, 1, 'باید دقیقاً یک کلید عمومی (DeepSeek خالی است) باشد');
+  assert.match(keys[0], /^(sb_publishable_|eyJ)/);
+});
+
+test('validateConfig: پیش‌فرض پروژه بدون خطاست', () => {
+  assert.deepEqual(validateConfig(SUPABASE_CONFIG), []);
 });
 
 test('testConnection: پیکربندی ناقص → not-configured بدون درخواست شبکه', async () => {
