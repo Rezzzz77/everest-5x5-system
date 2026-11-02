@@ -148,9 +148,7 @@ function renderLeopardAvatar() {
   try {
     const stage = getHighestUnlockedStage(appState);
     const progress = getOverallProgress(appState);
-    const ring = document.getElementById('leopard-progress');
-    if (ring) ring.setAttribute('data-progress', String(progress));
-    leopardAvatar?.render(stage);
+    leopardAvatar?.render(stage, progress);
   } catch (_) { /* هرگز نباید رندر اصلی را بشکند */ }
 }
 

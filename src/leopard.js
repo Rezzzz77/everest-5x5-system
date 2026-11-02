@@ -1,14 +1,16 @@
 /**
- * صحنهٔ کوهستان اورست + ببر برفی (پلنگ کوهستان)
- * ---------------------------------------------------
- * یک صحنهٔ تزئینی، کاملاً درون‌برنامه‌ای (SVG + CSS) و بدون هیچ درخواست شبکه،
- * چون اپ باید آفلاین‌فرست بماند و نباید به CDN وابسته شود.
+ * صحنهٔ کوهستان اورست + آواتار پیشرفت پلنگ برفی
+ * -------------------------------------------------
+ * دو چیز در این ماژول ساخته می‌شود:
+ *   ۱) صحنهٔ تزئینی کوهستان (SVG + CSS) — ماه، ستاره، برف، پارالاکس کوه‌ها
+ *   ۲) آواتار کاربر که با ۵ مرحلهٔ سیستم ۵×۵ رشد می‌کند
+ *      (تولهٔ نوزاد → تولهٔ در حال رشد → نوجوان → جوان بالغ → پلنگ نگهبان)
  *
- * اصول پیاده‌سازی:
- *  - همهٔ حرکت‌ها با CSS transform انجام می‌شوند (بدون حلقهٔ JS؛ باتری موبایل).
- *  - با `prefers-reduced-motion` خودکار به حالت ساکن می‌رود.
- *  - با پنهان شدن تب، انیمیشن متوقف می‌شود (`visibilitychange`).
- *  - انتخاب کاربر در `localStorage` نگه داشته می‌شود.
+ * اصول:
+ *  - همه‌چیز درون‌برنامه‌ای است؛ هیچ درخواست شبکه‌ای ندارد (آفلاین‌فرست).
+ *  - حرکت‌ها CSS-only هستند تا حلقهٔ JS روی موبایل اجرا نشود.
+ *  - `prefers-reduced-motion` و «تب پنهان» باعث توقف انیمیشن می‌شوند.
+ *  - در محیط بدون DOM (تست‌های Node) بی‌خطر است.
  */
 
 const LS_KEY = 'everest_leopard_anim';
@@ -17,10 +19,11 @@ export const ANIM_FULL = 'full';
 export const ANIM_REDUCED = 'reduced';
 export const ANIM_OFF = 'off';
 
+/* ------------------------------ حالت انیمیشن ------------------------------ */
+
 /**
- * تصمیم حالت انیمیشن از روی تنظیم ذخیره‌شده و ترجیح سیستم.
- * مقدار نامعتبر/خالی → پیش‌فرض روشن.
- *
+ * تصمیم حالت انیمیشن.
+ * ترتیب اولویت: انتخاب صریح کاربر (off/full) → ترجیح سیستم → روشن.
  * @param {string|null|undefined} stored مقدار localStorage
  * @param {boolean} prefersReduced آیا کاربر «کاهش حرکت» خواسته است
  * @returns {'full'|'reduced'|'off'}
@@ -28,12 +31,14 @@ export const ANIM_OFF = 'off';
 export function resolveAnimationMode(stored, prefersReduced = false) {
   const value = String(stored ?? '').trim().toLowerCase();
   if (value === ANIM_OFF) return ANIM_OFF;
+  if (value === ANIM_FULL) return ANIM_FULL; // انتخاب صریح کاربر بر سیستم اولویت دارد
+  if (value === ANIM_REDUCED) return prefersReduced ? ANIM_REDUCED : ANIM_FULL;
   if (prefersReduced) return ANIM_REDUCED;
   return ANIM_FULL;
 }
 
 /**
- * حالت بعدی هنگام کلیک کاربر (فقط روشن/خاموش ساده).
+ * حالت بعدی با کلیک کاربر.
  * @param {'full'|'reduced'|'off'} mode
  * @returns {'full'|'off'}
  */
@@ -41,19 +46,21 @@ export function nextAnimationMode(mode) {
   return mode === ANIM_OFF ? ANIM_FULL : ANIM_OFF;
 }
 
-/** آیا باید ذرات برف حرکت کنند؟ (در حالت reduced ساکن می‌مانند) */
+/** آیا ذرات برف باید حرکت کنند؟ */
 export function shouldAnimateParticles(mode) {
   return mode === ANIM_FULL;
 }
 
-/** کلاسی که روی ریشهٔ صحنه گذاشته می‌شود. */
+/** کلاس ظرف صحنه برای یک حالت. */
 export function sceneClass(mode) {
   if (mode === ANIM_OFF) return 'leopard-scene is-off';
   if (mode === ANIM_REDUCED) return 'leopard-scene is-still';
   return 'leopard-scene';
 }
 
-/** ذرات برف با موقعیت/تأخیر قطعی (بدون Math.random تا خروجی پایدار بماند). */
+/* --------------------------------- صحنه ---------------------------------- */
+
+/** دانه‌های برف؛ قطعی (بدون Math.random) تا خروجی تست پایدار بماند. */
 export function snowFlakes(count = 18) {
   const flakes = [];
   for (let i = 0; i < count; i += 1) {
@@ -80,10 +87,7 @@ export function stars(count = 22) {
   return list;
 }
 
-/**
- * مارک‌آپ SVG صحنه.
- * @param {{mode?: 'full'|'reduced'|'off'}} [options]
- */
+/** مارک‌آپ SVG صحنهٔ کوهستان. */
 export function sceneMarkup({ mode = ANIM_FULL } = {}) {
   const flakes = snowFlakes()
     .map(
@@ -96,7 +100,7 @@ export function sceneMarkup({ mode = ANIM_FULL } = {}) {
     .join('');
 
   return `
-<svg class="leopard-svg" viewBox="0 0 400 200" preserveAspectRatio="xMidYMax slice" role="presentation" focusable="false">
+<svg class="leopard-svg" viewBox="0 0 400 200" preserveAspectRatio="xMidYMax slice" role="presentation" focusable="false" data-mode="${mode}">
   <defs>
     <linearGradient id="lp-sky" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#050a18"></stop>
@@ -123,7 +127,6 @@ export function sceneMarkup({ mode = ANIM_FULL } = {}) {
   </defs>
 
   <rect width="400" height="200" fill="url(#lp-sky)"></rect>
-
   <g class="stars">${starDots}</g>
 
   <g class="moon">
@@ -134,11 +137,9 @@ export function sceneMarkup({ mode = ANIM_FULL } = {}) {
   <g class="ridge ridge-far">
     <path d="M-20 132 L34 96 L62 116 L96 74 L128 112 L160 88 L196 122 L232 92 L268 124 L304 98 L340 126 L380 104 L420 132 L420 200 L-20 200 Z" fill="url(#lp-far)"></path>
   </g>
-
   <g class="ridge ridge-mid">
     <path d="M-20 160 L26 130 L58 148 L92 118 L126 146 L164 126 L204 154 L242 128 L282 156 L320 132 L360 158 L420 138 L420 200 L-20 200 Z" fill="url(#lp-mid)"></path>
   </g>
-
   <g class="ridge ridge-near">
     <path d="M-20 186 L40 168 L84 178 L124 164 L168 180 L214 168 L258 182 L300 170 L344 184 L400 172 L420 200 L-20 200 Z" fill="url(#lp-near)"></path>
   </g>
@@ -146,10 +147,10 @@ export function sceneMarkup({ mode = ANIM_FULL } = {}) {
   <g class="leopard">
     <g class="leopard-body">
       <path class="lp-tail" d="M118 168 C104 166 96 158 92 148 C89 141 92 136 97 137 C102 138 101 143 103 149 C106 157 112 163 121 164 Z" fill="#dfe9f7" opacity="0.92"></path>
-      <path class="lp-leg lp-leg-a" d="M126 168 L124 178 L128 178 L130 168 Z" fill="#e6eefb"></path>
-      <path class="lp-leg lp-leg-b" d="M140 168 L139 178 L143 178 L144 168 Z" fill="#e6eefb"></path>
-      <path class="lp-leg lp-leg-c" d="M152 168 L151 178 L155 178 L156 168 Z" fill="#dfe8f6"></path>
-      <path class="lp-leg lp-leg-d" d="M164 168 L163 178 L167 178 L168 168 Z" fill="#dfe8f6"></path>
+      <path class="lp-leg" d="M126 168 L124 178 L128 178 L130 168 Z" fill="#e6eefb"></path>
+      <path class="lp-leg" d="M140 168 L139 178 L143 178 L144 168 Z" fill="#e6eefb"></path>
+      <path class="lp-leg" d="M152 168 L151 178 L155 178 L156 168 Z" fill="#dfe8f6"></path>
+      <path class="lp-leg" d="M164 168 L163 178 L167 178 L168 168 Z" fill="#dfe8f6"></path>
       <path class="lp-torso" d="M122 166 C128 154 150 152 162 158 C170 162 170 168 164 169 L126 169 C121 169 120 168 122 166 Z" fill="#eef4ff"></path>
       <path class="lp-head" d="M166 158 C172 152 180 152 183 157 C185 161 182 165 176 166 L168 166 C164 164 164 160 166 158 Z" fill="#eef4ff"></path>
       <path class="lp-ear" d="M168 156 L169 151 L173 155 Z" fill="#eef4ff"></path>
@@ -157,7 +158,6 @@ export function sceneMarkup({ mode = ANIM_FULL } = {}) {
       <circle class="lp-spot" cx="132" cy="161" r="1.05" fill="#93a9c8" opacity="0.7"></circle>
       <circle class="lp-spot" cx="141" cy="158" r="0.95" fill="#93a9c8" opacity="0.65"></circle>
       <circle class="lp-spot" cx="150" cy="161" r="0.9" fill="#93a9c8" opacity="0.6"></circle>
-      <circle class="lp-spot" cx="157" cy="157" r="0.85" fill="#93a9c8" opacity="0.55"></circle>
     </g>
   </g>
 
@@ -166,9 +166,13 @@ export function sceneMarkup({ mode = ANIM_FULL } = {}) {
 }
 
 /**
- * نصب صحنه در صفحه. در محیط بدون DOM (تست) بی‌خطر است.
+ * نصب صحنه در صفحه. بازگشت `{ toggle, getMode, setMode, dispose }`.
+ * برای محیط بدون DOM بی‌خطر است (`null`).
  */
-export function initLeopardScene(doc = typeof document !== 'undefined' ? document : null, win = typeof window !== 'undefined' ? window : null) {
+export function initLeopardScene(
+  doc = typeof document !== 'undefined' ? document : null,
+  win = typeof window !== 'undefined' ? window : null
+) {
   if (!doc) return null;
   const host = doc.getElementById('leopard-bg');
   if (!host) return null;
@@ -179,48 +183,73 @@ export function initLeopardScene(doc = typeof document !== 'undefined' ? documen
   } catch (_) { /* بدون matchMedia */ }
 
   let stored = null;
-  try { stored = win?.localStorage?.getItem(LS_KEY) ?? null; } catch (_) { /* دسترسی ندارد */ }
+  try {
+    stored = win?.localStorage?.getItem(LS_KEY) ?? null;
+  } catch (_) { /* دسترسی به حافظه ندارد */ }
 
   let mode = resolveAnimationMode(stored, prefersReduced);
+
+  // SVG فقط یک‌بار ساخته می‌شود؛ تغییر حالت با کلاس انجام می‌شود (بدون بازسازی DOM).
   host.innerHTML = sceneMarkup({ mode });
-  host.className = sceneClass(mode);
+
+  const btn = () => doc.getElementById('leopard-btn');
 
   const apply = (next) => {
     mode = next;
-    host.className = sceneClass(mode);
-    const btn = doc.getElementById('leopard-btn');
-    if (btn) {
-      btn.textContent = mode === ANIM_OFF ? '🐾' : '🐆';
-      btn.title = mode === ANIM_OFF ? 'نمایش انیمیشن کوهستان' : 'توقف انیمیشن کوهستان';
-      btn.setAttribute('aria-pressed', String(mode !== ANIM_OFF));
+    // ⚠️ className مستقیم استفاده نمی‌شود تا کلاس‌هایی مثل is-paused از دست نروند.
+    host.classList.toggle('is-off', mode === ANIM_OFF);
+    host.classList.toggle('is-still', mode === ANIM_REDUCED);
+    const b = btn();
+    if (b) {
+      b.textContent = mode === ANIM_OFF ? '🐾' : '🐆';
+      b.title = mode === ANIM_OFF ? 'نمایش انیمیشن کوهستان' : 'توقف انیمیشن کوهستان';
+      b.setAttribute('aria-pressed', String(mode !== ANIM_OFF));
     }
+  };
+
+  const persist = () => {
+    try {
+      win?.localStorage?.setItem(LS_KEY, mode);
+    } catch (_) { /* بی‌اهمیت */ }
+  };
+
+  const setMode = (next) => {
+    apply(next);
+    persist();
   };
 
   const toggle = () => {
     apply(nextAnimationMode(mode));
-    try { win?.localStorage?.setItem(LS_KEY, mode === ANIM_OFF ? 'off' : 'on'); } catch (_) { /* بی‌اهمیت */ }
+    persist();
+    return mode;
   };
 
-  // توقف انیمیشن وقتی تب دیده نمی‌شود (باتری)
-  if (win?.addEventListener) {
-    doc.addEventListener?.('visibilitychange', () => {
-      host.classList.toggle('is-paused', doc.hidden === true);
-    });
+  // توقف مصرف باتری وقتی تب دیده نمی‌شود. هندلر یکتا (در صورت init دوباره).
+  const onVisibility = () => {
+    const hidden = doc.hidden === true || doc.webkitHidden === true;
+    if (hidden) host.classList.add('is-paused');
+    else host.classList.remove('is-paused');
+  };
+  if (typeof host.__leopardVis === 'function') {
+    doc.removeEventListener?.('visibilitychange', host.__leopardVis);
   }
+  host.__leopardVis = onVisibility;
+  doc.addEventListener?.('visibilitychange', onVisibility);
 
   apply(mode);
-  return { toggle, getMode: () => mode, setMode: apply };
+
+  return {
+    toggle,
+    getMode: () => mode,
+    setMode,
+    dispose() {
+      doc.removeEventListener?.('visibilitychange', onVisibility);
+      if (host.__leopardVis === onVisibility) delete host.__leopardVis;
+    }
+  };
 }
 
-
-/* =====================================================================
- * آواتار پیشرفت پلنگ برفی
- * ---------------------------------------------------------------------
- * کاربر با طی کردن ۵ مرحلهٔ سیستم ۵×۵ رشد می‌کند:
- *   ۱) تولهٔ نوزاد  → ۲) تولهٔ در حال رشد → ۳) نوجوان
- *   → ۴) جوان بالغ → ۵) پلنگ نگهبان (بالغ و آراسته)
- * این نگاشت همان «SNOW LEOPARD AVATAR PROGRESSION» است که تیم تعریف کرده.
- * ===================================================================== */
+/* ---------------------- آواتار پیشرفت پلنگ برفی (۵ پله) ---------------------- */
 
 /** تبدیل ارقام لاتین به فارسی برای نمایش در UI. */
 export function faDigits(value) {
@@ -228,35 +257,42 @@ export function faDigits(value) {
   return String(value ?? '').replace(/[0-9]/g, (d) => digits[Number(d)]);
 }
 
-/** پله‌های رشد؛ آیکون‌ها در UI از همین جدول ساخته می‌شوند. */
+/**
+ * پله‌های رشد؛ مطابق نقشهٔ «SNOW LEOPARD AVATAR PROGRESSION» تیم.
+ * `scale` عمداً محدود است (۰.۸۸ → ۱) تا رشد مثل «آیکون بداندازه» دیده نشود؛
+ * تفاوت اصلی از نسبت سر/بدن، دُم، خال‌ها، سِبیل و قلاده می‌آید.
+ */
 export const LEOPARD_STAGES = [
-  { stage: 1, key: 'cub-infant', level: 1,   code: 'CUBLING',  titleFa: 'تولهٔ نوزاد',      minProgress: 0,   scale: 0.62, tail: 'short', spots: 1, collar: false },
-  { stage: 2, key: 'cub-growing', level: 10, code: 'POUKLE',   titleFa: 'تولهٔ در حال رشد', minProgress: 10,  scale: 0.74, tail: 'curl',  spots: 3, collar: false },
-  { stage: 3, key: 'adolescent', level: 25,  code: 'TRAINEE',  titleFa: 'نوجوان',           minProgress: 25,  scale: 0.84, tail: 'long',  spots: 4, collar: false },
-  { stage: 4, key: 'young-adult', level: 50, code: 'VANGUARD', titleFa: 'جوان بالغ',        minProgress: 50,  scale: 0.93, tail: 'long',  spots: 5, collar: false },
-  { stage: 5, key: 'guardian',   level: 100, code: 'GUARDIAN', titleFa: 'پلنگ نگهبان',      minProgress: 100, scale: 1,    tail: 'long',  spots: 6, collar: true }
+  { stage: 1, key: 'cub-infant',  level: 1,   code: 'CUBLING',  titleFa: 'تولهٔ نوزاد',      minProgress: 0,   scale: 0.88, tail: 'short', spots: 1, whiskers: false, collar: false },
+  { stage: 2, key: 'cub-growing', level: 10,  code: 'POUKLE',   titleFa: 'تولهٔ در حال رشد', minProgress: 10,  scale: 0.92, tail: 'curl',  spots: 2, whiskers: false, collar: false },
+  { stage: 3, key: 'adolescent',  level: 25,  code: 'TRAINEE',  titleFa: 'نوجوان',           minProgress: 25,  scale: 0.96, tail: 'long',  spots: 3, whiskers: true,  collar: false },
+  { stage: 4, key: 'young-adult', level: 50,  code: 'VANGUARD', titleFa: 'جوان بالغ',        minProgress: 50,  scale: 0.98, tail: 'long',  spots: 4, whiskers: true,  collar: false },
+  { stage: 5, key: 'guardian',    level: 100, code: 'GUARDIAN', titleFa: 'پلنگ نگهبان',      minProgress: 100, scale: 1,    tail: 'long',  spots: 4, whiskers: true,  collar: true }
 ];
 
 /**
- * پلهٔ رشد بر اساس شمارهٔ مرحله (۱ تا ۵). مقدار خارج از بازه به نزدیک‌ترین
- * پله محدود می‌شود تا ورودی خراب باعث crash نشود.
+ * پلهٔ رشد بر اساس شمارهٔ مرحله (۱ تا ۵).
+ * ورودی غیرصحیح یا خارج از بازه به پلهٔ اول برمی‌گردد (بدون کرش).
  * @param {number} stage
  */
 export function leopardStageFor(stage) {
-  const n = Number(stage);
+  const n = Math.trunc(Number(stage));
   if (!Number.isFinite(n)) return LEOPARD_STAGES[0];
-  const idx = Math.min(LEOPARD_STAGES.length - 1, Math.max(0, Math.round(n) - 1));
-  return LEOPARD_STAGES[idx];
+  const clamped = Math.min(LEOPARD_STAGES.length, Math.max(1, n));
+  return LEOPARD_STAGES[clamped - 1];
 }
 
 /**
  * پلهٔ رشد بر اساس درصد پیشرفت (۰ تا ۱۰۰).
- * مرزها دقیقاً مثل تصویر مرجع: 0 / 10 / 25 / 50 / 100.
+ * مرزها مطابق تصویر مرجع: 0 / 10 / 25 / 50 / 100.
+ * اگر مقدار ۰ تا ۱ داده شود، به‌عنوان کسر تفسیر می‌شود.
  * @param {number} progressPercent
  */
 export function leopardStageForProgress(progressPercent) {
-  const p = Number(progressPercent);
-  const safe = Number.isFinite(p) ? Math.min(100, Math.max(0, p)) : 0;
+  const raw = Number(progressPercent);
+  let p = Number.isFinite(raw) ? raw : 0;
+  if (p > 0 && p <= 1) p *= 100;
+  const safe = Math.min(100, Math.max(0, p));
   let chosen = LEOPARD_STAGES[0];
   for (const item of LEOPARD_STAGES) {
     if (safe >= item.minProgress) chosen = item;
@@ -265,15 +301,21 @@ export function leopardStageForProgress(progressPercent) {
 }
 
 /**
- * مارک‌آپ آواتار برای یک پله.
- * @param {{stage?: number}|number} [input] شمارهٔ مرحله یا خود پله
+ * مارک‌آپ SVG آواتار برای یک پله.
+ * @param {{stage?: number}|number} [input] شمارهٔ مرحله یا خود شیء پله
  */
 export function avatarMarkup(input = 1) {
-  const item = typeof input === 'object' && input ? input : leopardStageFor(input);
+  const item = input && typeof input === 'object' && 'spots' in input ? input : leopardStageFor(input);
+
+  // نسبت سر/بدن با رشد تغییر می‌کند: توله سرِ درشت‌تر و بدن کوچک‌تر دارد.
+  const headR = 13.4 - (item.stage - 1) * 0.55;
+  const bodyRx = 14 + (item.stage - 1) * 0.9;
+  const eyeR = 2.4 - (item.stage - 1) * 0.1;
+
   const spots = Array.from({ length: item.spots }, (_, i) => {
-    const cx = 30 + ((i * 7) % 17);
-    const cy = 40 - ((i * 5) % 11);
-    return `<circle class="av-spot" cx="${cx}" cy="${cy}" r="1.5" opacity="0.75"></circle>`;
+    const cx = 30 + ((i * 8) % 15);
+    const cy = 39 - ((i * 6) % 10);
+    return `<circle class="av-spot" cx="${cx}" cy="${cy}" r="2.2" opacity="0.7"></circle>`;
   }).join('');
 
   const tailPath = item.tail === 'short'
@@ -288,27 +330,27 @@ export function avatarMarkup(input = 1) {
        <circle class="av-gem-shine" cx="32.2" cy="34.8" r="0.6" fill="#ecfeff"></circle>`
     : '';
 
-  const whiskers = item.stage >= 3
-    ? `<path d="M44.5 31 L49 30 M44.5 33 L49.2 33.6" stroke="#cbd5e1" stroke-width="0.7" opacity="0.8" stroke-linecap="round"></path>`
+  const whiskers = item.whiskers
+    ? `<path d="M45.5 31 L49.4 30.2 M45.5 33 L49.6 33.6" stroke="#cbd5e1" stroke-width="1" opacity="0.85" stroke-linecap="round"></path>`
     : '';
 
-  return `<svg class="leopard-avatar-svg" viewBox="0 0 60 60" role="img" aria-label="${item.titleFa}">
+  return `<svg class="leopard-avatar-svg" viewBox="2 14 48 44" aria-hidden="true" focusable="false" data-stage="${item.stage}">
   <g transform="translate(8 6) scale(${item.scale})">
     <path class="av-tail" d="${tailPath}" fill="#e2ebf8"></path>
-    <ellipse class="av-body" cx="32" cy="44" rx="15" ry="9" fill="#eef4ff"></ellipse>
+    <ellipse class="av-body" cx="32" cy="44" rx="${bodyRx}" ry="9" fill="#eef4ff"></ellipse>
     <path class="av-leg" d="M22 51 L21.4 56 L24.6 56 L25.4 51 Z" fill="#e6eefb"></path>
     <path class="av-leg" d="M29 52 L28.6 56 L31.6 56 L32 52 Z" fill="#dfe8f6"></path>
     <path class="av-leg" d="M38 52 L38 56 L41 56 L41.2 52 Z" fill="#e6eefb"></path>
     <path class="av-leg" d="M44 51 L44.6 56 L47.6 56 L47 51 Z" fill="#dfe8f6"></path>
-    <circle class="av-head" cx="35" cy="32" r="11.5" fill="#f3f8ff"></circle>
+    <circle class="av-head" cx="35" cy="32" r="${headR}" fill="#f3f8ff"></circle>
     <path class="av-ear" d="M27.4 23 L26 16.8 L32.4 21 Z" fill="#eef4ff"></path>
     <path class="av-ear" d="M42 23 L44 17 L37.6 21 Z" fill="#eef4ff"></path>
     <path class="av-ear-inner" d="M28.4 22.4 L27.8 19.4 L30.8 21.6 Z" fill="#bcd0e8"></path>
     <path class="av-ear-inner" d="M41.2 22.4 L43 18.8 L39.4 21.6 Z" fill="#bcd0e8"></path>
-    <circle class="av-eye" cx="31.6" cy="31" r="1.9" fill="#0f172a"></circle>
-    <circle class="av-eye" cx="39.2" cy="31" r="1.9" fill="#0f172a"></circle>
-    <circle class="av-eye-shine" cx="32.2" cy="30.4" r="0.7" fill="#e0f2fe"></circle>
-    <circle class="av-eye-shine" cx="39.8" cy="30.4" r="0.7" fill="#e0f2fe"></circle>
+    <circle class="av-eye" cx="31.6" cy="31" r="${eyeR}" fill="#0f172a"></circle>
+    <circle class="av-eye" cx="39.2" cy="31" r="${eyeR}" fill="#0f172a"></circle>
+    <circle class="av-eye-shine" cx="32.2" cy="30.4" r="0.8" fill="#e0f2fe"></circle>
+    <circle class="av-eye-shine" cx="39.8" cy="30.4" r="0.8" fill="#e0f2fe"></circle>
     <path class="av-nose" d="M34.6 35.4 L37.2 35.4 L35.9 37.2 Z" fill="#94a3b8"></path>
     ${whiskers}
     <g class="av-spots">${spots}</g>
@@ -318,29 +360,54 @@ export function avatarMarkup(input = 1) {
 }
 
 /**
- * نصب آواتار در هدر و به‌روزرسانی آن با مرحله/پیشرفت.
+ * نصب آواتار در هدر.
+ * `render(stage, progress)` — درصد پیشرفت اختیاری است.
  */
 export function initLeopardAvatar(doc = typeof document !== 'undefined' ? document : null) {
   if (!doc) return null;
   const host = doc.getElementById('leopard-avatar');
   if (!host) return null;
 
-  const render = (stage) => {
+  let lastStage = -1;
+
+  const paintRing = (progress) => {
+    const ring = doc.getElementById('leopard-progress');
+    if (!ring) return 0;
+    const raw = Number(progress);
+    const pct = Number.isFinite(raw) ? Math.min(100, Math.max(0, Math.round(raw))) : 0;
+    ring.setAttribute('data-progress', String(pct));
+    ring.style.setProperty('--p', `${pct}%`);
+    ring.setAttribute('role', 'progressbar');
+    ring.setAttribute('aria-valuemin', '0');
+    ring.setAttribute('aria-valuemax', '100');
+    ring.setAttribute('aria-valuenow', String(pct));
+    return pct;
+  };
+
+  const render = (stage, progress) => {
     const item = leopardStageFor(stage);
+    paintRing(progress);
+
+    // اگر مرحله عوض نشده، DOM بازسازی نمی‌شود تا انیمیشن‌ها ری‌استارت نشوند
+    // و صفحه‌خوان دوباره کل گرافیک را نخواند.
+    if (item.stage === lastStage) return item;
+    lastStage = item.stage;
+
     host.innerHTML = avatarMarkup(item);
-    host.className = `leopard-avatar level-${item.stage}`;
+    host.classList.remove('level-1', 'level-2', 'level-3', 'level-4', 'level-5');
+    host.classList.add('leopard-avatar', `level-${item.stage}`);
     host.setAttribute('data-level', String(item.level));
     host.setAttribute('title', `${item.titleFa} — سطح ${faDigits(item.level)} (${item.code})`);
+
     const label = doc.getElementById('leopard-level-label');
-    if (label) label.textContent = item.code;
-    const ring = doc.getElementById('leopard-progress');
-    if (ring) {
-      const pct = Number(ring.getAttribute('data-progress') || 0);
-      ring.style.setProperty('--p', `${Math.min(100, Math.max(0, pct))}%`);
+    if (label) {
+      label.textContent = `${item.titleFa} · ${faDigits(item.stage)}`;
+      label.setAttribute('aria-label', `مرحلهٔ ${faDigits(item.stage)} از ۵ — ${item.titleFa}`);
+      label.setAttribute('title', `${item.code} — سطح ${faDigits(item.level)}`);
     }
     return item;
   };
 
-  render(1);
-  return { render };
+  render(1, 0);
+  return { render, getStage: () => lastStage };
 }
