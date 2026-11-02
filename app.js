@@ -20,12 +20,12 @@ import {
   sendOtp, verifyOtp, signOut, loadSession, currentUser, isValidEmail, authErrorText, consumeAuthRedirect,
   signInWithPassword, signUpWithPassword
 } from './src/auth.js';
-import { generateCoachCard, getStageTheme, getOverallProgress } from './src/coach.js';
+import { generateCoachCard, getOverallProgress } from './src/coach.js';
 import { getHighestUnlockedStage, isStageUnlocked, getCriteriaStage, isWaitingForApproval } from './src/stages.js';
 import { escapeHtml, phoneDigits, resetDailyCounters, calculateMemberHealth, isEveningReportTime, contactsToCsv, teamToCsv, initialList30ToCsv } from './src/utils.js';
 import {
   initLeopardScene, initLeopardAvatar, shouldCelebrate, showCelebration,
-  shareCard, SEEN_STAGE_KEY
+  shareCard, SEEN_STAGE_KEY, faDigits
 } from './src/leopard.js';
 
 export { getHighestUnlockedStage };
@@ -156,6 +156,17 @@ function renderLeopardAvatar() {
     const progress = getOverallProgress(appState);
     leopardAvatar?.render(stage, progress);
     leopardAuthAvatar?.render(stage, progress);
+
+    // نوار XP کارت قهرمان
+    const pct = Math.min(100, Math.max(0, Math.round(Number(progress) || 0)));
+    const bar = document.getElementById('hero-progress-bar');
+    if (bar) {
+      bar.style.width = `${pct}%`;
+      bar.setAttribute('aria-valuenow', String(pct));
+    }
+    const pctEl = document.getElementById('hero-progress-pct');
+    if (pctEl) pctEl.textContent = `${faDigits(pct)}٪`;
+
     celebrateIfStageUp(stage);
   } catch (_) { /* هرگز نباید رندر اصلی را بشکند */ }
 }
@@ -198,11 +209,11 @@ async function shareProgress() {
 
 /* ---------------- وضعیت اتصال ابری ---------------- */
 const CLOUD_STYLE = {
-  off:  { text: 'آفلاین', cls: 'bg-slate-700/60 text-slate-300' },
-  idle: { text: 'ابر',    cls: 'bg-slate-700/60 text-slate-300' },
-  ok:   { text: 'ابر ✓',  cls: 'bg-emerald-600/30 text-emerald-300' },
-  err:  { text: 'ابر ✖',  cls: 'bg-red-600/30 text-red-300' },
-  storage: { text: 'حافظه ✖', cls: 'bg-amber-600/30 text-amber-200' }
+  off:  { text: 'آفلاین', cls: 'text-slate-300' },
+  idle: { text: 'ابر',    cls: 'text-cyan-300' },
+  ok:   { text: 'ابر ✓',  cls: 'text-emerald-300' },
+  err:  { text: 'ابر ✖',  cls: 'text-rose-300' },
+  storage: { text: 'حافظه ✖', cls: 'text-amber-300' }
 };
 
 function cloudLabel(state) {
@@ -210,7 +221,7 @@ function cloudLabel(state) {
   if (!el) return;
   const m = CLOUD_STYLE[state] || CLOUD_STYLE.off;
   el.innerText = m.text;
-  el.className = `text-[10px] px-2 py-0.5 rounded-full font-bold ${m.cls}`;
+  el.className = `text-[11px] font-bold ${m.cls}`;
 }
 
 function updateCloudBadge() {
@@ -408,45 +419,23 @@ function renderCoachCard() {
   }
 
   const card = generateCoachCard(appState);
-  const theme = getStageTheme(card.stage);
 
   container.innerHTML = `
-    <div class="${theme.bg} ${theme.border} rounded-2xl p-3.5 space-y-2.5 shadow-lg">
-      <!-- Header -->
-      <div class="flex justify-between items-start">
-        <div>
-          <span class="text-[10px] ${theme.badge} text-white px-2 py-0.5 rounded-full font-bold">Coach ۵×۵</span>
-          <h3 class="text-sm font-extrabold mt-1 ${theme.text}">اقدام بعدی + انگیزه</h3>
+    <div class="bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-transparent rounded-2xl p-3.5 border border-amber-500/30 flex items-start justify-between gap-3">
+      <div class="min-w-0">
+        <div class="flex items-center gap-2 mb-1 flex-wrap">
+          <span class="text-xs font-extrabold text-amber-400">🎯 اقدام بعدی:</span>
+          <span class="text-xs font-bold text-white leading-snug">${escapeHtml(card.nextAction)}</span>
         </div>
-        <div class="text-right">
-          <div class="text-[10px] font-mono font-bold ${theme.text}">${card.progress}%</div>
-          <div class="text-[9px] text-slate-500">پیشرفت کلی</div>
-        </div>
+        <p class="text-[11px] text-slate-400 italic leading-relaxed">"${escapeHtml(card.motivation)}"</p>
       </div>
-
-      <!-- Progress bar -->
-      <div class="w-full bg-slate-950 h-1.5 rounded-full overflow-hidden">
-        <div class="${theme.badge.replace('bg-', 'bg-')} h-full transition-all duration-500" style="width: ${card.progress}%"></div>
-      </div>
-
-      <!-- Next Action -->
-      <div class="bg-slate-900/80 rounded-xl p-3 border ${theme.border}">
-        <div class="flex items-center gap-2 mb-1.5">
-          <span class="text-[10px] font-bold ${theme.text}">🎯 اقدام بعدی:</span>
-        </div>
-        <p class="text-[11px] text-slate-200 leading-relaxed">${escapeHtml(card.nextAction)}</p>
-      </div>
-
-      <!-- Motivation -->
-      <div class="bg-gradient-to-r ${theme.bg} border ${theme.border} rounded-xl p-3">
-        <p class="text-[11px] ${theme.text} leading-relaxed font-medium">"${escapeHtml(card.motivation)}"</p>
+      <div class="shrink-0 text-center">
+        <span class="block text-[10px] font-black bg-amber-400/20 text-amber-300 px-2.5 py-1 rounded-lg border border-amber-400/30">Coach ۵×۵</span>
+        <span class="block mt-1 text-[10px] font-mono font-bold text-slate-400">${faDigits(card.progress)}٪</span>
       </div>
     </div>
   `;
 }
-
-/* ---------------- ورود (OTP) ---------------- */
-let pendingEmail = '';
 
 function authMsg(step, kind, html) {
   const colors = {
@@ -785,7 +774,7 @@ function renderTabs() {
   const isLeader = appState.user?.role === 'leader';
 
   const stageBadge = document.getElementById('user-stage-badge');
-  if (stageBadge) stageBadge.innerText = `سطح مجاز: مرحله ${unlocked}`;
+  if (stageBadge) stageBadge.innerText = `مرحله ${faDigits(unlocked)}`;
 
   const roleBadge = document.getElementById('user-role-badge');
   if (roleBadge) {
@@ -814,10 +803,24 @@ function renderTabs() {
     if (isWaiting) lockIcon = '⏳';
     else if (isLocked) lockIcon = '🔒';
 
+    // سه وضعیت: فعال (سفید)، در انتظار تأیید (آبی)، قفل
+    let cls = 'bg-slate-900/40 text-slate-500 border border-white/5';
+    let titleCls = '';
+    if (isActive) {
+      cls = 'bg-white text-slate-950 font-black shadow-lg transform scale-105';
+      titleCls = 'text-slate-600';
+    } else if (isWaiting) {
+      cls = 'bg-slate-900/70 text-blue-200 border border-blue-400/25 hover:bg-slate-800';
+      titleCls = 'text-slate-400';
+    } else if (!isLocked) {
+      cls = 'bg-slate-900/70 text-blue-100 border border-blue-400/20 hover:bg-slate-800';
+      titleCls = 'text-slate-400';
+    }
+
     return `
-      <button onclick="switchStage(${item.n})" class="py-1.5 rounded-xl text-center transition ${isActive ? 'bg-white text-slate-950 font-extrabold shadow' : 'text-white/80 hover:bg-white/10'} text-[11px]">
-        <div>${item.t} ${lockIcon}</div>
-        <div class="text-[9px] opacity-75">${item.sub}</div>
+      <button onclick="switchStage(${item.n})" class="flex flex-col items-center py-2 px-1 rounded-xl transition ${cls}" aria-current="${isActive ? 'step' : 'false'}">
+        <span class="text-[11px] leading-tight">${item.t}${lockIcon ? ' ' + lockIcon : ''}</span>
+        <span class="text-[9px] font-bold ${titleCls}">${item.sub}</span>
       </button>
     `;
   }).join('');
@@ -1000,22 +1003,35 @@ function renderStage1() {
     appState.s1Steps[2].done = true;
   }
 
+  // تم رنگی هر کوئست (مثل نمونهٔ طراحی: نیلی، فیروزه‌ای، زمردی، ارغوانی، کهربایی)
+  const QUEST_THEMES = [
+    { from: 'from-indigo-950/80',  border: 'border-indigo-500/30',  hover: 'hover:border-indigo-400/60',  text: 'text-indigo-300',  chipBg: 'bg-indigo-950/90',  chipBorder: 'border-indigo-500/30',  btn: 'from-blue-500 to-indigo-600',     glow: 'rgba(99,102,241,.5)' },
+    { from: 'from-cyan-950/70',    border: 'border-cyan-500/30',    hover: 'hover:border-cyan-400/60',    text: 'text-cyan-300',    chipBg: 'bg-cyan-950/90',    chipBorder: 'border-cyan-500/30',    btn: 'from-cyan-500 to-blue-600',       glow: 'rgba(6,182,212,.5)' },
+    { from: 'from-emerald-950/60', border: 'border-emerald-500/30', hover: 'hover:border-emerald-400/60', text: 'text-emerald-300', chipBg: 'bg-emerald-950/90', chipBorder: 'border-emerald-500/30', btn: 'from-emerald-500 to-teal-600',    glow: 'rgba(16,185,129,.5)' },
+    { from: 'from-purple-950/60',  border: 'border-purple-500/30',  hover: 'hover:border-purple-400/60',  text: 'text-purple-300',  chipBg: 'bg-purple-950/90',  chipBorder: 'border-purple-500/30',  btn: 'from-purple-500 to-indigo-600',   glow: 'rgba(168,85,247,.5)' },
+    { from: 'from-amber-950/60',   border: 'border-amber-500/30',   hover: 'hover:border-amber-400/60',   text: 'text-amber-300',   chipBg: 'bg-amber-950/90',   chipBorder: 'border-amber-500/30',   btn: 'from-amber-500 to-orange-600',    glow: 'rgba(245,158,11,.5)' }
+  ];
+
   let doneCount = 0;
   c.innerHTML = appState.s1Steps.map((s, idx) => {
     if (s.done) doneCount++;
     const isStep3 = idx === 2;
+    const t = QUEST_THEMES[idx % QUEST_THEMES.length];
     return `
-      <div onclick="toggleS1Step(${idx})" class="cursor-pointer p-3 rounded-2xl border transition ${s.done ? 'bg-blue-950/50 border-blue-500/70' : 'bg-slate-800/90 border-slate-700'}">
-        <div class="flex justify-between items-start gap-2">
-          <div>
-            <div class="text-xs font-extrabold flex items-center gap-2 ${s.done ? 'text-blue-300' : 'text-white'}">
-              <span>${escapeHtml(s.title)}</span>
-              ${isStep3 ? `<span class="text-[10px] bg-blue-600/40 text-blue-200 border border-blue-500/40 px-2 py-0.5 rounded-full font-bold">${l30Count} / ۳۰ نفر</span>` : ''}
+      <div class="relative overflow-hidden rounded-2xl bg-gradient-to-l ${t.from} via-slate-900 to-slate-900 p-4 border ${s.done ? t.border : 'border-slate-800'} shadow-md transition ${t.hover}">
+        <div class="flex items-start justify-between gap-3">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between gap-2 flex-wrap">
+              <h3 class="text-sm font-extrabold text-white leading-snug">${escapeHtml(s.title)}</h3>
+              ${isStep3 ? `<span class="text-[10px] font-bold ${t.text} bg-slate-950/70 px-2 py-0.5 rounded-full border ${t.chipBorder}">${faDigits(l30Count)} / ۳۰ نفر</span>` : ''}
             </div>
-            <p class="text-[11px] text-slate-300 mt-0.5">${escapeHtml(s.desc)}</p>
-            <span class="inline-block mt-1.5 text-[10px] bg-slate-900 text-blue-300 px-2 py-0.5 rounded-lg border border-blue-800/40">★ ${escapeHtml(s.tip)}</span>
+            <p class="text-xs text-slate-300 mt-1 leading-relaxed">${escapeHtml(s.desc)}</p>
+            <div class="inline-flex items-center gap-1 mt-2.5 text-[10px] font-medium ${t.text} ${t.chipBg} px-2.5 py-1 rounded-lg border ${t.chipBorder}">
+              <span aria-hidden="true">✨</span> ${escapeHtml(s.tip)}
+            </div>
           </div>
-          <div class="w-6 h-6 rounded-lg flex items-center justify-center border font-bold text-xs ${s.done ? 'bg-blue-600 border-blue-400 text-white' : 'border-slate-600 text-transparent'}">✓</div>
+          <button onclick="toggleS1Step(${idx})" aria-pressed="${s.done}" aria-label="تیک ${escapeHtml(s.title)}"
+            class="w-9 h-9 shrink-0 mt-1 rounded-xl flex items-center justify-center font-black text-sm transition active:scale-95 ${s.done ? `bg-gradient-to-br ${t.btn} text-white shadow-[0_0_12px_${t.glow}]` : 'bg-slate-800/80 text-slate-600 border border-slate-700'}">✓</button>
         </div>
       </div>
     `;

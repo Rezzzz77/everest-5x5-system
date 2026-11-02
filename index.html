@@ -181,6 +181,32 @@
     @media (prefers-reduced-motion: reduce) {
       .celebrate-root.is-open, .celebrate-card, .celebrate-avatar { animation: none !important; }
     }
+
+    /* ===== هدر جدید: نوار ابزار + کارت قهرمان ===== */
+    .hero-glow {
+      background: radial-gradient(circle at 50% 0%, rgba(56,189,248,.25) 0%, rgba(29,78,216,.10) 50%, transparent 100%);
+    }
+    .icon-btn {
+      width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center;
+      border-radius: 12px; font-size: 13px;
+      background: rgba(30,41,59,.8); border: 1px solid rgba(51,65,85,1);
+      transition: transform .15s ease, background-color .2s ease;
+    }
+    .icon-btn:hover { background: rgba(51,65,85,.95); }
+    .icon-btn:active { transform: scale(.94); }
+    .icon-btn.danger:hover { background: rgba(190,18,60,.55); }
+    /* حلقهٔ پیشرفت در کارت قهرمان (۹۶px) */
+    #leopard-progress.leopard-ring { width: 96px; height: 96px; border-radius: 50%; padding: 3px; }
+    #leopard-progress #leopard-avatar { border-radius: 19px; }
+    /* چیپ سطح: زیر آواتار، بیرون‌زده */
+    #leopard-level-label.leopard-level-chip {
+      position: absolute; left: 50%; bottom: -10px; transform: translateX(-50%);
+      white-space: nowrap; z-index: 2;
+      background: linear-gradient(90deg, #fbbf24, #f97316);
+      color: #0b0f19; border: 1px solid #fff;
+      font-size: 9px; font-weight: 900; padding: 2px 8px;
+      box-shadow: 0 4px 10px rgba(2,6,23,.55);
+    }
   </style>
 </head>
 <body class="min-h-screen flex justify-center bg-slate-950 p-0 sm:p-4">
@@ -272,37 +298,67 @@
     </div>
 
     <!-- ================= هدر پویا ================= -->
-    <header id="app-header" class="p-4 bg-gradient-to-l from-blue-700 to-blue-900 transition-all duration-300 shadow-lg">
-      <div class="flex justify-between items-center mb-3">
-        <div class="flex items-center gap-2.5">
-          <div id="leopard-progress" data-progress="0" class="leopard-ring" title="پیشرفت کل">
-              <div id="leopard-avatar" class="leopard-avatar" data-level="1"></div>
-            </div>
-          <div>
-            <div class="flex items-center gap-1.5">
-              <h1 id="user-display-name" class="font-extrabold text-sm">عضو تیم اورست</h1>
-              <span id="user-role-badge" class="text-[10px] bg-blue-600/70 border border-blue-400/50 px-2 py-0.5 rounded-full font-bold">🎯 مشاور</span>
-              <span id="user-stage-badge" class="text-[10px] bg-black/30 px-2 py-0.5 rounded-full text-amber-300 font-bold">مرحله ۱</span>
-              <span id="leopard-level-label" class="leopard-level-chip">CUBLING</span>
-              <span id="cloud-badge" class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-slate-700/60 text-slate-300">آفلاین</span>
-            </div>
-            <p class="text-[10px] text-white/80 mt-0.5">حامی: <span id="upline-display">راهبر اورست</span></p>
-          </div>
-        </div>
-        <div class="flex gap-1 items-center">
-          <button onclick="toggleLeopard()" id="leopard-btn" aria-pressed="true" title="توقف انیمیشن کوهستان" class="text-[11px] bg-white/20 hover:bg-white/30 px-2 py-1.5 rounded-xl backdrop-blur">🐆</button>
-          <button onclick="toggleDarkMode()" id="dark-mode-btn" title="تغییر حالت شب/روز" class="text-[11px] bg-white/20 hover:bg-white/30 px-2 py-1.5 rounded-xl backdrop-blur">🌙</button>
-          <button onclick="requestNotificationPermission()" id="notif-btn" title="یادآور اعلان شبانه" class="text-[11px] bg-white/20 hover:bg-white/30 px-2 py-1.5 rounded-xl backdrop-blur">🔔</button>
-          <button onclick="toggleGoalModal()" class="text-[11px] bg-white/20 hover:bg-white/30 px-2.5 py-1.5 rounded-xl font-bold backdrop-blur">🎯 هدف</button>
-          <button onclick="shareProgress()" id="share-btn" title="اشتراک‌گذاری کارت پیشرفت" class="text-[11px] bg-white/20 hover:bg-white/30 px-2 py-1.5 rounded-xl backdrop-blur">📤</button>
-          <button onclick="openCloudModal()" title="اتصال ابری" class="text-[11px] bg-white/20 hover:bg-white/30 px-2 py-1.5 rounded-xl backdrop-blur">☁️</button>
-          <button onclick="resetDemo()" title="خروج / ریست" class="text-[11px] bg-black/25 hover:bg-red-600/60 px-2 py-1.5 rounded-xl">⚙️</button>
+    <!-- نور پس‌زمینهٔ بالای صفحه -->
+    <div class="absolute top-0 inset-x-0 h-72 hero-glow pointer-events-none"></div>
+
+    <!-- ================= هدر: نوار ابزار + کارت قهرمان (آواتار/سطح/XP) + تب مراحل ================= -->
+    <header id="app-header" class="relative z-10 px-4 pt-4 pb-2 transition-all duration-300">
+      <!-- ۱) نوار ابزار -->
+      <div class="flex items-center justify-between mb-3">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-slate-900/80 text-cyan-300 border border-slate-700 backdrop-blur-md">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" aria-hidden="true"></span>
+          <span id="cloud-badge" class="text-[11px] font-bold">آفلاین</span>
+        </span>
+        <div class="flex items-center gap-1.5">
+          <button onclick="toggleLeopard()" id="leopard-btn" aria-pressed="true" title="توقف انیمیشن کوهستان" class="icon-btn">🐆</button>
+          <button onclick="toggleDarkMode()" id="dark-mode-btn" title="تغییر حالت شب/روز" class="icon-btn">🌙</button>
+          <button onclick="requestNotificationPermission()" id="notif-btn" title="یادآور اعلان شبانه" class="icon-btn relative">🔔</button>
+          <button onclick="shareProgress()" id="share-btn" title="اشتراک‌گذاری کارت پیشرفت" class="icon-btn">📤</button>
+          <button onclick="toggleGoalModal()" title="هدف من" class="icon-btn">🎯</button>
+          <button onclick="openCloudModal()" title="اتصال ابری" class="icon-btn">☁️</button>
+          <button onclick="resetDemo()" title="خروج / ریست" class="icon-btn danger">⚙️</button>
         </div>
       </div>
 
-      <!-- تب‌های ۵ مرحله (با وضعیت قفل یا باز) -->
-      <div class="grid grid-cols-5 gap-1 bg-black/30 p-1 rounded-2xl" id="stage-tabs-bar"></div>
-    </header>
+      <!-- ۲) کارت قهرمان: آواتار + هویت + نوار XP -->
+      <div class="relative bg-gradient-to-br from-indigo-900/90 via-blue-900/80 to-slate-900 rounded-3xl p-4 border border-blue-400/30 shadow-[0_10px_30px_-10px_rgba(37,99,235,0.5)]">
+        <div class="flex items-center gap-4">
+          <!-- آواتار با هاله و نشان سطح -->
+          <div class="relative w-24 h-24 shrink-0">
+            <div class="absolute inset-0 bg-gradient-to-tr from-cyan-400 to-blue-600 rounded-2xl rotate-3 opacity-40 blur-sm" aria-hidden="true"></div>
+            <div id="leopard-progress" data-progress="0" class="leopard-ring" title="پیشرفت کل">
+              <div id="leopard-avatar" class="leopard-avatar" data-level="1"></div>
+            </div>
+            <span id="leopard-level-label" class="leopard-level-chip">LVL ۱ • تولهٔ نوزاد</span>
+          </div>
+
+          <!-- نام و پیشرفت -->
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between gap-2 mb-1">
+              <h1 id="user-display-name" class="text-lg font-black text-white truncate">عضو تیم اورست</h1>
+              <span id="user-stage-badge" class="shrink-0 text-[10px] font-bold bg-cyan-400/20 text-cyan-200 px-2 py-0.5 rounded-md border border-cyan-400/30">مرحله ۱</span>
+            </div>
+            <div class="flex items-center gap-1.5 mb-2 flex-wrap">
+              <span id="user-role-badge" class="text-[10px] bg-blue-600/70 border border-blue-400/50 text-blue-100 font-bold px-2 py-0.5 rounded-full">🎯 مشاور</span>
+            </div>
+            <p class="text-[11px] text-blue-200/80 truncate">حامی: <span id="upline-display">راهبر اورست</span></p>
+
+            <!-- نوار XP -->
+            <div class="bg-slate-950/60 p-2.5 rounded-2xl border border-white/10 mt-2">
+              <div class="flex justify-between items-center text-[11px] mb-1.5">
+                <span class="text-slate-300 font-medium">پیشرفت کلی مرحله</span>
+                <span id="hero-progress-pct" class="text-emerald-400 font-black" aria-live="polite">۰٪</span>
+              </div>
+              <div class="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden p-0.5">
+                <div id="hero-progress-bar" class="h-full bg-gradient-to-l from-emerald-400 via-teal-400 to-cyan-400 rounded-full transition-[width] duration-500" style="width: 0%" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ۳) تب‌های ۵ مرحله (با وضعیت قفل/انتظار تأیید) -->
+        <div class="grid grid-cols-5 gap-1.5 mt-4 pt-3 border-t border-white/10" id="stage-tabs-bar"></div>
+      </div>
 
     <!-- ================= بنر هوشمند یادآور گزارش شبانه ================= -->
     <div id="evening-reminder-banner" class="hidden mx-4 mt-2 p-2.5 bg-gradient-to-l from-amber-600 to-amber-800 border border-amber-400/60 rounded-2xl flex items-center justify-between text-xs text-amber-100 shadow-lg">
@@ -327,15 +383,15 @@
 
       <!-- 🔵 مرحله ۱: شروع | ۷۲ ساعت اول -->
       <section id="stage-1" class="stage-content space-y-3.5">
-        <div class="bg-blue-950/70 border border-blue-600/40 rounded-2xl p-3.5 flex justify-between items-center">
-          <div>
-            <span class="text-[10px] bg-blue-600 text-white px-2 py-0.5 rounded-full font-bold">مرحله ۱: شروع | ۷۲ ساعت اول</span>
-            <h2 class="text-sm font-extrabold mt-1">سریع از «آموزش دیدن» وارد عمل شو!</h2>
-            <p class="text-[11px] text-blue-200/80 mt-0.5">۵ اقدام، دقیقاً با همین ترتیب:</p>
+        <div class="bg-gradient-to-l from-blue-950/90 to-slate-900 rounded-2xl p-4 border border-cyan-500/30 flex items-center justify-between gap-3 shadow-lg">
+          <div class="min-w-0">
+            <span class="inline-block text-[10px] font-bold bg-blue-500/20 text-cyan-300 px-2.5 py-0.5 rounded-full mb-1.5 border border-cyan-500/30">مرحله ۱: شروع | ۷۲ ساعت اول</span>
+            <h2 class="text-sm font-black text-white leading-snug">سریع از «آموزش دیدن» وارد عمل شو!</h2>
+            <p class="text-[11px] text-slate-400 mt-0.5">۵ اقدام، دقیقاً با همین ترتیب:</p>
           </div>
-          <div class="text-center bg-slate-900/90 px-3 py-2 rounded-xl border border-blue-500/40 min-w-[92px]">
-            <div id="live-timer-72" class="font-mono font-black text-sm text-blue-300">72:00:00</div>
-            <div class="text-[9px] text-slate-400">تایمر ۷۲ ساعت</div>
+          <div class="bg-slate-950 px-3.5 py-2.5 rounded-xl border border-cyan-500/40 text-center shrink-0 shadow-[0_0_15px_rgba(6,182,212,0.15)]">
+            <div id="live-timer-72" class="font-mono text-lg font-black text-cyan-400 tracking-wider leading-none" aria-live="off">72:00:00</div>
+            <div class="text-[10px] text-slate-400 mt-1">تایمر ۷۲ ساعت</div>
           </div>
         </div>
 
