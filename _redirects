@@ -1,6 +1,0 @@
-# Cloudflare Pages Redirects for Everest 5x5 System
-# SPA fallback - all routes serve index.html (for PWA deep linking)
-/* /index.html 200
-
-# Specific redirects if needed
-# /old-path /new-path 301

@@ -7,11 +7,7 @@
     "test": "node --test tests/*.test.mjs",
     "check": "python3 tools/check_contracts.py",
     "graph": "python3 tools/build_graph.py",
-    "serve": "python3 -m http.server 8080",
-    "deploy": "wrangler pages deploy . --project-name=everest-5x5-system --branch=main --commit-dirty=true"
-  },
-  "devDependencies": {
-    "wrangler": "^4.156.0"
+    "serve": "python3 -m http.server 8080"
   },
   "engines": {
     "node": ">=22.0.0"
