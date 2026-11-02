@@ -8,6 +8,9 @@ import { authHeaders, currentUser } from './auth.js';
 
 const STORAGE_KEY = 'everest_5x5_full_v2';
 
+/** لیست‌هایی که محتوایشان کاملاً از کاربر می‌آید و نباید با پیش‌فرض پر شوند. */
+const USER_LIST_KEYS = new Set(['crm', 'dupTeam', 'meetings', 'initialList30']);
+
 /** حذف کامل داده محلی (مثلاً هنگام خروج یا تغییر حساب) */
 export function clearStorage() {
   try {
@@ -59,6 +62,14 @@ export function mergeWithDefaults(stored) {
     }
   }
 
+  // نوع داده باید با پیش‌فرض بخواند: اگر مقدار ذخیره‌شده برای یک کلید آرایه‌ای
+  // خراب باشد (مثلاً رشته یا شیء از یک نسخه قدیمی/رکورد ناقص)، همان‌جا اصلاح
+  // می‌شود تا رندرها به `.map` روی غیرآرایه نخورند.
+  for (const key of Object.keys(DEFAULT_DATA)) {
+    if (!Array.isArray(DEFAULT_DATA[key]) || Array.isArray(out[key])) continue;
+    out[key] = USER_LIST_KEYS.has(key) ? [] : JSON.parse(JSON.stringify(DEFAULT_DATA[key]));
+  }
+
   // KPI یک شیء تودرتوست؛ کلیدهای جاافتاده باید از پیش‌فرض پر شوند.
   const kpi = out.kpi && typeof out.kpi === 'object' && !Array.isArray(out.kpi) ? out.kpi : {};
   out.kpi = { ...DEFAULT_DATA.kpi };
@@ -76,6 +87,25 @@ function ls() {
   } catch (_) {
     return null;
   }
+}
+
+/**
+ * تصمیم «کدام نسخه جدیدتر است» هنگام بازیابی داده ابری (پس از ورود).
+ *
+ * فقط وقتی نسخه ابری ترجیح دارد که واقعاً جدیدتر باشد. مقادیر نامعتبر
+ * (`undefined` / `NaN` / منفی) صفر حساب می‌شوند تا یک رکورد خراب هیچ‌وقت
+ * داده محلی کاربر را از بین نبرد.
+ *
+ * @param {number} remoteTouched lastModified نسخه ابری
+ * @param {number} localTouched lastModified نسخه محلی
+ * @returns {boolean} true یعنی داده ابری جایگزین شود
+ */
+export function shouldPreferRemote(remoteTouched, localTouched) {
+  const remote = Number(remoteTouched);
+  const local = Number(localTouched);
+  const r = Number.isFinite(remote) && remote > 0 ? remote : 0;
+  const l = Number.isFinite(local) && local > 0 ? local : 0;
+  return r > l;
 }
 
 export function loadFromStorage() {

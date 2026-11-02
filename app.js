@@ -6,7 +6,7 @@
 import {
   loadFromStorage, saveToStorage, syncState, loadFromCloud, isSupabaseConfigured, testConnection,
   clearStorage, getDefaultData, saveProfile, sendBackupToN8n, exportStateAsJson, importStateFromJson,
-  loadTeamMembers, approveMemberStage, requestStageApproval
+  loadTeamMembers, approveMemberStage, requestStageApproval, shouldPreferRemote
 } from './src/db.js';
 import {
   getSupabaseConfig, saveSupabaseConfig, clearSupabaseConfig, validateConfig,
@@ -74,12 +74,29 @@ const newshaProducts = [
 
 // ذخیره‌سازی (محلی فوری + ابری با تأخیر کوتاه برای جلوگیری از هجوم درخواست)
 let cloudTimer = null;
+let storageWarned = false;
+
+/** فقط یک‌بار به کاربر بگو که ذخیرهٔ محلی کار نمی‌کند. */
+function warnStorageUnavailable() {
+  if (storageWarned) return;
+  storageWarned = true;
+  if (typeof alert === 'function') {
+    alert('حافظهٔ این دستگاه پر است یا دسترسی به آن بسته شده؛ تغییرات این نشست پس از بستن اپ از بین می‌رود. اگر به ابر وصل باشی، داده در ابر ذخیره می‌شود.');
+  }
+}
+
+/**
+ * ذخیرهٔ وضعیت: محلی فوری + همگام‌سازی ابری با تأخیر کوتاه.
+ * @returns {boolean} آیا در حافظهٔ محلی ذخیره شد
+ */
 function saveAll() {
   appState.lastModified = Date.now();
-  saveToStorage(appState);
+  const persisted = saveToStorage(appState);
+  if (!persisted) warnStorageUnavailable();
   renderCoachCard();
   clearTimeout(cloudTimer);
 
+  if (!persisted && !isSupabaseConfigured()) return cloudLabel('storage');
   if (!isSupabaseConfigured()) return cloudLabel('off');
   if (!appState.user) return cloudLabel('idle');
   if (appState.user.local) return cloudLabel('off');
@@ -101,6 +118,7 @@ function saveAll() {
       else cloudLabel('err');
     } catch (_) { cloudLabel('err'); }
   }, 400);
+  return persisted;
 }
 
 /* ---------------- وضعیت اتصال ابری ---------------- */
@@ -108,7 +126,8 @@ const CLOUD_STYLE = {
   off:  { text: 'آفلاین', cls: 'bg-slate-700/60 text-slate-300' },
   idle: { text: 'ابر',    cls: 'bg-slate-700/60 text-slate-300' },
   ok:   { text: 'ابر ✓',  cls: 'bg-emerald-600/30 text-emerald-300' },
-  err:  { text: 'ابر ✖',  cls: 'bg-red-600/30 text-red-300' }
+  err:  { text: 'ابر ✖',  cls: 'bg-red-600/30 text-red-300' },
+  storage: { text: 'حافظه ✖', cls: 'bg-amber-600/30 text-amber-200' }
 };
 
 function cloudLabel(state) {
@@ -600,8 +619,17 @@ async function verifyOtpAndStart() {
   // `stripNationalId` تضمین می‌کند این مقدار هیچ‌وقت به state_data ابری نرود.
   if (!profileResult.ok && nationalIdToSave) appState.user.nationalId = nationalIdToSave;
 
-  saveAll();
+  // ۱) هویت جدید را فقط محلی بنویس، بدون بالا بردن lastModified.
+  //    اگر اینجا saveAll صدا زده شود، lastModified از نسخهٔ ابری تازه‌تر می‌شود،
+  //    مقایسه در pullCloudAfterLogin همیشه محلی را جدیدتر می‌بیند و دادهٔ ابری
+  //    هرگز بازیابی نمی‌شود (و بعد با دادهٔ ناقص بازنویسی می‌شد).
+  saveToStorage(appState);
+
+  // ۲) اول دادهٔ ابری را بکش؛ اگر واقعاً جدیدتر بود جایگزین می‌شود.
   await pullCloudAfterLogin();
+
+  // ۳) حالا با lastModified تازه ذخیره و همگام‌سازی کن.
+  saveAll();
   clearAuthFields();
   initApp();
 }
@@ -611,9 +639,7 @@ async function pullCloudAfterLogin() {
   try {
     const remote = await loadFromCloud();
     if (!remote) return;
-    const remoteTouched = remote.lastModified || 0;
-    const localTouched = appState.lastModified || 0;
-    if (remoteTouched > localTouched) {
+    if (shouldPreferRemote(remote.lastModified, appState.lastModified)) {
       const keepUser = appState.user;
       const remoteNationalId = remote.user?.nationalId || '';
       appState = remote;
