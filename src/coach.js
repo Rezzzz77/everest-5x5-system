@@ -258,9 +258,16 @@ export function getOverallProgress(appState) {
 
   // مرحله ۴
   if (stage >= 4) {
-    if (appState.dupTeam) {
+    if (Array.isArray(appState.dupTeam)) {
       total += appState.dupTeam.length * 5;
-      done += appState.dupTeam.reduce((sum, m) => sum + Math.min(m.step, 5), 0);
+      // هر عضو یا آرایهٔ پنج‌تایی steps دارد (نسخهٔ تازه) یا عدد step (نسخهٔ قدیمی)
+      done += appState.dupTeam.reduce((sum, m) => {
+        if (Array.isArray(m?.steps) && m.steps.length === 5) {
+          return sum + m.steps.filter(Boolean).length;
+        }
+        const legacy = Number(m?.step);
+        return sum + (Number.isFinite(legacy) ? Math.min(Math.max(legacy, 0), 5) : 0);
+      }, 0);
     }
     if (appState.s4Pass) {
       total += appState.s4Pass.length;

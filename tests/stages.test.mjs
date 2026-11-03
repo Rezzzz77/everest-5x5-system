@@ -77,3 +77,40 @@ test('stages: با تأیید راهبر (approvedStage: 2)، مرحله ۲ بر
   assert.equal(isStageUnlocked(3, s), false);
   assert.equal(isWaitingForApproval(3, s), true);
 });
+
+
+test('پیشرفت: ماتریس مرحله ۴ با آرایهٔ steps در محاسبه حساب می‌شود', async () => {
+  const { getOverallProgress } = await import('../src/coach.js');
+  const mk = (steps) => ({
+    user: { role: 'member' },
+    approvedStage: 5,
+    s1Steps: [{ done: true }, { done: true }, { done: true }, { done: true }, { done: true }],
+    s2Streak: 7,
+    s2Counters: [{ count: 5, target: 5 }],
+    s3Counters: [{ count: 5, target: 5 }],
+    s3Pass: [{ done: true }, { done: true }, { done: true }, { done: true }, { done: true }],
+    crm: Array.from({ length: 100 }, (_, i) => ({ id: i })),
+    s4Pass: [],
+    dupTeam: [{ name: 'a', steps }, { name: 'b', steps }],
+    s5Standards: [{ done: true }, { done: true }, { done: true }, { done: true }, { done: true }],
+    meetings: [{}, {}, {}, {}, {}],
+    kpi: { sales: 1, entries: 1, active: 1, leaders: 1, depth: 1 }
+  });
+  const empty = getOverallProgress(mk([false, false, false, false, false]));
+  const full = getOverallProgress(mk([true, true, true, true, true]));
+  assert.ok(Number.isFinite(empty), 'خروجی نباید NaN باشد');
+  assert.ok(Number.isFinite(full), 'خروجی نباید NaN باشد');
+  assert.ok(full > empty, 'تکمیل ماتریس باید پیشرفت را بالا ببرد');
+});
+
+test('پیشرفت: دادهٔ قدیمی step با آرایهٔ steps هم‌ارز است', async () => {
+  const { getOverallProgress } = await import('../src/coach.js');
+  const base = {
+    user: { role: 'member' }, approvedStage: 5,
+    s1Steps: [{ done: true }], s2Streak: 7, s2Counters: [], s3Counters: [], s3Pass: [],
+    crm: [], s4Pass: [], s5Standards: [], meetings: [], kpi: {}
+  };
+  const legacy = getOverallProgress({ ...base, dupTeam: [{ name: 'a', step: 3 }] });
+  const fresh = getOverallProgress({ ...base, dupTeam: [{ name: 'a', steps: [true, true, true, false, false] }] });
+  assert.equal(legacy, fresh);
+});
