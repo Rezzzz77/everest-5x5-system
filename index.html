@@ -836,7 +836,7 @@
     </main>
 
     <!-- ================= نوار ابزار پایین (ابزارهای کمکی سیستم ۵×۵) ================= -->
-    <nav id="bottom-nav" class="shrink-0 safe-area-bottom bg-slate-900/95 backdrop-blur border-t border-slate-800 px-1.5 py-2 flex justify-around items-center gap-0.5 text-xs z-30">
+    <nav id="bottom-nav" class="shrink-0 safe-area-bottom bg-slate-900/95 backdrop-blur border-t border-slate-800 px-1.5 py-2 flex justify-around items-center gap-0.5 text-xs relative z-20">
       <button onclick="openAIChatModal()" class="nav-item flex-1 flex flex-col items-center justify-center gap-0.5 min-h-[48px] rounded-xl text-purple-300 active:bg-purple-500/10 font-bold">
         <span class="text-[18px] leading-none animate-pulse">🤖</span>
         <span class="text-[10px] leading-tight whitespace-nowrap">مربی هوشمند</span>
@@ -860,7 +860,7 @@
     </nav>
 
     <!-- ================= مودال اتصال ابری (Supabase) ================= -->
-    <div id="cloud-modal" class="hidden absolute inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div id="cloud-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
       <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4 w-full max-w-sm space-y-3 shadow-2xl max-h-[90vh] overflow-y-auto">
         <div class="flex justify-between items-center border-b border-slate-700 pb-2">
           <h3 class="font-extrabold text-sm text-sky-400">☁️ اتصال ابری و پشتیبان‌گیری</h3>
@@ -946,8 +946,8 @@
     </div>
 
     <!-- ================= مودال هدف و داستان من (شارژ انگیزه) ================= -->
-    <div id="goal-modal" class="hidden absolute inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5 w-full max-w-sm space-y-3 shadow-2xl">
+    <div id="goal-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+      <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5 w-full max-w-sm space-y-3 shadow-2xl max-h-[85dvh] overflow-y-auto overscroll-contain">
         <div class="flex justify-between items-center">
           <h3 class="font-extrabold text-sm text-blue-400">🎯 هدف و داستان من (مرحله ۱ و ۵)</h3>
           <button onclick="toggleGoalModal()" class="text-slate-400 hover:text-white text-sm">✕</button>
@@ -971,7 +971,7 @@
     </div>
 
     <!-- ================= مودال ابزارهای کمکی (کاتالوگ / اسکریپت / پک‌ها) ================= -->
-    <div id="helper-modal" class="hidden absolute inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div id="helper-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
       <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4 w-full max-w-sm space-y-3 shadow-2xl">
         <div class="flex justify-between items-center border-b border-slate-700 pb-2">
           <h3 id="helper-modal-title" class="font-extrabold text-sm text-emerald-400">ابزار کمکی</h3>
@@ -983,7 +983,7 @@
     </div>
 
     <!-- ================= مودال مربی هوشمند (DeepSeek AI Coach) ================= -->
-    <div id="ai-chat-modal" class="hidden absolute inset-0 bg-black/85 backdrop-blur-md flex flex-col z-50 overflow-hidden">
+    <div id="ai-chat-modal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-md flex flex-col z-50 overflow-hidden">
       <!-- هدر چت مربی هوشمند -->
       <div class="p-3 bg-gradient-to-l from-purple-800 to-indigo-900 border-b border-purple-500/30 flex justify-between items-center shadow-md">
         <div class="flex items-center gap-2">
@@ -1063,6 +1063,6 @@
   <!-- اورلی جشن ارتقای مرحله -->
   <div id="celebrate-root" class="celebrate-root" aria-hidden="true"></div>
 
-  <script type="module" src="./app.js?v=0.9.8"></script>
+  <script type="module" src="./app.js?v=0.9.9"></script>
 </body>
 </html>
