@@ -1508,77 +1508,77 @@ function dupProgress(m) {
 
 function renderStage4() {
   const box = document.getElementById('duplication-members-container');
-  if (!box) { renderOnlineTeam(); return; }
-
   const team = Array.isArray(appState.dupTeam) ? appState.dupTeam : [];
 
-  if (!team.length) {
-    box.innerHTML = `
-      <div class="text-center py-6 space-y-1.5">
-        <p class="text-2xl">👥</p>
-        <p class="text-[11px] text-slate-400 leading-relaxed">هنوز عضوی اضافه نکرده‌ای.<br>نام نفرات مستقیمت را اضافه کن تا پنج گام تکثیر را برای هر کدام جدا ثبت کنی.</p>
-      </div>`;
-    renderOnlineTeam();
-    return;
+  // رندر ماتریس (فقط اگر ظرف ماتریس موجود باشد)
+  if (box) {
+    if (!team.length) {
+      box.innerHTML = `
+        <div class="text-center py-6 space-y-1.5">
+          <p class="text-2xl">👥</p>
+          <p class="text-[11px] text-slate-400 leading-relaxed">هنوز عضوی اضافه نکرده‌ای.<br>نام نفرات مستقیمت را اضافه کن تا پنج گام تکثیر را برای هر کدام جدا ثبت کنی.</p>
+        </div>`;
+    } else {
+      const avg = Math.round(team.reduce((a, m) => a + dupProgress(m), 0) / team.length);
+      const independent = team.filter(m => dupSteps(m).every(Boolean)).length;
+
+      box.innerHTML = `
+        <!-- خلاصه -->
+        <div class="grid grid-cols-3 gap-1.5 text-center text-[10px] mb-2">
+          <div class="bg-slate-900/80 p-2 rounded-xl border border-purple-500/30">
+            <span class="text-slate-400 block text-[9px]">اعضا</span>
+            <span class="font-extrabold text-white text-xs">${faDigits(team.length)}</span>
+          </div>
+          <div class="bg-slate-900/80 p-2 rounded-xl border border-purple-500/30">
+            <span class="text-slate-400 block text-[9px]">میانگین پیشرفت</span>
+            <span class="font-extrabold text-purple-300 text-xs">${faDigits(avg)}٪</span>
+          </div>
+          <div class="bg-slate-900/80 p-2 rounded-xl border border-emerald-500/30">
+            <span class="text-slate-400 block text-[9px]">مستقل شده</span>
+            <span class="font-extrabold text-emerald-400 text-xs">${faDigits(independent)}</span>
+          </div>
+        </div>
+
+        <!-- سرستون‌های ماتریس -->
+        <div class="grid grid-cols-[1fr_repeat(5,2rem)_1.6rem] gap-1 items-center text-[8.5px] text-slate-500 text-center px-0.5 mb-1">
+          <span class="text-right pr-1">عضو</span>
+          <span title="${DUP_STEP_LABELS[0]}">۱</span>
+          <span title="${DUP_STEP_LABELS[1]}">۲</span>
+          <span title="${DUP_STEP_LABELS[2]}">۳</span>
+          <span title="${DUP_STEP_LABELS[3]}">۴</span>
+          <span title="${DUP_STEP_LABELS[4]}">۵</span>
+          <span></span>
+        </div>
+
+        <!-- ردیف هر عضو -->
+        <div class="space-y-1">
+          ${team.map((m, idx) => {
+            const steps = dupSteps(m);
+            const pct = dupProgress(m);
+            const done = steps.every(Boolean);
+            return `
+            <div class="grid grid-cols-[1fr_repeat(5,2rem)_1.6rem] gap-1 items-center bg-slate-900 rounded-xl p-1.5 border ${done ? 'border-emerald-500/45' : 'border-slate-700'}">
+              <button onclick="renameDupMember(${idx})" class="text-right min-w-0 pr-1">
+                <span class="block text-[11px] font-bold ${done ? 'text-emerald-300' : 'text-white'} truncate">${escapeHtml(m.name)}</span>
+                <span class="block text-[8.5px] ${done ? 'text-emerald-500/80' : 'text-slate-500'}">${faDigits(pct)}٪${done ? ' • مستقل' : ''}</span>
+              </button>
+              ${steps.map((on, i) => `
+                <button onclick="toggleDupStep(${idx}, ${i})" aria-pressed="${on}" title="${DUP_STEP_LABELS[i]}"
+                  class="h-8 rounded-lg text-[11px] font-bold transition active:scale-95 ${on ? 'bg-purple-600 text-white' : 'bg-slate-800 text-slate-600'}">
+                  ${on ? '✓' : faDigits(i + 1)}
+                </button>
+              `).join('')}
+              <button onclick="removeDupMember(${idx})" aria-label="حذف ${escapeHtml(m.name)}" class="h-8 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 text-xs">✕</button>
+            </div>`;
+          }).join('')}
+        </div>
+
+        <p class="text-[9px] text-slate-500 leading-relaxed pt-1">روی هر عدد بزن تا آن گام برای آن عضو ثبت شود. نام را لمس کن تا ویرایش شود.</p>
+      `;
+    }
   }
 
-  const avg = Math.round(team.reduce((a, m) => a + dupProgress(m), 0) / team.length);
-  const independent = team.filter(m => dupSteps(m).every(Boolean)).length;
-
-  box.innerHTML = `
-    <!-- خلاصه -->
-    <div class="grid grid-cols-3 gap-1.5 text-center text-[10px] mb-2">
-      <div class="bg-slate-900/80 p-2 rounded-xl border border-purple-500/30">
-        <span class="text-slate-400 block text-[9px]">اعضا</span>
-        <span class="font-extrabold text-white text-xs">${faDigits(team.length)}</span>
-      </div>
-      <div class="bg-slate-900/80 p-2 rounded-xl border border-purple-500/30">
-        <span class="text-slate-400 block text-[9px]">میانگین پیشرفت</span>
-        <span class="font-extrabold text-purple-300 text-xs">${faDigits(avg)}٪</span>
-      </div>
-      <div class="bg-slate-900/80 p-2 rounded-xl border border-emerald-500/30">
-        <span class="text-slate-400 block text-[9px]">مستقل شده</span>
-        <span class="font-extrabold text-emerald-400 text-xs">${faDigits(independent)}</span>
-      </div>
-    </div>
-
-    <!-- سرستون‌های ماتریس -->
-    <div class="grid grid-cols-[1fr_repeat(5,2rem)_1.6rem] gap-1 items-center text-[8.5px] text-slate-500 text-center px-0.5 mb-1">
-      <span class="text-right pr-1">عضو</span>
-      <span title="${DUP_STEP_LABELS[0]}">۱</span>
-      <span title="${DUP_STEP_LABELS[1]}">۲</span>
-      <span title="${DUP_STEP_LABELS[2]}">۳</span>
-      <span title="${DUP_STEP_LABELS[3]}">۴</span>
-      <span title="${DUP_STEP_LABELS[4]}">۵</span>
-      <span></span>
-    </div>
-
-    <!-- ردیف هر عضو -->
-    <div class="space-y-1">
-      ${team.map((m, idx) => {
-        const steps = dupSteps(m);
-        const pct = dupProgress(m);
-        const done = steps.every(Boolean);
-        return `
-        <div class="grid grid-cols-[1fr_repeat(5,2rem)_1.6rem] gap-1 items-center bg-slate-900 rounded-xl p-1.5 border ${done ? 'border-emerald-500/45' : 'border-slate-700'}">
-          <button onclick="renameDupMember(${idx})" class="text-right min-w-0 pr-1">
-            <span class="block text-[11px] font-bold ${done ? 'text-emerald-300' : 'text-white'} truncate">${escapeHtml(m.name)}</span>
-            <span class="block text-[8.5px] ${done ? 'text-emerald-500/80' : 'text-slate-500'}">${faDigits(pct)}٪${done ? ' • مستقل' : ''}</span>
-          </button>
-          ${steps.map((on, i) => `
-            <button onclick="toggleDupStep(${idx}, ${i})" aria-pressed="${on}" title="${DUP_STEP_LABELS[i]}"
-              class="h-8 rounded-lg text-[11px] font-bold transition active:scale-95 ${on ? 'bg-purple-600 text-white' : 'bg-slate-800 text-slate-600'}">
-              ${on ? '✓' : faDigits(i + 1)}
-            </button>
-          `).join('')}
-          <button onclick="removeDupMember(${idx})" aria-label="حذف ${escapeHtml(m.name)}" class="h-8 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 text-xs">✕</button>
-        </div>`;
-      }).join('')}
-    </div>
-
-    <p class="text-[9px] text-slate-500 leading-relaxed pt-1">روی هر عدد بزن تا آن گام برای آن عضو ثبت شود. نام را لمس کن تا ویرایش شود.</p>
-  `;
-
+  // معیار عبور مرحله ۴ همیشه رندر می‌شود — مستقل از ماتریس.
   const criteriaContainer = document.getElementById('s4-pass-criteria');
   if (criteriaContainer && appState.s4Pass) {
     criteriaContainer.innerHTML = appState.s4Pass.map((item, idx) => `
