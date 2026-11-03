@@ -563,7 +563,8 @@ export function escapeXml(value) {
  * ساخت کارت پیشرفت به‌صورت SVG (بدون هیچ منبع خارجی).
  * @param {{name?:string, stage?:number, progress?:number, date?:string}} [opts]
  */
-export function buildShareCard({ name = 'عضو تیم اورست', stage = 1, progress = 0, date = '' } = {}) {
+export function buildShareCard(opts = {}) {
+  const { name = 'عضو تیم اورست', stage = 1, progress = 0, date = '' } = opts;
   const item = leopardStageFor(stage);
   const rawPct = Number(progress);
   const pct = Number.isFinite(rawPct) ? Math.min(100, Math.max(0, Math.round(rawPct))) : 0;
@@ -571,10 +572,20 @@ export function buildShareCard({ name = 'عضو تیم اورست', stage = 1, p
   const safeName = escapeXml(name);
   const safeDate = escapeXml(date);
 
-  // آواتار SVG را داخل کارت جاسازی می‌کنیم (بدون <svg> تودرتو معتبر نیست)
-  const avatarInner = avatarMarkup(item)
-    .replace(/^<svg[^>]*>/, '')
-    .replace(/<\/svg>$/, '');
+  // همان تصویری که در آپ نمایش داده می‌شود داخل کارت جاسازی می‌شود.
+  // مسیر باید مطلق باشد، وگرنه داخل SVG جاسازی‌شده در canvas لود نمی‌شود.
+  const avatarSrc = avatarImageFor(item.stage);
+  const avatarImg = avatarSrc
+    ? `<image href="${escapeXml(absAssetUrl(avatarSrc, opts))}" x="108" y="116" width="144" height="144" preserveAspectRatio="xMidYMid meet" clip-path="url(#avatar-clip)"></image>`
+    : `<g transform="translate(122 130) scale(2.05)">${avatarMarkup(item).replace(/^<svg[^>]*>/, '').replace(/<\/svg>$/, '')}</g>`;
+
+  // آدرس مطلق فایل‌های داخلی برای اینکه SVG خودکفا باشد
+  function absAssetUrl(path, o) {
+    const p2 = String(path || '');
+    if (/^(data:|https?:)/i.test(p2)) return p2;
+    const base = o.baseUrl || (typeof location !== 'undefined' ? location.href : '');
+    try { return new URL(p2.replace(/^\.\//, ''), base).href; } catch (_) { return p2; }
+  }
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 480" width="360" height="480" dir="rtl" font-family="Vazirmatn, system-ui, sans-serif">
   <defs>
@@ -595,6 +606,7 @@ export function buildShareCard({ name = 'عضو تیم اورست', stage = 1, p
       <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.85"></stop>
       <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.35"></stop>
     </linearGradient>
+    <clipPath id="avatar-clip"><circle cx="180" cy="188" r="72"></circle></clipPath>
   </defs>
 
   <rect width="360" height="480" fill="url(#card-bg)"></rect>
@@ -612,7 +624,7 @@ export function buildShareCard({ name = 'عضو تیم اورست', stage = 1, p
   <!-- حلقهٔ آواتار -->
   <circle cx="180" cy="188" r="80" fill="#0a1424" stroke="url(#card-ring)" stroke-width="2.5"></circle>
   <circle cx="180" cy="188" r="70" fill="#0d1a30" stroke="#1e3a5f" stroke-width="1"></circle>
-  <g transform="translate(122 130) scale(2.05)">${avatarInner}</g>
+  ${avatarImg}
 
   <!-- عنوان سطح -->
   <text x="180" y="298" text-anchor="middle" fill="#fcd34d" font-size="16" font-weight="800">${escapeXml(item.titleFa)}</text>
