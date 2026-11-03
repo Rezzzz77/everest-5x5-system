@@ -1447,22 +1447,92 @@ function togglePassCriterion(stageKey, idx) {
 }
 
 // رندر مرحله ۴
+const DUP_STEP_LABELS = ['یاد بگیر', 'انجام بده', 'نشان بده', 'همراهی کن', 'واگذار کن'];
+
+/** گام‌های یک عضو را به آرایهٔ ۵ بولین تبدیل می‌کند (سازگار با دادهٔ قدیمی step). */
+function dupSteps(m) {
+  if (Array.isArray(m?.steps) && m.steps.length === 5) return m.steps.map(Boolean);
+  const legacy = Number(m?.step) || 1;
+  return [1, 2, 3, 4, 5].map(s => s <= legacy);
+}
+
+/** درصد پیشرفت یک عضو روی پنج گام. */
+function dupProgress(m) {
+  return Math.round((dupSteps(m).filter(Boolean).length / 5) * 100);
+}
+
 function renderStage4() {
-  const stepNames = ['۱. یاد بگیر', '۲. انجام بده', '۳. نشان بده', '۴. همراهی کن', '۵. واگذار کن (مستقل)'];
   const box = document.getElementById('duplication-members-container');
-  box.innerHTML = (appState.dupTeam || []).map((m, idx) => `
-    <div class="bg-slate-900 p-3 rounded-xl border border-slate-700 space-y-2">
-      <div class="flex justify-between items-center text-xs">
-        <span class="font-bold text-white">${escapeHtml(m.name)}</span>
-        <span class="text-[10px] bg-purple-900/80 text-purple-200 px-2 py-0.5 rounded-full font-bold">${stepNames[m.step - 1]}</span>
+  if (!box) { renderOnlineTeam(); return; }
+
+  const team = Array.isArray(appState.dupTeam) ? appState.dupTeam : [];
+
+  if (!team.length) {
+    box.innerHTML = `
+      <div class="text-center py-6 space-y-1.5">
+        <p class="text-2xl">👥</p>
+        <p class="text-[11px] text-slate-400 leading-relaxed">هنوز عضوی اضافه نکرده‌ای.<br>نام نفرات مستقیمت را اضافه کن تا پنج گام تکثیر را برای هر کدام جدا ثبت کنی.</p>
+      </div>`;
+    renderOnlineTeam();
+    return;
+  }
+
+  const avg = Math.round(team.reduce((a, m) => a + dupProgress(m), 0) / team.length);
+  const independent = team.filter(m => dupSteps(m).every(Boolean)).length;
+
+  box.innerHTML = `
+    <!-- خلاصه -->
+    <div class="grid grid-cols-3 gap-1.5 text-center text-[10px] mb-2">
+      <div class="bg-slate-900/80 p-2 rounded-xl border border-purple-500/30">
+        <span class="text-slate-400 block text-[9px]">اعضا</span>
+        <span class="font-extrabold text-white text-xs">${faDigits(team.length)}</span>
       </div>
-      <div class="grid grid-cols-5 gap-1">
-        ${[1,2,3,4,5].map(s => `
-          <button onclick="setMemberDup(${idx}, ${s})" class="py-1 rounded text-[10px] font-bold transition ${s <= m.step ? 'bg-purple-600 text-white' : 'bg-slate-800 text-slate-500'}">گام ${s}</button>
-        `).join('')}
+      <div class="bg-slate-900/80 p-2 rounded-xl border border-purple-500/30">
+        <span class="text-slate-400 block text-[9px]">میانگین پیشرفت</span>
+        <span class="font-extrabold text-purple-300 text-xs">${faDigits(avg)}٪</span>
+      </div>
+      <div class="bg-slate-900/80 p-2 rounded-xl border border-emerald-500/30">
+        <span class="text-slate-400 block text-[9px]">مستقل شده</span>
+        <span class="font-extrabold text-emerald-400 text-xs">${faDigits(independent)}</span>
       </div>
     </div>
-  `).join('');
+
+    <!-- سرستون‌های ماتریس -->
+    <div class="grid grid-cols-[1fr_repeat(5,2rem)_1.6rem] gap-1 items-center text-[8.5px] text-slate-500 text-center px-0.5 mb-1">
+      <span class="text-right pr-1">عضو</span>
+      <span title="${DUP_STEP_LABELS[0]}">۱</span>
+      <span title="${DUP_STEP_LABELS[1]}">۲</span>
+      <span title="${DUP_STEP_LABELS[2]}">۳</span>
+      <span title="${DUP_STEP_LABELS[3]}">۴</span>
+      <span title="${DUP_STEP_LABELS[4]}">۵</span>
+      <span></span>
+    </div>
+
+    <!-- ردیف هر عضو -->
+    <div class="space-y-1">
+      ${team.map((m, idx) => {
+        const steps = dupSteps(m);
+        const pct = dupProgress(m);
+        const done = steps.every(Boolean);
+        return `
+        <div class="grid grid-cols-[1fr_repeat(5,2rem)_1.6rem] gap-1 items-center bg-slate-900 rounded-xl p-1.5 border ${done ? 'border-emerald-500/45' : 'border-slate-700'}">
+          <button onclick="renameDupMember(${idx})" class="text-right min-w-0 pr-1">
+            <span class="block text-[11px] font-bold ${done ? 'text-emerald-300' : 'text-white'} truncate">${escapeHtml(m.name)}</span>
+            <span class="block text-[8.5px] ${done ? 'text-emerald-500/80' : 'text-slate-500'}">${faDigits(pct)}٪${done ? ' • مستقل' : ''}</span>
+          </button>
+          ${steps.map((on, i) => `
+            <button onclick="toggleDupStep(${idx}, ${i})" aria-pressed="${on}" title="${DUP_STEP_LABELS[i]}"
+              class="h-8 rounded-lg text-[11px] font-bold transition active:scale-95 ${on ? 'bg-purple-600 text-white' : 'bg-slate-800 text-slate-600'}">
+              ${on ? '✓' : faDigits(i + 1)}
+            </button>
+          `).join('')}
+          <button onclick="removeDupMember(${idx})" aria-label="حذف ${escapeHtml(m.name)}" class="h-8 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 text-xs">✕</button>
+        </div>`;
+      }).join('')}
+    </div>
+
+    <p class="text-[9px] text-slate-500 leading-relaxed pt-1">روی هر عدد بزن تا آن گام برای آن عضو ثبت شود. نام را لمس کن تا ویرایش شود.</p>
+  `;
 
   const criteriaContainer = document.getElementById('s4-pass-criteria');
   if (criteriaContainer && appState.s4Pass) {
@@ -1800,16 +1870,69 @@ function copyMyInviteLink() {
 
 function addDuplicationMember() {
   const input = document.getElementById('dup-member-name');
-  if (!input.value.trim()) return;
+  if (!input || !input.value.trim()) return;
+  const name = input.value.trim().slice(0, 60);
+
   if (!appState.dupTeam) appState.dupTeam = [];
-  appState.dupTeam.unshift({ name: input.value.trim(), step: 1 });
+  const exists = appState.dupTeam.some(m => String(m.name || '').trim() === name);
+  if (exists) {
+    input.value = '';
+    alert('این نام قبلاً در ماتریس هست.');
+    return;
+  }
+
+  appState.dupTeam.unshift({ name, steps: [false, false, false, false, false] });
   input.value = '';
   saveAll();
   renderStage4();
 }
 
+/** روشن/خاموش کردن یک گام برای یک عضو (مستقل از بقیهٔ گام‌ها). */
+function toggleDupStep(idx, stepIdx) {
+  const m = appState.dupTeam?.[idx];
+  if (!m) return;
+  const steps = dupSteps(m);
+  const i = Number(stepIdx);
+  if (i < 0 || i > 4) return;
+  steps[i] = !steps[i];
+  m.steps = steps;
+  delete m.step;           // دادهٔ قدیمی دیگر لازم نیست
+  saveAll();
+  renderStage4();
+}
+
+/** حذف یک عضو از ماتریس. */
+function removeDupMember(idx) {
+  const m = appState.dupTeam?.[idx];
+  if (!m) return;
+  if (!confirm(`«${m.name}» از ماتریس حذف شود؟`)) return;
+  appState.dupTeam.splice(idx, 1);
+  saveAll();
+  renderStage4();
+}
+
+/** تغییر نام یک عضو. */
+function renameDupMember(idx) {
+  const m = appState.dupTeam?.[idx];
+  if (!m) return;
+  const next = (prompt('نام جدید:', m.name) || '').trim().slice(0, 60);
+  if (!next || next === m.name) return;
+  if (appState.dupTeam.some((x, i) => i !== idx && String(x.name || '').trim() === next)) {
+    alert('این نام قبلاً در ماتریس هست.');
+    return;
+  }
+  m.name = next;
+  saveAll();
+  renderStage4();
+}
+
+/** سازگاری با نسخهٔ قبلی: گام n به معنی «تا گام n انجام شده» است. */
 function setMemberDup(idx, step) {
-  appState.dupTeam[idx].step = step;
+  const m = appState.dupTeam?.[idx];
+  if (!m) return;
+  const n = Math.max(1, Math.min(5, Number(step) || 1));
+  m.steps = [1, 2, 3, 4, 5].map(s => s <= n);
+  delete m.step;
   saveAll();
   renderStage4();
 }
@@ -2470,6 +2593,9 @@ Object.assign(window, {
   cycleCRMStatus,
   togglePassCriterion,
   addDuplicationMember,
+  toggleDupStep,
+  removeDupMember,
+  renameDupMember,
   setMemberDup,
   toggleS5Standard,
   saveKpi,
