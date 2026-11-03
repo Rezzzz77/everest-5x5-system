@@ -13,6 +13,11 @@
     body { font-family: 'Vazirmatn', sans-serif; background-color: #090d16; color: #f8fafc; -webkit-tap-highlight-color: transparent; }
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    /* نوار پایین همیشه دیده شود و زیر ناحیهٔ امن گوشی نرود */
+    .safe-area-bottom { padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px)); }
+    .nav-item { -webkit-tap-highlight-color: transparent; transition: transform .12s ease; }
+    .nav-item:active { transform: scale(.96); }
+    @media (prefers-reduced-motion: reduce) { .nav-item { transition: none; } }
     body.light-mode { background-color: #f1f5f9 !important; color: #0f172a !important; }
     body.light-mode .bg-slate-950 { background-color: #f8fafc !important; }
     body.light-mode .bg-slate-900 { background-color: #ffffff !important; color: #0f172a !important; }
@@ -220,16 +225,16 @@
     }
   </style>
 </head>
-<body class="min-h-screen flex justify-center bg-slate-950 p-0 sm:p-4">
+<body class="min-h-[100dvh] h-[100dvh] overflow-hidden flex justify-center bg-slate-950 p-0 sm:p-4">
 
   <!-- قاب اصلی موبایل -->
-  <div class="w-full max-w-md bg-slate-900 min-h-screen sm:min-h-[880px] sm:rounded-3xl shadow-2xl border border-slate-800 flex flex-col overflow-hidden relative">
+  <div id="app-frame" class="w-full max-w-md bg-slate-900 h-[100dvh] max-h-[100dvh] sm:h-[880px] sm:max-h-[880px] sm:min-h-0 sm:rounded-3xl shadow-2xl border border-slate-800 flex flex-col overflow-hidden relative">
 
     <!-- صحنهٔ تزئینی کوهستان اورست (SVG درون‌برنامه‌ای) -->
     <div id="leopard-bg" class="leopard-scene" aria-hidden="true"></div>
 
     <!-- ================= صفحه ثبت نام و ورود اولیه ================= -->
-    <div id="auth-screen" class="hidden absolute inset-0 bg-slate-950/95 backdrop-blur-md z-50 p-6 flex flex-col justify-center space-y-5">
+    <div id="auth-screen" class="hidden absolute inset-0 bg-slate-950/95 backdrop-blur-md z-50 p-6 flex flex-col justify-center space-y-5 overflow-y-auto overscroll-contain">
       <div class="text-center space-y-2">
         <div class="w-16 h-16 mx-auto"><div id="leopard-avatar-auth" class="leopard-avatar levauth" data-level="1"></div></div>
         <h1 class="text-xl font-extrabold text-white">سیستم ۵×۵ تیم اورست</h1>
@@ -389,7 +394,7 @@
     <div id="coach-card" class="px-4 pb-2" aria-live="polite"></div>
 
     <!-- ================= بدنه اصلی مراحل ================= -->
-    <main class="flex-1 overflow-y-auto p-4 space-y-4 pb-24 no-scrollbar">
+    <main class="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 space-y-4 pb-4 no-scrollbar">
 
       <!-- 🔵 مرحله ۱: شروع | ۷۲ ساعت اول -->
       <section id="stage-1" class="stage-content space-y-3.5">
@@ -831,26 +836,26 @@
     </main>
 
     <!-- ================= نوار ابزار پایین (ابزارهای کمکی سیستم ۵×۵) ================= -->
-    <nav class="absolute bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur border-t border-slate-800 px-2 py-2 flex justify-around text-xs z-30">
-      <button onclick="openAIChatModal()" class="flex flex-col items-center text-purple-400 hover:text-purple-300 font-bold">
-        <span class="text-base animate-pulse">🤖</span>
-        <span class="text-[9px] mt-0.5">مربی هوشمند</span>
+    <nav id="bottom-nav" class="shrink-0 safe-area-bottom bg-slate-900/95 backdrop-blur border-t border-slate-800 px-1.5 py-2 flex justify-around items-center gap-0.5 text-xs z-30">
+      <button onclick="openAIChatModal()" class="nav-item flex-1 flex flex-col items-center justify-center gap-0.5 min-h-[48px] rounded-xl text-purple-300 active:bg-purple-500/10 font-bold">
+        <span class="text-[18px] leading-none animate-pulse">🤖</span>
+        <span class="text-[10px] leading-tight whitespace-nowrap">مربی هوشمند</span>
       </button>
-      <button onclick="openHelperModal('invite')" class="flex flex-col items-center text-slate-300 hover:text-white">
-        <span class="text-base">💬</span>
-        <span class="text-[9px] mt-0.5">اسکریپت دعوت</span>
+      <button onclick="openHelperModal('invite')" class="nav-item flex-1 flex flex-col items-center justify-center gap-0.5 min-h-[48px] rounded-xl text-slate-300 active:bg-slate-700/40">
+        <span class="text-[18px] leading-none">💬</span>
+        <span class="text-[10px] leading-tight whitespace-nowrap">اسکریپت دعوت</span>
       </button>
-      <button onclick="openHelperModal('product')" class="flex flex-col items-center text-slate-300 hover:text-white">
-        <span class="text-base">🍵</span>
-        <span class="text-[9px] mt-0.5">کاتالوگ نیوشا</span>
+      <button onclick="openHelperModal('product')" class="nav-item flex-1 flex flex-col items-center justify-center gap-0.5 min-h-[48px] rounded-xl text-slate-300 active:bg-slate-700/40">
+        <span class="text-[18px] leading-none">🍵</span>
+        <span class="text-[10px] leading-tight whitespace-nowrap">کاتالوگ نیوشا</span>
       </button>
-      <button onclick="openHelperModal('packages')" class="flex flex-col items-center text-slate-300 hover:text-white">
-        <span class="text-base">📦</span>
-        <span class="text-[9px] mt-0.5">پک‌های مشاوره</span>
+      <button onclick="openHelperModal('packages')" class="nav-item flex-1 flex flex-col items-center justify-center gap-0.5 min-h-[48px] rounded-xl text-slate-300 active:bg-slate-700/40">
+        <span class="text-[18px] leading-none">📦</span>
+        <span class="text-[10px] leading-tight whitespace-nowrap">پک‌های مشاوره</span>
       </button>
-      <button onclick="toggleGoalModal()" class="flex flex-col items-center text-slate-300 hover:text-white">
-        <span class="text-base">🎯</span>
-        <span class="text-[9px] mt-0.5">هدف من</span>
+      <button onclick="toggleGoalModal()" class="nav-item flex-1 flex flex-col items-center justify-center gap-0.5 min-h-[48px] rounded-xl text-slate-300 active:bg-slate-700/40">
+        <span class="text-[18px] leading-none">🎯</span>
+        <span class="text-[10px] leading-tight whitespace-nowrap">هدف من</span>
       </button>
     </nav>
 
@@ -1058,6 +1063,6 @@
   <!-- اورلی جشن ارتقای مرحله -->
   <div id="celebrate-root" class="celebrate-root" aria-hidden="true"></div>
 
-  <script type="module" src="./app.js?v=0.9.7"></script>
+  <script type="module" src="./app.js?v=0.9.8"></script>
 </body>
 </html>
