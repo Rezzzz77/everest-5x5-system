@@ -2149,24 +2149,31 @@ function closeHelperModal() {
   document.getElementById('helper-modal').classList.add('hidden');
 }
 
+/**
+ * تم فقط تیره است. کل طراحی (شیشه، کنتراست، پالت) برای حالت دارک ساخته شده
+ * و حالت روشن متن‌های ناخوانا داشت؛ پس موقتاً غیرفعال شده است.
+ * برای برگرداندن: DARK_ONLY را false کن و CSS حالت روشن را کامل کن.
+ */
+const DARK_ONLY = true;
+
 function initTheme() {
   try {
-    const isLight = localStorage.getItem('everest_theme') === 'light';
-    if (isLight) {
-      document.body.classList.add('light-mode');
-      const btn = document.getElementById('dark-mode-btn');
-      if (btn) btn.innerText = '☀️';
-    }
+    document.body.classList.remove('light-mode');
+    if (DARK_ONLY) localStorage.setItem('everest_theme', 'dark');
   } catch (_) {}
 }
 
 function toggleDarkMode() {
+  // تم روشن موقتاً غیرفعال است (DARK_ONLY). دکمه هم از نوار بالا برداشته شده.
+  if (DARK_ONLY) {
+    document.body.classList.remove('light-mode');
+    try { localStorage.setItem('everest_theme', 'dark'); } catch (_) {}
+    return;
+  }
   const isLight = document.body.classList.toggle('light-mode');
   try {
     localStorage.setItem('everest_theme', isLight ? 'light' : 'dark');
   } catch (_) {}
-  const btn = document.getElementById('dark-mode-btn');
-  if (btn) btn.innerText = isLight ? '☀️' : '🌙';
 }
 
 function checkEveningReminder() {
