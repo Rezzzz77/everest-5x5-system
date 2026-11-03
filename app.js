@@ -1530,6 +1530,58 @@ async function decideApproval(approvalId, approve) {
   await refreshOnlineTeam();
 }
 
+/* ---------------- هدر جمع‌شو (سبک توییتر) ---------------- */
+
+const HEADER_COLLAPSE_AT = 70;   // بعد از این مقدار اسکرول، هدر جمع می‌شود
+const HEADER_EXPAND_AT = 24;     // با برگشت به این مقدار، باز می‌شود
+
+let headerCollapsed = false;
+let headerScrollBound = false;
+
+function setHeaderCollapsed(collapsed) {
+  const header = document.getElementById('app-header');
+  if (!header) return;
+  if (collapsed === headerCollapsed) return;
+  headerCollapsed = collapsed;
+
+  // کلاس‌های مرحله را دست نزن؛ فقط کلاس جمع‌شدن را اضافه/حذف کن
+  header.classList.toggle('header-collapsed', collapsed);
+  header.classList.toggle('header-expand', !collapsed);
+
+  syncCompactHeader();
+}
+
+/** نام، مرحله و درصد را از هدر کامل به نوار باریک منتقل می‌کند */
+function syncCompactHeader() {
+  const name = document.getElementById('user-display-name')?.textContent?.trim() || 'عضو تیم اورست';
+  const cName = document.getElementById('compact-name');
+  if (cName) cName.textContent = name;
+
+  const stageBadge = document.getElementById('user-stage-badge')?.textContent?.trim() || '';
+  const cStage = document.getElementById('compact-stage');
+  if (cStage) cStage.textContent = `مرحله ${stageBadge.replace(/[^۰-۹0-9]/g, '') || '۱'} • مسیر اورست`;
+
+  const pct = document.getElementById('hero-progress-pct')?.textContent?.trim() || '۰٪';
+  const cPct = document.getElementById('compact-pct');
+  if (cPct) cPct.textContent = pct;
+
+  const cBar = document.getElementById('compact-bar');
+  const bar = document.getElementById('hero-progress-bar');
+  if (cBar && bar) cBar.style.width = bar.style.width || '0%';
+}
+
+function bindHeaderCollapse() {
+  if (headerScrollBound) return;
+  const main = document.querySelector('main');
+  if (!main) return;
+  headerScrollBound = true;
+  main.addEventListener('scroll', () => {
+    const y = main.scrollTop;
+    if (!headerCollapsed && y > HEADER_COLLAPSE_AT) setHeaderCollapsed(true);
+    else if (headerCollapsed && y < HEADER_EXPAND_AT) setHeaderCollapsed(false);
+  }, { passive: true });
+}
+
 /* ---------------- دیده‌بانی آنلاین اعضای تیم برای بالاسری ---------------- */
 let onlineTeamCache = [];
 let myInviteCode = null;
@@ -2320,6 +2372,7 @@ function startAIVoiceInput() {
 
 function initApp() {
   initTheme();
+  bindHeaderCollapse();
   if (appState.user && !appState.user.local && loadSession() && isSupabaseConfigured()) {
     loadMyInviteCode().catch(() => {});
     renderPendingApprovals().catch(() => {});
@@ -2495,6 +2548,8 @@ Object.assign(window, {
   loadMyInviteCode,
   generateMyInviteCode,
   renderPendingApprovals,
+  setHeaderCollapsed,
+  syncCompactHeader,
   decideApproval,
   toggleDarkMode,
   requestNotificationPermission,

@@ -15,6 +15,60 @@
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     /* نوار پایین همیشه دیده شود و زیر ناحیهٔ امن گوشی نرود */
     .safe-area-bottom { padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px)); }
+
+    /* ---- هدر جمع‌شو (سبک توییتر) ---- */
+    /* در حالت کامل، کارت قهرمان و تب‌ها دیده می‌شوند */
+    #app-header .hero-card-body,
+    #app-header #stage-tabs-bar,
+    #app-header #icon-bar {
+      transition: opacity .22s ease, max-height .28s ease, margin .22s ease, transform .22s ease;
+      overflow: hidden;
+      max-height: 600px;
+      opacity: 1;
+    }
+    /* حالت جمع‌شده: آواتار و تب‌ها کنار می‌روند، نام و درصد می‌مانند */
+    #app-header.header-collapsed {
+      padding-top: .5rem;
+      padding-bottom: .5rem;
+      box-shadow: 0 6px 18px -12px rgba(2, 6, 23, .9);
+    }
+    #app-header.header-collapsed .hero-card-body {
+      max-height: 0;
+      opacity: 0;
+      margin: 0;
+      padding-top: 0;
+      padding-bottom: 0;
+      transform: translateY(-6px);
+      border-width: 0;
+    }
+    #app-header.header-collapsed #stage-tabs-bar {
+      max-height: 0;
+      opacity: 0;
+      margin: 0;
+      padding-top: 0;
+      border-top-width: 0;
+    }
+    #app-header.header-collapsed #icon-bar {
+      max-height: 0;
+      opacity: 0;
+      margin: 0;
+      pointer-events: none;
+    }
+    /* نوار تحلیل‌شدهٔ مشخصات که فقط در حالت جمع‌شده دیده می‌شود */
+    #header-compact {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: .5rem;
+      min-height: 44px;
+    }
+    #app-header.header-collapsed #header-compact { display: flex; }
+    #app-header.header-collapsed .header-topbar { display: none; }
+    @media (prefers-reduced-motion: reduce) {
+      #app-header .hero-card-body,
+      #app-header #stage-tabs-bar,
+      #app-header #icon-bar { transition: none; }
+    }
     .nav-item { -webkit-tap-highlight-color: transparent; transition: transform .12s ease; }
     .nav-item:active { transform: scale(.96); }
     @media (prefers-reduced-motion: reduce) { .nav-item { transition: none; } }
@@ -316,9 +370,9 @@
     <div class="absolute top-0 inset-x-0 h-72 hero-glow pointer-events-none"></div>
 
     <!-- ================= هدر: نوار ابزار + کارت قهرمان (آواتار/سطح/XP) + تب مراحل ================= -->
-    <header id="app-header" class="relative z-10 px-4 pt-4 pb-2 transition-all duration-300">
+    <header id="app-header" class="relative z-10 px-4 pt-4 pb-2 header-expand">
       <!-- ۱) نوار ابزار -->
-      <div class="flex items-center justify-between mb-3">
+      <div class="header-topbar flex items-center justify-between mb-3">
         <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-slate-900/80 text-cyan-300 border border-slate-700 backdrop-blur-md">
           <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" aria-hidden="true"></span>
           <span id="cloud-badge" class="text-[11px] font-bold">آفلاین</span>
@@ -334,8 +388,25 @@
         </div>
       </div>
 
+      <!-- نوار باریک در حالت جمع‌شده: نام + مرحله + درصد -->
+      <div id="header-compact">
+        <div class="min-w-0 flex items-center gap-2">
+          <span class="text-lg leading-none" aria-hidden="true">🐆</span>
+          <div class="min-w-0">
+            <p id="compact-name" class="text-[13px] font-black text-white truncate leading-tight">عضو تیم اورست</p>
+            <p id="compact-stage" class="text-[10px] text-cyan-300 font-bold leading-tight">مرحله ۱ • شروع</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+          <span id="compact-pct" class="text-[12px] font-black text-emerald-400">۰٪</span>
+          <div class="w-16 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+            <div id="compact-bar" class="h-full bg-emerald-500 rounded-full transition-all duration-300" style="width:0%"></div>
+          </div>
+        </div>
+      </div>
+
       <!-- ۲) کارت قهرمان: آواتار + هویت + نوار XP -->
-      <div class="relative bg-gradient-to-br from-indigo-900/90 via-blue-900/80 to-slate-900 rounded-3xl p-4 border border-blue-400/30 shadow-[0_10px_30px_-10px_rgba(37,99,235,0.5)]">
+      <div id="hero-card" class="relative bg-gradient-to-br from-indigo-900/90 via-blue-900/80 to-slate-900 rounded-3xl p-4 border border-blue-400/30 shadow-[0_10px_30px_-10px_rgba(37,99,235,0.5)] hero-card-body">
         <div class="flex items-center gap-4">
           <!-- آواتار با هاله و نشان سطح -->
           <div class="relative w-24 h-24 shrink-0">
@@ -1063,6 +1134,6 @@
   <!-- اورلی جشن ارتقای مرحله -->
   <div id="celebrate-root" class="celebrate-root" aria-hidden="true"></div>
 
-  <script type="module" src="./app.js?v=0.9.9"></script>
+  <script type="module" src="./app.js?v=0.9.10"></script>
 </body>
 </html>
