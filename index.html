@@ -673,6 +673,9 @@
           <div id="duplication-members-container" class="space-y-2"></div>
         </div>
 
+        <!-- درخواست‌های تأیید مرحله که به من ارجاع شده‌اند -->
+        <div id="pending-approvals"></div>
+
         <!-- پایش آنلاین اعضای سازمان برای بالاسری -->
         <div class="bg-slate-800/90 border border-purple-500/50 rounded-2xl p-3.5 space-y-3 shadow-lg">
           <div class="flex justify-between items-center border-b border-slate-700/80 pb-2">
@@ -686,12 +689,20 @@
           </div>
 
           <!-- لینک دعوت اختصاصی راهبر -->
-          <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-700 space-y-1.5">
+          <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-700 space-y-2">
+            <div class="flex justify-between items-center gap-2">
+              <div class="min-w-0">
+                <span class="text-[10px] text-slate-300 font-bold block">🎟️ کد معرف شما</span>
+                <span id="my-invite-code" class="text-base font-black tracking-[0.25em] text-amber-300 font-mono" dir="ltr">—</span>
+              </div>
+              <button onclick="generateMyInviteCode()" id="btn-new-invite-code" class="shrink-0 text-[10px] bg-amber-600 hover:bg-amber-500 text-white px-2.5 py-2 rounded-xl font-bold min-h-[36px]">ساخت کد جدید</button>
+            </div>
             <div class="flex justify-between items-center text-[10px]">
-              <span class="text-slate-300 font-bold">🔗 لینک اختصاصی شما برای عضویت مستقیم در تیم:</span>
+              <span class="text-slate-300 font-bold">🔗 لینک اختصاصی دعوت:</span>
               <button onclick="copyMyInviteLink()" id="copy-invite-btn" class="text-purple-400 hover:text-purple-300 font-bold">کپی لینک</button>
             </div>
             <div id="my-invite-link-preview" class="text-[9px] font-mono text-slate-400 bg-slate-950 p-2 rounded-lg truncate text-left" dir="ltr"></div>
+            <p class="text-[9px] text-slate-500 leading-relaxed">هر کسی با این کد ثبت‌نام کند، زیرمجموعهٔ شما می‌شود و تأیید مراحلش با شماست.</p>
           </div>
 
           <!-- کارت خلاصه وضعیت سلامت تیم -->
@@ -1047,6 +1058,6 @@
   <!-- اورلی جشن ارتقای مرحله -->
   <div id="celebrate-root" class="celebrate-root" aria-hidden="true"></div>
 
-  <script type="module" src="./app.js?v=0.9.5"></script>
+  <script type="module" src="./app.js?v=0.9.6"></script>
 </body>
 </html>

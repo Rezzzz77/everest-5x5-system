@@ -313,6 +313,116 @@ export async function resolveInviteCode(code, rawCfg = getSupabaseConfig()) {
 }
 
 /**
+ * کد معرف فعال خود کاربر (اگر هیچ کدی ندارد، null).
+ */
+export async function getMyInviteCode(rawCfg = getSupabaseConfig()) {
+  const cfg = normalizeConfig(rawCfg);
+  const h = await headers();
+  const user = currentUser();
+  if (!cfgValid(cfg) || !h || !user?.id) return null;
+  try {
+    const res = await fetch(
+      `${cfg.url}/rest/v1/invite_codes?select=code,used_count,max_uses,active&owner_id=eq.${user.id}&active=eq.true&order=created_at.desc&limit=1`,
+      { headers: h }
+    );
+    if (!res.ok) return null;
+    const rows = await res.json();
+    return Array.isArray(rows) && rows[0] ? rows[0] : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+/**
+ * ساخت کد معرف تازه برای کاربر جاری.
+ * @returns {Promise<{ok:boolean, code?:string, message?:string}>}
+ */
+export async function createInviteCode(maxUses = 0, expiresDays = 0, rawCfg = getSupabaseConfig()) {
+  const cfg = normalizeConfig(rawCfg);
+  const h = await headers();
+  if (!cfgValid(cfg) || !h) return { ok: false, message: 'عدم دسترسی به سرور' };
+  try {
+    const res = await fetch(`${cfg.url}/rest/v1/rpc/new_invite_code`, {
+      method: 'POST',
+      headers: h,
+      body: JSON.stringify({ p_max_uses: Number(maxUses) || 0, p_expires_days: Number(expiresDays) || 0 })
+    });
+    const text = await res.text();
+    if (!res.ok) return { ok: false, message: 'ساخت کد ناموفق بود' };
+    let code = '';
+    try { code = JSON.parse(text); } catch (_) { code = text; }
+    code = String(code || '').replace(/^"|"$/g, '').trim();
+    return code ? { ok: true, code } : { ok: false, message: 'کد خالی برگشت' };
+  } catch (e) {
+    return { ok: false, message: String(e && e.message || e) };
+  }
+}
+
+/**
+ * درخواست‌های تأیید مرحله که به من ارجاع شده‌اند (زنجیرهٔ بالادست).
+ * پروفایل درخواست‌دهنده جدا خوانده می‌شود چون FK مستقیمی بین
+ * stage_approvals.user_id و profiles.id وجود ندارد.
+ */
+export async function loadPendingApprovals(rawCfg = getSupabaseConfig()) {
+  const cfg = normalizeConfig(rawCfg);
+  const h = await headers();
+  const user = currentUser();
+  if (!cfgValid(cfg) || !h || !user?.id) return [];
+  try {
+    const res = await fetch(
+      `${cfg.url}/rest/v1/stage_approvals?select=id,user_id,target_stage,requested_at&approver_id=eq.${user.id}&status=eq.pending&order=requested_at.asc`,
+      { headers: h }
+    );
+    if (!res.ok) return [];
+    const rows = await res.json();
+    if (!Array.isArray(rows) || !rows.length) return [];
+
+    const ids = [...new Set(rows.map(r => r.user_id))].filter(Boolean);
+    const pRes = await fetch(
+      `${cfg.url}/rest/v1/profiles?select=id,full_name,email,current_stage,approved_stage&id=in.(${ids.join(',')})`,
+      { headers: h }
+    );
+    const people = pRes.ok ? await pRes.json() : [];
+    const byId = new Map((Array.isArray(people) ? people : []).map(p => [p.id, p]));
+
+    return rows.map(r => ({
+      id: r.id,
+      userId: r.user_id,
+      targetStage: r.target_stage,
+      requestedAt: r.requested_at,
+      name: byId.get(r.user_id)?.full_name || byId.get(r.user_id)?.email || 'عضو تیم',
+      email: byId.get(r.user_id)?.email || '',
+      stage: byId.get(r.user_id)?.approved_stage || byId.get(r.user_id)?.current_stage || 1
+    }));
+  } catch (_) {
+    return [];
+  }
+}
+
+/**
+ * تصمیم روی یک درخواست تأیید (فقط تأییدکنندهٔ زنجیره مجاز است).
+ */
+export async function decideStageApproval(approvalId, approve, note = '', rawCfg = getSupabaseConfig()) {
+  const cfg = normalizeConfig(rawCfg);
+  const h = await headers();
+  if (!cfgValid(cfg) || !h) return { ok: false, message: 'عدم دسترسی به سرور' };
+  try {
+    const res = await fetch(`${cfg.url}/rest/v1/rpc/decide_stage_approval`, {
+      method: 'POST',
+      headers: h,
+      body: JSON.stringify({ approval_id: Number(approvalId), approve: Boolean(approve), note: note || null })
+    });
+    const text = await res.text();
+    if (res.ok) return { ok: true };
+    let msg = 'خطا در ثبت تصمیم';
+    try { msg = JSON.parse(text)?.message || msg; } catch (_) { if (text) msg = text.slice(0, 200); }
+    return { ok: false, message: msg };
+  } catch (e) {
+    return { ok: false, message: String(e && e.message || e) };
+  }
+}
+
+/**
  * بارگذاری آنلاین اعضای تیم زیرمجموعه برای بالاسری
  */
 export async function loadTeamMembers(rawCfg = getSupabaseConfig()) {

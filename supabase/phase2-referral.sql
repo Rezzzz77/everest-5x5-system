@@ -268,7 +268,19 @@ begin
     select referred_by into _cur from public.profiles where id = _cur;
   end loop;
 
-  return null;
+  -- ۳) قاعدهٔ ریشه: اگر زنجیره به کسی نرسید (کاربر معرف ندارد یا
+  --    کل زنجیره‌اش پایین‌تر از مرحلهٔ هدف است)، قدیمی‌ترین حساب
+  --    «ریشه» که مرحلهٔ تأییدشده‌اش کافی است تأیید می‌کند.
+  --    خود کاربر هرگز تأییدکنندهٔ خودش نیست.
+  select p.id into _cur
+  from public.profiles p
+  where p.referred_by is null
+    and p.id is distinct from p_user
+    and coalesce(p.approved_stage, 1) >= p_target_stage
+  order by p.created_at asc nulls last, p.id
+  limit 1;
+
+  return _cur;
 end;
 $$;
 
