@@ -233,11 +233,13 @@ test('share: کارت هیچ منبع شبکه‌ای ندارد', () => {
   assert.ok(!/https?:\/\//.test(withoutNs), 'تصویر کارت باید کامل آفلاین باشد');
 });
 
-test('share: مرحله در کارت با عنوان فارسی و کد می‌آید', () => {
+test('share: مرحله در کارت با عنوان فارسی و شمارهٔ مرحله می‌آید', () => {
   const card = buildShareCard({ stage: 5, progress: 100 });
   assert.match(card, /پلنگ نگهبان/);
-  assert.match(card, /GUARDIAN/);
+  assert.match(card, /مرحله ۵ از ۵/);
   assert.match(card, /۱۰۰/);
+  // برچسب «سطح ۵۰» نباید در کارت باشد (کامنت SVG اشکالی ندارد)
+  assert.ok(!/سطح \d|سطح [۰-۹]/.test(card), 'عدد سطح نباید در کارت باشد');
 });
 
 test('avatar image: هر پنج مرحله تصویر واقعی دارند', () => {

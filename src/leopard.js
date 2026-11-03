@@ -411,13 +411,13 @@ export function initLeopardAvatar(
     host.classList.remove('level-1', 'level-2', 'level-3', 'level-4', 'level-5');
     host.classList.add('leopard-avatar', `level-${item.stage}`);
     host.setAttribute('data-level', String(item.level));
-    host.setAttribute('title', `${item.titleFa} — سطح ${faDigits(item.level)} (${item.code})`);
+    host.setAttribute('title', item.titleFa);
 
     const label = labelId ? doc.getElementById(labelId) : null;
     if (label) {
-      label.textContent = `سطح ${faDigits(item.level)} • ${item.titleFa}`;
+      label.textContent = item.titleFa;
       label.setAttribute('aria-label', `مرحلهٔ ${faDigits(item.stage)} از ۵ — ${item.titleFa}`);
-      label.setAttribute('title', `${item.code} — سطح ${faDigits(item.level)}`);
+      label.setAttribute('title', item.titleFa);
     }
     return item;
   };
@@ -571,38 +571,66 @@ export function buildShareCard({ name = 'عضو تیم اورست', stage = 1, p
   const safeName = escapeXml(name);
   const safeDate = escapeXml(date);
 
-  // آواتار SVG را داخل کارت جاسازی می‌کنیم (بدون <svg> تودرتو معتبر نیست،
-  // پس محتوای گروه را جدا می‌گیریم).
+  // آواتار SVG را داخل کارت جاسازی می‌کنیم (بدون <svg> تودرتو معتبر نیست)
   const avatarInner = avatarMarkup(item)
     .replace(/^<svg[^>]*>/, '')
     .replace(/<\/svg>$/, '');
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 460" width="360" height="460" dir="rtl" font-family="Vazirmatn, system-ui, sans-serif">
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 480" width="360" height="480" dir="rtl" font-family="Vazirmatn, system-ui, sans-serif">
   <defs>
     <linearGradient id="card-bg" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#0b1220"></stop>
-      <stop offset="100%" stop-color="#122544"></stop>
+      <stop offset="0%" stop-color="#070b14"></stop>
+      <stop offset="55%" stop-color="#0d1a30"></stop>
+      <stop offset="100%" stop-color="#111f38"></stop>
     </linearGradient>
     <linearGradient id="card-bar" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#22d3ee"></stop>
-      <stop offset="100%" stop-color="#38bdf8"></stop>
+      <stop offset="0%" stop-color="#fbbf24"></stop>
+      <stop offset="100%" stop-color="#f97316"></stop>
+    </linearGradient>
+    <radialGradient id="card-glow" cx="50%" cy="0%" r="70%">
+      <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.22"></stop>
+      <stop offset="100%" stop-color="#22d3ee" stop-opacity="0"></stop>
+    </radialGradient>
+    <linearGradient id="card-ring" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.85"></stop>
+      <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.35"></stop>
     </linearGradient>
   </defs>
-  <rect width="360" height="460" fill="url(#card-bg)"></rect>
-  <text x="180" y="46" text-anchor="middle" fill="#93c5fd" font-size="12" letter-spacing="2">EVEREST 5&#215;5</text>
-  <text x="180" y="76" text-anchor="middle" fill="#e2e8f0" font-size="17" font-weight="700">${safeName}</text>
 
-  <circle cx="180" cy="180" r="78" fill="#0f172a" stroke="#22d3ee" stroke-opacity="0.35" stroke-width="1.5"></circle>
-  <g transform="translate(120 120) scale(2)">${avatarInner}</g>
+  <rect width="360" height="480" fill="url(#card-bg)"></rect>
+  <rect width="360" height="480" fill="url(#card-glow)"></rect>
+  <!-- قاب مویی -->
+  <rect x="1" y="1" width="358" height="478" rx="20" fill="none" stroke="#1e3a5f" stroke-width="1.5"></rect>
 
-  <text x="180" y="292" text-anchor="middle" fill="#a5f3fc" font-size="15" font-weight="700">${escapeXml(item.titleFa)}</text>
-  <text x="180" y="314" text-anchor="middle" fill="#94a3b8" font-size="11">${escapeXml(item.code)} &#183; سطح ${escapeXml(faDigits(item.level))}</text>
+  <!-- سرصفحه -->
+  <text x="180" y="38" text-anchor="middle" fill="#7dd3fc" font-size="11" font-weight="700" letter-spacing="3">EVEREST 5&#215;5</text>
+  <line x1="140" y1="50" x2="220" y2="50" stroke="#1e3a5f" stroke-width="1"></line>
 
-  <rect x="30" y="342" width="300" height="12" rx="6" fill="#1e293b"></rect>
-  <rect x="30" y="342" width="${barW}" height="12" rx="6" fill="url(#card-bar)"></rect>
-  <text x="330" y="376" text-anchor="end" fill="#cbd5e1" font-size="11">${escapeXml(faDigits(pct))}٪ پیشرفت</text>
-  ${safeDate ? `<text x="30" y="376" text-anchor="start" fill="#64748b" font-size="10">${safeDate}</text>` : ''}
-  <text x="180" y="428" text-anchor="middle" fill="#475569" font-size="9">سیستم ۵&#215;۵ تیم اورست — نیوشانیک</text>
+  <!-- نام -->
+  <text x="180" y="82" text-anchor="middle" fill="#f8fafc" font-size="19" font-weight="800">${safeName}</text>
+
+  <!-- حلقهٔ آواتار -->
+  <circle cx="180" cy="188" r="80" fill="#0a1424" stroke="url(#card-ring)" stroke-width="2.5"></circle>
+  <circle cx="180" cy="188" r="70" fill="#0d1a30" stroke="#1e3a5f" stroke-width="1"></circle>
+  <g transform="translate(122 130) scale(2.05)">${avatarInner}</g>
+
+  <!-- عنوان سطح -->
+  <text x="180" y="298" text-anchor="middle" fill="#fcd34d" font-size="16" font-weight="800">${escapeXml(item.titleFa)}</text>
+  <text x="180" y="318" text-anchor="middle" fill="#94a3b8" font-size="11" font-weight="600">مرحله ${escapeXml(faDigits(item.stage))} از ۵</text>
+
+  <!-- نوار پیشرفت -->
+  <rect x="32" y="344" width="300" height="12" rx="6" fill="#16233a"></rect>
+  <rect x="32" y="344" width="${barW}" height="12" rx="6" fill="url(#card-bar)"></rect>
+
+  <!-- درصد و برچسب -->
+  
+  <text x="32" y="376" text-anchor="start" fill="#94a3b8" font-size="11" font-weight="600">${escapeXml(faDigits(pct))}٪ پیشرفت</text>
+  ${safeDate ? `<text x="32" y="392" text-anchor="start" fill="#64748b" font-size="10">${safeDate}</text>` : ''}
+
+  <!-- پانوشت -->
+  <line x1="32" y1="424" x2="328" y2="424" stroke="#16233a" stroke-width="1"></line>
+  <text x="180" y="446" text-anchor="middle" fill="#64748b" font-size="10">سیستم ۵&#215;۵ تیم اورست — نیوشانیک</text>
+  <text x="180" y="462" text-anchor="middle" fill="#3b4a61" font-size="8.5">everest-5x5-system</text>
 </svg>`.trim();
 }
 
@@ -616,16 +644,21 @@ export async function shareCard({ name, stage, progress, date } = {}, win = type
 
   let file = null;
   try {
-    const blob = new win.Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+    // width/height صریح؛ وگرنه Safari/Firefox تصویر را بدون ابعاد رندر می‌کنند
+    const sized = svg.replace('<svg ', '<svg width="1080" height="1440" ');
+    const blob = new win.Blob([sized], { type: 'image/svg+xml;charset=utf-8' });
     const url = win.URL.createObjectURL(blob);
     file = await new Promise((resolve) => {
       const img = new win.Image();
       img.onload = () => {
         try {
           const canvas = win.document.createElement('canvas');
-          canvas.width = 720;
-          canvas.height = 920;
+          canvas.width = 1080;
+          canvas.height = 1440;
           const ctx = canvas.getContext('2d');
+          // پس‌زمینهٔ مات تا PNG شفاف نباشد و در گالری خوب دیده شود
+          ctx.fillStyle = '#070b14';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
           ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
           canvas.toBlob((b) => resolve(b), 'image/png');
         } catch (_) { resolve(null); }
