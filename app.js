@@ -834,12 +834,13 @@ function renderTabs() {
     }
   }
 
+  // فقط نام مرحله؛ شماره و مدت زیر آن می‌آید
   const labels = [
-    { n: 1, t: 'م۱: شروع', sub: '۷۲ ساعت' },
-    { n: 2, t: 'م۲: حرکت', sub: '۷ روز' },
-    { n: 3, t: 'م۳: ساخت', sub: '۳۰ روز' },
-    { n: 4, t: 'م۴: تکثیر', sub: '۹۰ روز' },
-    { n: 5, t: 'م۵: راهبری', sub: 'مستمر' }
+    { n: 1, t: 'شروع', sub: '۷۲ ساعت' },
+    { n: 2, t: 'حرکت', sub: '۷ روز' },
+    { n: 3, t: 'ساخت', sub: '۳۰ روز' },
+    { n: 4, t: 'تکثیر', sub: '۹۰ روز' },
+    { n: 5, t: 'راهبری', sub: 'مستمر' }
   ];
 
   bar.innerHTML = labels.map(item => {
@@ -865,9 +866,10 @@ function renderTabs() {
     }
 
     return `
-      <button onclick="switchStage(${item.n})" class="flex flex-col items-center py-2 px-1 rounded-xl transition ${cls}" aria-current="${isActive ? 'step' : 'false'}">
-        <span class="text-[11px] leading-tight">${item.t}${lockIcon ? ' ' + lockIcon : ''}</span>
-        <span class="text-[9px] font-bold ${titleCls}">${item.sub}</span>
+      <button onclick="switchStage(${item.n})" class="flex flex-col items-center py-2 px-1 rounded-xl transition ${cls}" aria-current="${isActive ? 'step' : 'false'}" aria-label="مرحله ${faDigits(item.n)}: ${item.t} — ${item.sub}">
+        <span class="text-[8.5px] font-bold opacity-70 leading-none mb-0.5">${faDigits(item.n)}${lockIcon ? ' ' + lockIcon : ''}</span>
+        <span class="text-[12px] font-extrabold leading-tight">${item.t}</span>
+        <span class="text-[8.5px] font-bold ${titleCls} leading-none mt-0.5">${item.sub}</span>
       </button>
     `;
   }).join('');
