@@ -265,8 +265,9 @@ export async function saveProfile(profile = {}, rawCfg = getSupabaseConfig()) {
   if (profile.referrer_code != null) {
     row.referrer_code = String(profile.referrer_code).trim().toUpperCase().slice(0, 40) || null;
   }
-  if (profile.approved_stage != null) row.approved_stage = Number(profile.approved_stage) || 1;
-  if (profile.pending_stage !== undefined) row.pending_stage = profile.pending_stage ? Number(profile.pending_stage) : null;
+  // approved_stage عمداً اینجا نوشته نمی‌شود: فقط تأیید راهبر (RPC) آن را بالا می‌برد.
+  // اگر کلاینت آن را بنویسد، مقدار محلی کهنه (۱) تأیید راهبر را بازنویسی می‌کند.
+  // pending_stage هم فقط از طریق RPC درخواست/تصمیم مدیریت می‌شود.
   // فقط اگر مقدار واقعی آمده باشد؛ در غیر این صورت مقدار قبلی پاک نمی‌شود.
   if (profile.national_id) row.national_id = String(profile.national_id).slice(0, 40);
 
@@ -419,6 +420,29 @@ export async function decideStageApproval(approvalId, approve, note = '', rawCfg
     return { ok: false, message: msg };
   } catch (e) {
     return { ok: false, message: String(e && e.message || e) };
+  }
+}
+
+/**
+ * خواندن پروفایل خودم (مقادیر authoritative تأیید مرحله).
+ * approved_stage و pending_stage در جدول profiles نگهداری می‌شوند و منبع
+ * حقیقت برای باز شدن مرحله‌ها هستند؛ state_data فقط کپی کار است.
+ */
+export async function loadMyProfile(rawCfg = getSupabaseConfig()) {
+  const cfg = normalizeConfig(rawCfg);
+  const h = await headers();
+  const user = currentUser();
+  if (!cfgValid(cfg) || !h || !user?.id) return null;
+  try {
+    const res = await fetch(
+      `${cfg.url}/rest/v1/profiles?select=id,full_name,email,role,approved_stage,current_stage,pending_stage,referred_by,referrer_code&id=eq.${user.id}`,
+      { headers: h, cache: 'no-store' }
+    );
+    if (!res.ok) return null;
+    const rows = await res.json();
+    return Array.isArray(rows) && rows[0] ? rows[0] : null;
+  } catch (_) {
+    return null;
   }
 }
 
