@@ -4,7 +4,7 @@
  * دو چیز در این ماژول ساخته می‌شود:
  *   ۱) صحنهٔ تزئینی کوهستان (SVG + CSS) — ماه، ستاره، برف، پارالاکس کوه‌ها
  *   ۲) آواتار کاربر که با ۵ مرحلهٔ سیستم ۵×۵ رشد می‌کند
- *      (تولهٔ نوزاد → تولهٔ در حال رشد → نوجوان → جوان بالغ → پلنگ نگهبان)
+ *      (پلنگ نوزاد → پلنگ در حال رشد → نوجوان → جوان بالغ → پلنگ نگهبان)
  *
  * اصول:
  *  - همه‌چیز درون‌برنامه‌ای است؛ هیچ درخواست شبکه‌ای ندارد (آفلاین‌فرست).
@@ -263,8 +263,8 @@ export function faDigits(value) {
  * تفاوت اصلی از نسبت سر/بدن، دُم، خال‌ها، سِبیل و قلاده می‌آید.
  */
 export const LEOPARD_STAGES = [
-  { stage: 1, key: 'cub-infant',  level: 1,   code: 'CUBLING',  titleFa: 'تولهٔ نوزاد',      minProgress: 0,   scale: 0.88, tail: 'short', spots: 1, whiskers: false, collar: false },
-  { stage: 2, key: 'cub-growing', level: 10,  code: 'POUKLE',   titleFa: 'تولهٔ در حال رشد', minProgress: 10,  scale: 0.92, tail: 'curl',  spots: 2, whiskers: false, collar: false },
+  { stage: 1, key: 'cub-infant',  level: 1,   code: 'CUBLING',  titleFa: 'پلنگ نوزاد',      minProgress: 0,   scale: 0.88, tail: 'short', spots: 1, whiskers: false, collar: false },
+  { stage: 2, key: 'cub-growing', level: 10,  code: 'POUKLE',   titleFa: 'پلنگ در حال رشد', minProgress: 10,  scale: 0.92, tail: 'curl',  spots: 2, whiskers: false, collar: false },
   { stage: 3, key: 'adolescent',  level: 25,  code: 'TRAINEE',  titleFa: 'نوجوان',           minProgress: 25,  scale: 0.96, tail: 'long',  spots: 3, whiskers: true,  collar: false },
   { stage: 4, key: 'young-adult', level: 50,  code: 'VANGUARD', titleFa: 'جوان بالغ',        minProgress: 50,  scale: 0.98, tail: 'long',  spots: 4, whiskers: true,  collar: false },
   { stage: 5, key: 'guardian',    level: 100, code: 'GUARDIAN', titleFa: 'پلنگ نگهبان',      minProgress: 100, scale: 1,    tail: 'long',  spots: 4, whiskers: true,  collar: true }
@@ -307,7 +307,7 @@ export function leopardStageForProgress(progressPercent) {
 export function avatarMarkup(input = 1) {
   const item = input && typeof input === 'object' && 'spots' in input ? input : leopardStageFor(input);
 
-  // نسبت سر/بدن با رشد تغییر می‌کند: توله سرِ درشت‌تر و بدن کوچک‌تر دارد.
+  // نسبت سر/بدن با رشد تغییر می‌کند: بچه‌پلنگ سرِ درشت‌تر و بدن کوچک‌تر دارد.
   const headR = 13.4 - (item.stage - 1) * 0.55;
   const bodyRx = 14 + (item.stage - 1) * 0.9;
   const eyeR = 2.4 - (item.stage - 1) * 0.1;

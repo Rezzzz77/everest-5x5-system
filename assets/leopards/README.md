@@ -6,8 +6,8 @@
 
 ```
 assets/leopards/
-├── stage-1.png   ← تولهٔ نوزاد        (CUBLING  · سطح ۱)
-├── stage-2.png   ← تولهٔ در حال رشد   (POUKLE   · سطح ۱۰)
+├── stage-1.png   ← پلنگ نوزاد          (CUBLING  · سطح ۱)
+├── stage-2.png   ← پلنگ در حال رشد   (POUKLE   · سطح ۱۰)
 ├── stage-3.png   ← نوجوان             (TRAINEE  · سطح ۲۵)
 ├── stage-4.png   ← جوان بالغ          (VANGUARD · سطح ۵۰)
 └── stage-5.png   ← پلنگ نگهبان        (GUARDIAN · سطح ۱۰۰)
