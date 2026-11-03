@@ -13,6 +13,63 @@
     body { font-family: 'Vazirmatn', sans-serif; background-color: #090d16; color: #f8fafc; -webkit-tap-highlight-color: transparent; }
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    /* ===== تم شیشه‌ای (Liquid Glass) =====
+       قاعدهٔ اصلی: شیشه فقط روی نوارها و کارت‌ها؛ محتوا و متن روی لایهٔ مات.
+       اگر گرافیک‌ها غیرفعال باشند، همه‌چیز مات و خوانا می‌ماند. */
+    :root {
+      --glass-bg: rgba(20, 30, 48, .55);
+      --glass-bg-strong: rgba(16, 24, 40, .72);
+      --glass-border: rgba(255, 255, 255, .14);
+      --glass-border-strong: rgba(255, 255, 255, .22);
+      --glass-highlight: rgba(255, 255, 255, .10);
+      --glass-blur: 18px;
+    }
+
+    @supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+      #top-bar,
+      #bottom-nav {
+        background: var(--glass-bg-strong) !important;
+        -webkit-backdrop-filter: blur(22px) saturate(160%);
+        backdrop-filter: blur(22px) saturate(160%);
+        border-color: var(--glass-border) !important;
+      }
+      #top-bar::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: linear-gradient(180deg, var(--glass-highlight), transparent 60%);
+      }
+      /* کارت‌های شیشه‌ای */
+      #hero-card,
+      #coach-card > div,
+      #stage-tabs-bar,
+      .glass-card {
+        -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(150%);
+        backdrop-filter: blur(var(--glass-blur)) saturate(150%);
+        border-color: var(--glass-border) !important;
+        box-shadow: 0 10px 30px -18px rgba(0, 0, 0, .9), inset 0 1px 0 var(--glass-highlight) !important;
+      }
+      /* کارت قهرمان تیره‌تر تا متن روی شیشه خوانا بماند */
+      #hero-card { background: linear-gradient(150deg, rgba(24, 39, 78, .72), rgba(12, 20, 38, .78)) !important; }
+      /* نوار پایین: خط نوری بالا */
+      #bottom-nav { box-shadow: 0 -1px 0 var(--glass-border), 0 -10px 30px -20px rgba(0, 0, 0, .9); }
+    }
+
+    /* متن جایگزین وقتی شیشه پشتیبانی نمی‌شود یا کاربر شفافیت را کم کرده */
+    @media (prefers-reduced-transparency: reduce) {
+      :root { --glass-bg: rgba(15, 23, 42, .97); --glass-bg-strong: rgba(15, 23, 42, .99); --glass-blur: 0px; }
+      #top-bar, #bottom-nav, #hero-card, #coach-card > div, .glass-card { -webkit-backdrop-filter: none; backdrop-filter: none; }
+    }
+
+    /* هالهٔ ملایم پشت شیشه تا بلور کار کند */
+    .hero-glow {
+      background:
+        radial-gradient(circle at 22% 0%, rgba(56, 189, 248, .22) 0%, transparent 55%),
+        radial-gradient(circle at 78% 12%, rgba(168, 85, 247, .16) 0%, transparent 50%),
+        radial-gradient(circle at 50% 30%, rgba(16, 185, 129, .10) 0%, transparent 60%);
+    }
+
     /* نوار پایین همیشه دیده شود و زیر ناحیهٔ امن گوشی نرود */
     .safe-area-bottom { padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px)); }
 
@@ -337,7 +394,7 @@
 
     <!-- ================= بدنه اصلی مراحل ================= -->
         <!-- نوار ابزار چسبیده به بالای صفحه -->
-    <div id="top-bar" class="shrink-0 sticky top-0 z-20 bg-slate-900/92 backdrop-blur-md border-b border-slate-800 px-3 py-2">
+    <div id="top-bar" class="relative shrink-0 sticky top-0 z-20 bg-slate-900/92 backdrop-blur-md border-b border-slate-800 px-3 py-2">
       <div class="flex items-center justify-between gap-2">
         <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-slate-950/70 text-cyan-300 border border-slate-700 shrink-0">
           <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" aria-hidden="true"></span>
@@ -419,7 +476,7 @@
         <div id="s1-steps-container" class="space-y-2.5"></div>
 
         <!-- کارت لیست اولیه ۳۰ نفره (فرم رسمی اورست) -->
-        <div id="s1-list30-card" class="bg-slate-800/90 border border-blue-500/50 rounded-2xl p-3.5 space-y-3 shadow-lg">
+        <div id="s1-list30-card" class="bg-slate-800/90 border border-blue-500/50 rounded-2xl p-3.5 space-y-3 shadow-lg glass-card">
           <div class="flex justify-between items-center border-b border-slate-700/80 pb-2.5">
             <div class="flex items-center gap-2">
               <span class="text-lg">🏔️</span>
@@ -532,7 +589,7 @@
         </div>
 
         <!-- کارت معیار عبور مرحله ۱ -->
-        <div class="bg-slate-800/90 border border-slate-700 rounded-2xl p-3.5 space-y-2">
+        <div class="bg-slate-800/90 border border-slate-700 rounded-2xl p-3.5 space-y-2 glass-card">
           <div class="flex justify-between items-center">
             <span class="text-xs font-extrabold text-blue-400">🏆 معیار عبور به مرحله ۲</span>
             <span id="s1-progress-label" class="text-[11px] font-bold text-blue-200">۰ از ۵ اقدام</span>
@@ -565,7 +622,7 @@
         <div id="s2-counters-list" class="space-y-2"></div>
 
         <!-- فرم گزارش شبانه با قابلیت تایپ صوتی -->
-        <div class="bg-slate-800/90 border border-emerald-600/40 rounded-2xl p-3.5 space-y-2.5">
+        <div class="bg-slate-800/90 border border-emerald-600/40 rounded-2xl p-3.5 space-y-2.5 glass-card">
           <div class="flex justify-between items-center">
             <h3 class="text-xs font-extrabold text-emerald-400">📝 ۵. ثبت گزارش شبانه و نتیجه امروز</h3>
             <button onclick="startVoiceInput('s2-note')" class="text-[10px] bg-emerald-900/80 hover:bg-emerald-800 text-emerald-200 px-2.5 py-1 rounded-lg border border-emerald-600/40">
@@ -580,7 +637,7 @@
         </div>
 
         <!-- کارت معیار عبور مرحله ۲ -->
-        <div class="bg-slate-800/90 border border-slate-700 rounded-2xl p-3.5 space-y-2">
+        <div class="bg-slate-800/90 border border-slate-700 rounded-2xl p-3.5 space-y-2 glass-card">
           <div class="flex justify-between items-center text-xs font-extrabold text-emerald-400">
             <span>🏆 معیار عبور به مرحله ۳</span>
             <span>۷ روز استریک متوالی</span>
@@ -608,7 +665,7 @@
         <div id="s3-counters-list" class="space-y-2"></div>
 
         <!-- بانک لیست مخاطبین ۱۰۰+ نفره با لینک تماس و واتساپ -->
-        <div class="bg-slate-800/90 border border-orange-600/40 rounded-2xl p-3.5 space-y-2.5">
+        <div class="bg-slate-800/90 border border-orange-600/40 rounded-2xl p-3.5 space-y-2.5 glass-card">
           <div class="flex justify-between items-center">
             <h3 class="text-xs font-extrabold text-orange-400">📋 ۳. لیست فعال و پویا (معیار: ۱۰۰+ نفر)</h3>
             <span id="crm-total-badge" class="text-[10px] bg-orange-900/80 text-orange-200 px-2.5 py-0.5 rounded-full font-bold">۰ / ۱۰۰ نفر</span>
@@ -650,7 +707,7 @@
         </div>
 
         <!-- معیار عبور مرحله ۳ -->
-        <div class="bg-slate-800/90 border border-slate-700 rounded-2xl p-3.5 space-y-2">
+        <div class="bg-slate-800/90 border border-slate-700 rounded-2xl p-3.5 space-y-2 glass-card">
           <div class="text-xs font-extrabold text-orange-400">🏆 ۵ معیار عبور از مرحله ۳ (ساخت ۳۰ روزه):</div>
           <div id="s3-pass-criteria" class="space-y-1.5 text-xs text-slate-300"></div>
           <div id="s3-approval-box"></div>
@@ -675,7 +732,7 @@
         </div>
 
         <!-- ماتریس ۵ گام تکثیر برای هر عضو مستقیم -->
-        <div class="bg-slate-800/90 border border-purple-600/40 rounded-2xl p-3.5 space-y-2.5">
+        <div class="bg-slate-800/90 border border-purple-600/40 rounded-2xl p-3.5 space-y-2.5 glass-card">
           <div class="flex justify-between items-center gap-2">
             <h3 class="text-xs font-extrabold text-purple-300">👥 ماتریس ۵ گام تکثیر</h3>
             <span class="text-[9px] text-slate-500 shrink-0">برای هر عضو جدا ثبت می‌شود</span>
@@ -693,7 +750,7 @@
         <div id="pending-approvals"></div>
 
         <!-- پایش آنلاین اعضای سازمان برای بالاسری -->
-        <div class="bg-slate-800/90 border border-purple-500/50 rounded-2xl p-3.5 space-y-3 shadow-lg">
+        <div class="bg-slate-800/90 border border-purple-500/50 rounded-2xl p-3.5 space-y-3 shadow-lg glass-card">
           <div class="flex justify-between items-center border-b border-slate-700/80 pb-2">
             <div>
               <span class="text-[10px] bg-purple-600 text-white px-2 py-0.5 rounded-full font-bold">دیده‌بانی آنلاین</span>
@@ -776,7 +833,7 @@
         </div>
 
         <!-- معیار عبور مرحله ۴ -->
-        <div class="bg-slate-800/90 border border-slate-700 rounded-2xl p-3.5 space-y-2">
+        <div class="bg-slate-800/90 border border-slate-700 rounded-2xl p-3.5 space-y-2 glass-card">
           <div class="text-xs font-extrabold text-purple-400">🏆 سؤال اصلی عبور به راهبری: «آیا بدون حضور من، سیستم در عمق سازمان اجرا می‌شود؟»</div>
           <div id="s4-pass-criteria" class="space-y-1.5 text-xs text-slate-300"></div>
           <div id="s4-approval-box"></div>
@@ -792,7 +849,7 @@
         </div>
 
         <!-- محور ۵: هدف‌گذاری و داشبورد عددی سازمان -->
-        <div class="bg-slate-800/90 border border-amber-500/40 rounded-2xl p-3.5 space-y-3">
+        <div class="bg-slate-800/90 border border-amber-500/40 rounded-2xl p-3.5 space-y-3 glass-card">
           <div class="flex justify-between items-center">
             <h3 class="text-xs font-extrabold text-amber-400">📊 ۵. داشبورد عددی سازمان (مدیریت با عدد)</h3>
             <span class="text-[10px] text-slate-400">به‌روزرسانی زنده</span>
@@ -826,7 +883,7 @@
         </div>
 
         <!-- محور ۳: ثبت جلسات هدفمند راهبری -->
-        <div class="bg-slate-800/90 border border-amber-500/30 rounded-2xl p-3.5 space-y-2.5">
+        <div class="bg-slate-800/90 border border-amber-500/30 rounded-2xl p-3.5 space-y-2.5 glass-card">
           <h3 class="text-xs font-extrabold text-amber-400">📅 ۳. مدیریت جلسات منظم و هدفمند تیم</h3>
           <div class="flex gap-1.5">
             <input id="meeting-title" type="text" placeholder="عنوان جلسه..." class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-white" />
@@ -844,7 +901,7 @@
         </div>
 
         <!-- ۵ استاندارد راهبر اورست -->
-        <div class="bg-slate-800/90 border border-slate-700 rounded-2xl p-3.5 space-y-2">
+        <div class="bg-slate-800/90 border border-slate-700 rounded-2xl p-3.5 space-y-2 glass-card">
           <div class="text-xs font-extrabold text-amber-400">👑 استانداردهای ۵گانه راهبر اورست (کنترل روزانه):</div>
           <div id="s5-standards-list" class="space-y-1.5 text-xs text-slate-300"></div>
         </div>
@@ -1050,7 +1107,7 @@
       <div id="ai-chat-messages" class="flex-1 overflow-y-auto p-3.5 space-y-3 no-scrollbar text-xs leading-relaxed">
         <div class="flex items-start gap-2">
           <div class="w-7 h-7 rounded-lg bg-purple-600/30 border border-purple-500/40 flex items-center justify-center text-sm shrink-0">🤖</div>
-          <div class="bg-slate-800/90 border border-slate-700 p-3 rounded-2xl rounded-tr-none text-slate-200 max-w-[88%] space-y-1.5 shadow-sm">
+          <div class="bg-slate-800/90 border border-slate-700 p-3 rounded-2xl rounded-tr-none text-slate-200 max-w-[88%] space-y-1.5 shadow-sm glass-card">
             <div class="font-extrabold text-purple-300 text-[11px]">سلام همکار پرانرژی اورست! 👋</div>
             <p>من مربی هوشمند سیستم ۵×۵ اورست مجهز به موتور هوش مصنوعی DeepSeek هستم. آماده‌ام تا بهت کمک کنم:</p>
             <ul class="text-[10px] text-slate-300 space-y-1 list-disc list-inside pt-0.5">
@@ -1080,6 +1137,6 @@
   <!-- اورلی جشن ارتقای مرحله -->
   <div id="celebrate-root" class="celebrate-root" aria-hidden="true"></div>
 
-  <script type="module" src="./app.js?v=0.9.19"></script>
+  <script type="module" src="./app.js?v=0.10.0"></script>
 </body>
 </html>
