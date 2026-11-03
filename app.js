@@ -6,7 +6,8 @@
 import {
   loadFromStorage, saveToStorage, syncState, loadFromCloud, isSupabaseConfigured, testConnection,
   clearStorage, getDefaultData, saveProfile, sendBackupToN8n, exportStateAsJson, importStateFromJson,
-  loadTeamMembers, approveMemberStage, requestStageApproval, shouldPreferRemote
+  loadTeamMembers, approveMemberStage, requestStageApproval, shouldPreferRemote,
+  resolveInviteCode
 } from './src/db.js';
 import {
   getSupabaseConfig, saveSupabaseConfig, clearSupabaseConfig, validateConfig,
@@ -462,7 +463,7 @@ function backToEmailStep() {
 
 /** پاک‌کردن ورودی‌های حساس صفحه ورود هنگام خروج */
 function clearAuthFields() {
-  for (const id of ['reg-email', 'reg-code', 'reg-name', 'reg-id', 'reg-upline']) {
+  for (const id of ['reg-email', 'reg-code', 'reg-name', 'reg-id', 'reg-phone', 'reg-invite-code', 'reg-invite-otp']) {
     const el = document.getElementById(id);
     if (el) el.value = '';
   }
@@ -490,34 +491,45 @@ async function requestOtp(ev) {
 }
 
 function toggleRoleUplineField() {
-  const roleSelect = document.getElementById('reg-role-select');
-  const uplineBox = document.getElementById('reg-upline-box');
-  if (!roleSelect || !uplineBox) return;
-  if (roleSelect.value === 'leader') {
-    uplineBox.classList.add('hidden');
-  } else {
-    uplineBox.classList.remove('hidden');
-  }
+  // نقش راهبر حذف شده است؛ همه یک نقش (member) دارند و معرف از روی کد تعیین می‌شود.
+  // این تابع فقط برای سازگاری با نسخه‌های قدیمی HTML باقی مانده است.
+  return;
+}
+
+/** شمارهٔ موبایل ایران: ۰۹xxxxxxxxx یا +۹۸۹xxxxxxxxx */
+function normalizePhone(raw) {
+  const digits = String(raw || '').replace(/[^\d+]/g, '');
+  if (/^09\d{9}$/.test(digits)) return digits;
+  if (/^\+989\d{9}$/.test(digits)) return '0' + digits.slice(3);
+  if (/^989\d{9}$/.test(digits)) return '0' + digits.slice(2);
+  return '';
 }
 
 async function handlePasswordAuth() {
   const emailInput = document.getElementById('reg-email');
   const passwordInput = document.getElementById('reg-password');
   const nameInput = document.getElementById('reg-name-input');
-  const roleSelect = document.getElementById('reg-role-select');
-  const uplineInput = document.getElementById('reg-upline-input');
+  const phoneInput = document.getElementById('reg-phone');
+  const inviteInput = document.getElementById('reg-invite-code');
   const btn = document.getElementById('btn-password-auth');
 
   const email = (emailInput?.value || '').trim();
   const password = (passwordInput?.value || '').trim();
   const enteredName = (nameInput?.value || '').trim();
-  const enteredRole = roleSelect?.value || 'member';
-  const enteredUpline = (uplineInput?.value || '').trim();
+  const phone = normalizePhone(phoneInput?.value || '');
+  const inviteCode = (inviteInput?.value || '').trim().toUpperCase();
 
   if (!isValidEmail(email)) return authMsg(1, 'err', 'ایمیل معتبر نیست.');
   if (!password || password.length < 6) return authMsg(1, 'err', 'رمز عبور باید حداقل ۶ کاراکتر باشد.');
 
   const originalBtnText = btn ? btn.innerHTML : 'ورود / ثبت‌نام آنی با رمز عبور 🚀';
+  const restoreBtn = () => {
+    if (!btn) return;
+    btn.disabled = false;
+    btn.innerHTML = originalBtnText;
+    btn.classList.remove('opacity-75', 'cursor-wait');
+  };
+
   if (btn) {
     btn.disabled = true;
     btn.innerHTML = 'در حال بررسی و ورود… ⏳';
@@ -526,12 +538,38 @@ async function handlePasswordAuth() {
   authMsg(1, 'info', 'در حال ورود / ثبت‌نام آنی… ⏳');
 
   try {
+    /* ۱) اول تلاش برای ورود. کاربران موجود هیچ‌وقت کد معرف نمی‌دهند. */
     let r = await signInWithPassword(email, password);
+
+    /* ۲) اگر ورود نشد، یعنی ثبت‌نام تازه است — اینجا کد معرف اجباری می‌شود. */
     if (!r.ok) {
+      if (!enteredName) { restoreBtn(); return authMsg(1, 'err', 'برای ثبت‌نام تازه، نام و نام خانوادگی لازم است.'); }
+      if (!phone) { restoreBtn(); return authMsg(1, 'err', 'برای ثبت‌نام تازه، شمارهٔ موبایل معتبر لازم است (مثال: ۰۹۱۲۱۲۳۴۵۶۷).'); }
+      if (!inviteCode || inviteCode.length < 6) {
+        restoreBtn();
+        authMsg(1, 'err', 'کد معرف اجباری است. از معرف خودت بگیر.');
+        document.getElementById('reg-invite-code')?.focus();
+        return;
+      }
+
+      if (btn) btn.innerHTML = 'در حال بررسی کد معرف… ⏳';
+      authMsg(1, 'info', 'در حال بررسی کد معرف… ⏳');
+
+      const invite = await resolveInviteCode(inviteCode);
+      if (!invite.valid) {
+        restoreBtn();
+        const hint = document.getElementById('reg-invite-hint');
+        if (hint) hint.textContent = 'این کد معرف معتبر یا فعال نیست.';
+        document.getElementById('reg-invite-code')?.focus();
+        return authMsg(1, 'err', 'کد معرف معتبر نیست یا منقضی شده است.');
+      }
+
       const metadata = {
-        full_name: enteredName || 'عضو تیم اورست',
-        role: enteredRole,
-        upline: enteredRole === 'leader' ? 'راهبر ارشد اورست' : (enteredUpline || 'راهبر تیم اورست')
+        full_name: enteredName,
+        role: 'member',
+        phone: phone,
+        referrer_code: inviteCode,
+        upline: ''
       };
       const upRes = await signUpWithPassword(email, password, metadata);
       if (upRes.ok) {
@@ -573,9 +611,9 @@ async function handlePasswordAuth() {
     const sameUser = Boolean(previousOwner && previousOwner === u.id && !appState.user?.local);
     if (previousOwner && !sameUser) appState = getDefaultData();
 
-    const resolvedRole = enteredRole || u.role || 'member';
+    const resolvedRole = 'member';
     const resolvedName = enteredName || u.name || 'عضو تیم اورست';
-    const resolvedUpline = resolvedRole === 'leader' ? 'راهبر ارشد اورست' : (enteredUpline || u.upline || 'راهبر تیم اورست');
+    const resolvedUpline = u.upline || '';
 
     appState.ownerId = u.id;
     appState.user = {
@@ -595,9 +633,10 @@ async function handlePasswordAuth() {
     try {
       await saveProfile({
         full_name: appState.user.name,
-        role: appState.user.role,
+        role: 'member',
+        phone: phone,
+        referrer_code: inviteCode,
         upline: appState.user.upline,
-        upline_email: appState.user.upline.includes('@') ? appState.user.upline : undefined,
         current_stage: getHighestUnlockedStage(appState),
         approved_stage: appState.approvedStage || 1,
         pending_stage: appState.pendingApprovalStage || null,
@@ -639,13 +678,19 @@ async function verifyOtpAndStart() {
   const code = document.getElementById('reg-code').value.trim();
   const name = document.getElementById('reg-name').value.trim();
   const nationalId = document.getElementById('reg-id').value.trim();
-  const upline = document.getElementById('reg-upline').value.trim();
+  const inviteInput = document.getElementById('reg-invite-otp');
+  const inviteCode = (inviteInput?.value || '').trim().toUpperCase();
 
   if (!/^\d{6,10}$/.test(code)) return authMsg(2, 'err', 'کد ورود (۶ تا ۱۰ رقم) را وارد کن.');
   if (!name) return authMsg(2, 'err', 'نام و نام خانوادگی را وارد کن.');
+  if (!inviteCode || inviteCode.length < 6) return authMsg(2, 'err', 'کد معرف اجباری است و باید معتبر باشد.');
+
+  authMsg(2, 'info', 'در حال بررسی کد معرف… ⏳');
+  const invite = await resolveInviteCode(inviteCode);
+  if (!invite.valid) return authMsg(2, 'err', 'کد معرف معتبر یا فعال نیست.');
 
   authMsg(2, 'info', 'در حال بررسی کد… ⏳');
-  const r = await verifyOtp(pendingEmail, code, { full_name: name, upline: upline || '' });
+  const r = await verifyOtp(pendingEmail, code, { full_name: name, role: 'member', referrer_code: inviteCode, upline: '' });
   if (!r.ok) return authMsg(2, 'err', authErrorText(r));
 
   const u = currentUser(r.session);
@@ -663,7 +708,8 @@ async function verifyOtpAndStart() {
     id: u.id,
     email: u.email,
     name: (u.name || name).trim(),
-    upline: upline || u.upline || 'راهبر تیم اورست'
+    role: 'member',
+    upline: u.upline || ''
   };
   delete appState.user.nationalId;
   if (!appState.startTime) appState.startTime = Date.now();
@@ -672,8 +718,9 @@ async function verifyOtpAndStart() {
   const nationalIdToSave = nationalId || legacyNationalId;
   const profileResult = await saveProfile({
     full_name: appState.user.name,
+    role: 'member',
+    referrer_code: inviteCode,
     upline: appState.user.upline,
-    upline_email: (upline && upline.includes('@')) ? upline.trim().toLowerCase() : '',
     current_stage: getHighestUnlockedStage(appState),
     s2_streak: Number(appState.s2Streak) || 0,
     crm_count: (appState.crm || []).length,
@@ -2223,10 +2270,10 @@ function initApp() {
     clearAuthFields();
     try {
       const params = new URLSearchParams(window.location.search);
-      const ref = params.get('upline') || params.get('ref');
-      const uplineInput = document.getElementById('reg-upline');
-      if (ref && uplineInput) {
-        uplineInput.value = decodeURIComponent(ref).trim();
+      const ref = params.get('ref') || params.get('upline');
+      const inviteInput = document.getElementById('reg-invite-code');
+      if (ref && inviteInput) {
+        inviteInput.value = decodeURIComponent(ref).trim().toUpperCase();
       }
     } catch (_) {}
     document.getElementById('auth-screen').classList.remove('hidden');

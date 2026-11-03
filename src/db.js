@@ -260,6 +260,11 @@ export async function saveProfile(profile = {}, rawCfg = getSupabaseConfig()) {
   if (profile.s2_streak != null) row.s2_streak = Number(profile.s2_streak) || 0;
   if (profile.crm_count != null) row.crm_count = Number(profile.crm_count) || 0;
   if (profile.role != null) row.role = String(profile.role).slice(0, 50);
+  if (profile.phone != null) row.phone = String(profile.phone).replace(/[^\d+]/g, '').slice(0, 20) || null;
+  // referred_by هرگز از کلاینت فرستاده نمی‌شود؛ سرور آن را از روی کد تعیین می‌کند.
+  if (profile.referrer_code != null) {
+    row.referrer_code = String(profile.referrer_code).trim().toUpperCase().slice(0, 40) || null;
+  }
   if (profile.approved_stage != null) row.approved_stage = Number(profile.approved_stage) || 1;
   if (profile.pending_stage !== undefined) row.pending_stage = profile.pending_stage ? Number(profile.pending_stage) : null;
   // فقط اگر مقدار واقعی آمده باشد؛ در غیر این صورت مقدار قبلی پاک نمی‌شود.
@@ -278,6 +283,32 @@ export async function saveProfile(profile = {}, rawCfg = getSupabaseConfig()) {
     return { ok: false, reason: res.status === 401 || res.status === 403 ? 'auth' : 'http', status: res.status, detail: text };
   } catch (e) {
     return { ok: false, reason: 'network', detail: String(e && e.message || e) };
+  }
+}
+
+/**
+ * اعتبارسنجی کد معرف پیش از ثبت‌نام.
+ * این RPC برای anon هم باز است، چون کاربر هنوز حساب ندارد.
+ * @param {string} code کد معرف
+ * @returns {Promise<{valid:boolean, ownerId:string|null}>}
+ */
+export async function resolveInviteCode(code, rawCfg = getSupabaseConfig()) {
+  const cfg = normalizeConfig(rawCfg);
+  const value = String(code || '').trim().toUpperCase();
+  if (!cfgValid(cfg) || !value) return { valid: false, ownerId: null };
+
+  try {
+    const res = await fetch(`${cfg.url}/rest/v1/rpc/resolve_invite_code`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': cfg.key, 'Authorization': `Bearer ${cfg.key}` },
+      body: JSON.stringify({ p_code: value })
+    });
+    if (!res.ok) return { valid: false, ownerId: null, reason: 'http', status: res.status };
+    const rows = await res.json();
+    const row = Array.isArray(rows) ? rows[0] : rows;
+    return { valid: Boolean(row?.valid), ownerId: row?.owner_id || null };
+  } catch (e) {
+    return { valid: false, ownerId: null, reason: 'network', detail: String(e && e.message || e) };
   }
 }
 
