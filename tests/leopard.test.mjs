@@ -105,7 +105,7 @@ test('avatar: درصد پیشرفت دقیقاً روی مرزهای ۰/۱۰/۲�
   assert.equal(leopardStageForProgress(100).code, 'GUARDIAN');
 });
 
-test('avatar: پیشرفت نامعتبر به تولهٔ نوزاد برمی‌گردد', () => {
+test('avatar: پیشرفت نامعتبر به پلنگ نوزاد برمی‌گردد', () => {
   assert.equal(leopardStageForProgress(NaN).code, 'CUBLING');
   assert.equal(leopardStageForProgress(undefined).code, 'CUBLING');
   assert.equal(leopardStageForProgress(-20).code, 'CUBLING');
