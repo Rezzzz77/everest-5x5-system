@@ -1,6 +1,6 @@
 {
   "name": "everest-5x5-system",
-  "version": "0.9.13",
+  "version": "0.9.14",
   "description": "سیستم ۵×۵ تیم اورست — PWA مدیریت رشد فروش",
   "type": "module",
   "scripts": {

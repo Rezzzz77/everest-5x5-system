@@ -211,8 +211,8 @@
     .icon-btn:active { transform: scale(.94); }
     .icon-btn.danger:hover { background: rgba(190,18,60,.55); }
     /* حلقهٔ پیشرفت در کارت قهرمان (۹۶px) */
-    #leopard-progress.leopard-ring { width: 96px; height: 96px; border-radius: 50%; padding: 3px; }
-    #leopard-progress #leopard-avatar { border-radius: 19px; }
+    #leopard-progress.leopard-ring { width: 128px; height: 128px; border-radius: 50%; padding: 4px; }
+    #leopard-progress #leopard-avatar { border-radius: 26px; }
     /* چیپ سطح: زیر آواتار، بیرون‌زده */
     #leopard-level-label.leopard-level-chip {
       position: absolute; left: 50%; bottom: -10px; transform: translateX(-50%);
@@ -220,9 +220,9 @@
       background: linear-gradient(90deg, #fbbf24, #f97316);
       color: #0b0f19; border: 1px solid #fff;
       /* !important چون گروه Tailwind روی ریشه اجازه نمی‌داد */
-      font-size: 13px !important; font-weight: 900; padding: 3px 8px;
-      max-width: 112px; overflow: hidden; text-overflow: ellipsis;
-      line-height: 1.35; min-height: 20px;
+      font-size: 13px !important; font-weight: 900; padding: 4px 12px;
+      max-width: 148px; overflow: hidden; text-overflow: ellipsis;
+      line-height: 1.35; min-height: 24px;
       box-shadow: 0 4px 10px rgba(2,6,23,.55);
     }
   </style>
@@ -362,7 +362,7 @@
       <div id="hero-card" class="relative bg-gradient-to-br from-indigo-900/90 via-blue-900/80 to-slate-900 rounded-3xl p-4 border border-blue-400/30 shadow-[0_10px_30px_-10px_rgba(37,99,235,0.5)]">
         <div class="flex items-center gap-4">
           <!-- آواتار با هاله و نشان سطح -->
-          <div class="relative w-24 h-24 shrink-0">
+          <div class="relative w-32 h-32 shrink-0">
             <div class="absolute inset-0 bg-gradient-to-tr from-cyan-400 to-blue-600 rounded-2xl rotate-3 opacity-40 blur-sm" aria-hidden="true"></div>
             <div id="leopard-progress" data-progress="0" class="leopard-ring" title="پیشرفت کل">
               <div id="leopard-avatar" class="leopard-avatar" data-level="1"></div>
@@ -1067,6 +1067,6 @@
   <!-- اورلی جشن ارتقای مرحله -->
   <div id="celebrate-root" class="celebrate-root" aria-hidden="true"></div>
 
-  <script type="module" src="./app.js?v=0.9.13"></script>
+  <script type="module" src="./app.js?v=0.9.14"></script>
 </body>
 </html>
