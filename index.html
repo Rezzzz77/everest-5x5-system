@@ -519,9 +519,9 @@
 
           <!-- ابزارهای جستجو و خروجی اکسل -->
           <div class="flex items-center justify-between gap-2 pt-1 border-t border-slate-700/60">
-            <input id="l30-search" oninput="renderInitialList30()" type="text" placeholder="🔍 جستجو در نام، نسبت یا زمینه..." class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1 text-[10px] text-white" />
-            <button onclick="exportInitialList30Csv()" title="دانلود خروجی اکسل / CSV لیست ۳۰ نفره" class="bg-emerald-700 hover:bg-emerald-600 text-white font-bold px-2.5 py-1 rounded-xl text-[10px] flex items-center gap-1 transition shadow">
-              <span>📊 خروجی اکسل</span>
+            <input id="l30-search" oninput="renderInitialList30()" type="text" placeholder="🔍 جستجو در نام، نسبت یا زمینه..." class="flex-1 min-w-0 bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-[10px] text-white" />
+            <button onclick="exportInitialList30Csv()" title="دانلود خروجی اکسل / CSV لیست ۳۰ نفره" class="shrink-0 bg-emerald-700 hover:bg-emerald-600 text-white font-bold px-2 py-1.5 rounded-xl text-[10px] flex items-center gap-1 whitespace-nowrap transition shadow">
+              <span>📊</span> اکسل
             </button>
           </div>
 
@@ -628,9 +628,14 @@
             <input id="crm-notes" type="text" placeholder="یادداشت پیگیری (اختیاری)..." class="col-span-7 bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-[11px] text-white" />
           </div>
           <!-- نوار فیلتر و جستجو و خروجی اکسل -->
-          <div class="flex items-center gap-1.5 pt-1 border-t border-slate-700/60">
-            <input id="crm-search-input" oninput="filterCRMList()" type="text" placeholder="🔍 جستجو در نام/شماره..." class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1 text-[10px] text-white" />
-            <select id="crm-filter-status" onchange="filterCRMList()" class="bg-slate-900 border border-slate-700 rounded-xl px-2 py-1 text-[9px] text-slate-300">
+          <div class="pt-1 border-t border-slate-700/60 space-y-1.5">
+            <div class="flex items-center gap-1.5">
+              <input id="crm-search-input" oninput="filterCRMList()" type="text" placeholder="🔍 جستجو در نام/شماره..." class="flex-1 min-w-0 bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-2 min-h-[36px] text-[11px] text-white" />
+              <button onclick="exportCRMToExcel()" title="دانلود لیست اکسل CRM" class="shrink-0 bg-emerald-700 hover:bg-emerald-600 text-white font-bold px-2.5 py-2 min-h-[36px] rounded-xl text-[10px] flex items-center gap-1 whitespace-nowrap shadow">
+                <span>📊</span> اکسل
+              </button>
+            </div>
+            <select id="crm-filter-status" onchange="filterCRMList()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2 py-1.5 min-h-[34px] text-[10px] text-slate-300">
               <option value="all">همه وضعیت‌ها</option>
               <option value="تازه اضافه‌شده">تازه اضافه‌شده</option>
               <option value="دعوت شده">دعوت شده</option>
@@ -638,9 +643,6 @@
               <option value="در حال پیگیری">در حال پیگیری</option>
               <option value="مشتری / عضو تیم">مشتری / عضو تیم</option>
             </select>
-            <button onclick="exportCRMToExcel()" title="دانلود لیست اکسل CRM" class="bg-emerald-700 hover:bg-emerald-600 text-white font-bold px-2.5 py-1 rounded-xl text-[10px] flex items-center gap-1 whitespace-nowrap shadow">
-              <span>📊</span> اکسل
-            </button>
           </div>
           <div id="crm-contacts-container" class="space-y-2 max-h-52 overflow-y-auto pr-0.5"></div>
         </div>
@@ -735,25 +737,31 @@
           </div>
 
           <!-- فیلتر و جستجوی اعضای تیم و خروجی اکسل -->
-          <div class="flex items-center gap-1.5 pt-1 border-t border-slate-700/60">
-            <input id="team-search-input" oninput="filterTeamList()" type="text" placeholder="🔍 نام یا ایمیل عضو..." class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1 text-[10px] text-white" />
-            <select id="team-filter-stage" onchange="filterTeamList()" class="bg-slate-900 border border-slate-700 rounded-xl px-2 py-1 text-[9px] text-slate-300">
-              <option value="all">همه مراحل</option>
-              <option value="1">مرحله ۱</option>
-              <option value="2">مرحله ۲</option>
-              <option value="3">مرحله ۳</option>
-              <option value="4">مرحله ۴</option>
-              <option value="5">مرحله ۵</option>
-            </select>
-            <select id="team-filter-health" onchange="filterTeamList()" class="bg-slate-900 border border-slate-700 rounded-xl px-2 py-1 text-[9px] text-slate-300">
-              <option value="all">همه وضعیت‌ها</option>
-              <option value="active">🟢 فقط فعال</option>
-              <option value="attention">🟡 نیازمند توجه</option>
-              <option value="risk">🔴 در خطر توقف</option>
-            </select>
-            <button onclick="exportTeamToExcel()" title="دانلود خروجی اکسل تیم" class="bg-emerald-700 hover:bg-emerald-600 text-white font-bold px-2 py-1 rounded-xl text-[10px] flex items-center gap-1 whitespace-nowrap shadow">
-              <span>📊</span> اکسل
-            </button>
+          <div class="pt-1 border-t border-slate-700/60 space-y-1.5">
+            <!-- ردیف اول: جستجو + دکمهٔ اکسل (همیشه داخل کادر) -->
+            <div class="flex items-center gap-1.5">
+              <input id="team-search-input" oninput="filterTeamList()" type="text" placeholder="🔍 نام یا ایمیل عضو..." class="flex-1 min-w-0 bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-2 min-h-[36px] text-[11px] text-white" />
+              <button onclick="exportTeamToExcel()" title="دانلود خروجی اکسل تیم" class="shrink-0 bg-emerald-700 hover:bg-emerald-600 text-white font-bold px-2.5 py-2 min-h-[36px] rounded-xl text-[10px] flex items-center gap-1 whitespace-nowrap shadow">
+                <span>📊</span> اکسل
+              </button>
+            </div>
+            <!-- ردیف دوم: فیلترها -->
+            <div class="flex items-center gap-1.5">
+              <select id="team-filter-stage" onchange="filterTeamList()" class="flex-1 min-w-0 bg-slate-900 border border-slate-700 rounded-xl px-2 py-1.5 min-h-[34px] text-[10px] text-slate-300">
+                <option value="all">همه مراحل</option>
+                <option value="1">مرحله ۱</option>
+                <option value="2">مرحله ۲</option>
+                <option value="3">مرحله ۳</option>
+                <option value="4">مرحله ۴</option>
+                <option value="5">مرحله ۵</option>
+              </select>
+              <select id="team-filter-health" onchange="filterTeamList()" class="flex-1 min-w-0 bg-slate-900 border border-slate-700 rounded-xl px-2 py-1.5 min-h-[34px] text-[10px] text-slate-300">
+                <option value="all">همه وضعیت‌ها</option>
+                <option value="active">🟢 فعال</option>
+                <option value="attention">🟡 توجه</option>
+                <option value="risk">🔴 در خطر</option>
+              </select>
+            </div>
           </div>
 
           <!-- کانتینر نمایش اعضا و مراحل آن‌ها -->
@@ -1067,6 +1075,6 @@
   <!-- اورلی جشن ارتقای مرحله -->
   <div id="celebrate-root" class="celebrate-root" aria-hidden="true"></div>
 
-  <script type="module" src="./app.js?v=0.9.14"></script>
+  <script type="module" src="./app.js?v=0.9.15"></script>
 </body>
 </html>
