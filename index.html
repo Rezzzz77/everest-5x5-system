@@ -16,59 +16,7 @@
     /* نوار پایین همیشه دیده شود و زیر ناحیهٔ امن گوشی نرود */
     .safe-area-bottom { padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px)); }
 
-    /* ---- هدر جمع‌شو (سبک توییتر) ---- */
-    /* در حالت کامل، کارت قهرمان و تب‌ها دیده می‌شوند */
-    #app-header .hero-card-body,
-    #app-header #stage-tabs-bar,
-    #app-header #icon-bar {
-      transition: opacity .22s ease, max-height .28s ease, margin .22s ease, transform .22s ease;
-      overflow: hidden;
-      max-height: 600px;
-      opacity: 1;
-    }
-    /* حالت جمع‌شده: آواتار و تب‌ها کنار می‌روند، نام و درصد می‌مانند */
-    #app-header.header-collapsed {
-      padding-top: .5rem;
-      padding-bottom: .5rem;
-      box-shadow: 0 6px 18px -12px rgba(2, 6, 23, .9);
-    }
-    #app-header.header-collapsed .hero-card-body {
-      max-height: 0;
-      opacity: 0;
-      margin: 0;
-      padding-top: 0;
-      padding-bottom: 0;
-      transform: translateY(-6px);
-      border-width: 0;
-    }
-    #app-header.header-collapsed #stage-tabs-bar {
-      max-height: 0;
-      opacity: 0;
-      margin: 0;
-      padding-top: 0;
-      border-top-width: 0;
-    }
-    #app-header.header-collapsed #icon-bar {
-      max-height: 0;
-      opacity: 0;
-      margin: 0;
-      pointer-events: none;
-    }
-    /* نوار تحلیل‌شدهٔ مشخصات که فقط در حالت جمع‌شده دیده می‌شود */
-    #header-compact {
-      display: none;
-      align-items: center;
-      justify-content: space-between;
-      gap: .5rem;
-      min-height: 44px;
-    }
-    #app-header.header-collapsed #header-compact { display: flex; }
-    #app-header.header-collapsed .header-topbar { display: none; }
-    @media (prefers-reduced-motion: reduce) {
-      #app-header .hero-card-body,
-      #app-header #stage-tabs-bar,
-      #app-header #icon-bar { transition: none; }
-    }
+    
     .nav-item { -webkit-tap-highlight-color: transparent; transition: transform .12s ease; }
     .nav-item:active { transform: scale(.96); }
     @media (prefers-reduced-motion: reduce) { .nav-item { transition: none; } }
@@ -370,9 +318,31 @@
     <div class="absolute top-0 inset-x-0 h-72 hero-glow pointer-events-none"></div>
 
     <!-- ================= هدر: نوار ابزار + کارت قهرمان (آواتار/سطح/XP) + تب مراحل ================= -->
-    <header id="app-header" class="relative z-10 px-4 pt-4 pb-2 header-expand">
+    
+
+    <!-- ================= بنر هوشمند یادآور گزارش شبانه ================= -->
+    <div id="evening-reminder-banner" class="hidden mx-4 mt-2 p-2.5 bg-gradient-to-l from-amber-600 to-amber-800 border border-amber-400/60 rounded-2xl flex items-center justify-between text-xs text-amber-100 shadow-lg">
+      <div class="flex items-center gap-2">
+        <span class="text-lg">🌙</span>
+        <div>
+          <span class="font-extrabold text-white text-[11px]">زمان ثبت گزارش شبانه است!</span>
+          <span class="text-[9px] block text-amber-200">زنجیره ۷ روزه امروزت رو ثبت کن تا استریک نسوزه.</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <button onclick="switchStage(2)" class="bg-slate-950 text-amber-300 font-extrabold px-2.5 py-1 rounded-xl text-[10px] hover:bg-slate-900 shadow">ثبت گزارش</button>
+        <button onclick="dismissEveningReminder()" title="بستن" class="text-white/80 hover:text-white px-1.5 py-0.5 text-xs font-bold">✕</button>
+      </div>
+    </div>
+
+    <!-- ================= Coach Card (همیشه قابل مشاهده) ================= -->
+    <div id="coach-card" class="px-4 pb-2" aria-live="polite"></div>
+
+    <!-- ================= بدنه اصلی مراحل ================= -->
+    <main id="app-main" class="flex-1 min-h-0 overflow-y-auto overscroll-contain pb-4 no-scrollbar">
+<header id="app-header" class="relative z-10 px-4 pt-4 pb-2">
       <!-- ۱) نوار ابزار -->
-      <div class="header-topbar flex items-center justify-between mb-3">
+      <div class="flex items-center justify-between mb-3">
         <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-slate-900/80 text-cyan-300 border border-slate-700 backdrop-blur-md">
           <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" aria-hidden="true"></span>
           <span id="cloud-badge" class="text-[11px] font-bold">آفلاین</span>
@@ -388,25 +358,8 @@
         </div>
       </div>
 
-      <!-- نوار باریک در حالت جمع‌شده: نام + مرحله + درصد -->
-      <div id="header-compact">
-        <div class="min-w-0 flex items-center gap-2">
-          <span class="text-lg leading-none" aria-hidden="true">🐆</span>
-          <div class="min-w-0">
-            <p id="compact-name" class="text-[13px] font-black text-white truncate leading-tight">عضو تیم اورست</p>
-            <p id="compact-stage" class="text-[10px] text-cyan-300 font-bold leading-tight">مرحله ۱ • شروع</p>
-          </div>
-        </div>
-        <div class="flex items-center gap-2 shrink-0">
-          <span id="compact-pct" class="text-[12px] font-black text-emerald-400">۰٪</span>
-          <div class="w-16 h-1.5 bg-slate-800 rounded-full overflow-hidden">
-            <div id="compact-bar" class="h-full bg-emerald-500 rounded-full transition-all duration-300" style="width:0%"></div>
-          </div>
-        </div>
-      </div>
-
       <!-- ۲) کارت قهرمان: آواتار + هویت + نوار XP -->
-      <div id="hero-card" class="relative bg-gradient-to-br from-indigo-900/90 via-blue-900/80 to-slate-900 rounded-3xl p-4 border border-blue-400/30 shadow-[0_10px_30px_-10px_rgba(37,99,235,0.5)] hero-card-body">
+      <div id="hero-card" class="relative bg-gradient-to-br from-indigo-900/90 via-blue-900/80 to-slate-900 rounded-3xl p-4 border border-blue-400/30 shadow-[0_10px_30px_-10px_rgba(37,99,235,0.5)]">
         <div class="flex items-center gap-4">
           <!-- آواتار با هاله و نشان سطح -->
           <div class="relative w-24 h-24 shrink-0">
@@ -446,29 +399,9 @@
       </div>
     </header>
 
-    <!-- ================= بنر هوشمند یادآور گزارش شبانه ================= -->
-    <div id="evening-reminder-banner" class="hidden mx-4 mt-2 p-2.5 bg-gradient-to-l from-amber-600 to-amber-800 border border-amber-400/60 rounded-2xl flex items-center justify-between text-xs text-amber-100 shadow-lg">
-      <div class="flex items-center gap-2">
-        <span class="text-lg">🌙</span>
-        <div>
-          <span class="font-extrabold text-white text-[11px]">زمان ثبت گزارش شبانه است!</span>
-          <span class="text-[9px] block text-amber-200">زنجیره ۷ روزه امروزت رو ثبت کن تا استریک نسوزه.</span>
-        </div>
-      </div>
-      <div class="flex items-center gap-1.5">
-        <button onclick="switchStage(2)" class="bg-slate-950 text-amber-300 font-extrabold px-2.5 py-1 rounded-xl text-[10px] hover:bg-slate-900 shadow">ثبت گزارش</button>
-        <button onclick="dismissEveningReminder()" title="بستن" class="text-white/80 hover:text-white px-1.5 py-0.5 text-xs font-bold">✕</button>
-      </div>
-    </div>
-
-    <!-- ================= Coach Card (همیشه قابل مشاهده) ================= -->
-    <div id="coach-card" class="px-4 pb-2" aria-live="polite"></div>
-
-    <!-- ================= بدنه اصلی مراحل ================= -->
-    <main class="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 space-y-4 pb-4 no-scrollbar">
 
       <!-- 🔵 مرحله ۱: شروع | ۷۲ ساعت اول -->
-      <section id="stage-1" class="stage-content space-y-3.5">
+      <section id="stage-1" class="stage-content px-4 pt-4 space-y-3.5">
         <div class="bg-gradient-to-l from-blue-950/90 to-slate-900 rounded-2xl p-4 border border-cyan-500/30 flex items-center justify-between gap-3 shadow-lg">
           <div class="min-w-0">
             <span class="inline-block text-[10px] font-bold bg-blue-500/20 text-cyan-300 px-2.5 py-0.5 rounded-full mb-1.5 border border-cyan-500/30">مرحله ۱: شروع | ۷۲ ساعت اول</span>
@@ -611,7 +544,7 @@
       </section>
 
       <!-- 🟢 مرحله ۲: حرکت | ۷ روز -->
-      <section id="stage-2" class="stage-content hidden space-y-3.5">
+      <section id="stage-2" class="stage-content px-4 pt-4 hidden space-y-3.5">
         <div class="bg-emerald-950/70 border border-emerald-600/40 rounded-2xl p-3.5">
           <div class="flex justify-between items-center">
             <div>
@@ -656,7 +589,7 @@
       </section>
 
       <!-- 🟠 مرحله ۳: ساخت | ۳۰ روز -->
-      <section id="stage-3" class="stage-content hidden space-y-3.5">
+      <section id="stage-3" class="stage-content px-4 pt-4 hidden space-y-3.5">
         <div class="bg-orange-950/70 border border-orange-600/40 rounded-2xl p-3.5 flex justify-between items-center">
           <div>
             <span class="text-[10px] bg-orange-600 text-white px-2 py-0.5 rounded-full font-bold">مرحله ۳: ساخت | ۳۰ روز</span>
@@ -721,7 +654,7 @@
       </section>
 
       <!-- 🟣 مرحله ۴: تکثیر | ۹۰ روز -->
-      <section id="stage-4" class="stage-content hidden space-y-3.5">
+      <section id="stage-4" class="stage-content px-4 pt-4 hidden space-y-3.5">
         <div class="bg-purple-950/70 border border-purple-600/40 rounded-2xl p-3.5">
           <span class="text-[10px] bg-purple-600 text-white px-2 py-0.5 rounded-full font-bold">مرحله ۴: تکثیر | ۹۰ روز</span>
           <h2 class="text-sm font-extrabold mt-1">قانون: «کاری را که نمی‌توانی منتقل کنی، هنوز تبدیل به سیستم نکرده‌ای.»</h2>
@@ -838,7 +771,7 @@
       </section>
 
       <!-- 🟡 مرحله ۵: راهبری | مستمر -->
-      <section id="stage-5" class="stage-content hidden space-y-3.5">
+      <section id="stage-5" class="stage-content px-4 pt-4 hidden space-y-3.5">
         <div class="bg-amber-950/70 border border-amber-500/40 rounded-2xl p-3.5">
           <span class="text-[10px] bg-amber-500 text-slate-950 px-2 py-0.5 rounded-full font-extrabold">مرحله ۵: راهبری مستمر (بدون پایان)</span>
           <h2 class="text-sm font-extrabold mt-1 text-amber-300">«راهبری یعنی آدم بساز، سیستم بساز، میراث بساز»</h2>
@@ -1134,6 +1067,6 @@
   <!-- اورلی جشن ارتقای مرحله -->
   <div id="celebrate-root" class="celebrate-root" aria-hidden="true"></div>
 
-  <script type="module" src="./app.js?v=0.9.10"></script>
+  <script type="module" src="./app.js?v=0.9.11"></script>
 </body>
 </html>
