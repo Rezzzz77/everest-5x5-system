@@ -7,7 +7,7 @@ import {
   loadFromStorage, saveToStorage, syncState, loadFromCloud, isSupabaseConfigured, testConnection,
   clearStorage, getDefaultData, saveProfile, sendBackupToN8n, exportStateAsJson, importStateFromJson,
   loadTeamMembers, approveMemberStage, requestStageApproval, shouldPreferRemote,
-  resolveInviteCode
+  resolveInviteCode, getMyInviteCode, createInviteCode, loadPendingApprovals, decideStageApproval
 } from './src/db.js';
 import {
   getSupabaseConfig, saveSupabaseConfig, clearSupabaseConfig, validateConfig,
@@ -1476,8 +1476,91 @@ function renderStage4() {
   renderOnlineTeam();
 }
 
+/* ---------------- درخواست‌های تأیید مرحله (زنجیرهٔ بالادست) ---------------- */
+
+async function renderPendingApprovals() {
+  const box = document.getElementById('pending-approvals');
+  if (!box) return;
+  const user = appState.user;
+  if (!user || user.local || !loadSession() || !isSupabaseConfigured()) {
+    box.innerHTML = '';
+    return;
+  }
+
+  let items = [];
+  try {
+    items = await loadPendingApprovals();
+  } catch (_) {
+    items = [];
+  }
+
+  if (!items.length) {
+    box.innerHTML = '';
+    return;
+  }
+
+  box.innerHTML = `
+    <div class="bg-slate-800/90 border border-amber-500/60 rounded-2xl p-3.5 space-y-2.5 shadow-lg">
+      <div class="flex justify-between items-center border-b border-slate-700/80 pb-2">
+        <h3 class="text-xs font-extrabold text-amber-300">🔔 درخواست‌های تأیید شما (${faDigits(items.length)})</h3>
+        <button onclick="renderPendingApprovals()" class="text-[10px] bg-amber-900/60 hover:bg-amber-800 text-amber-200 px-2.5 py-1 rounded-xl border border-amber-500/40 font-bold">⟳</button>
+      </div>
+      ${items.map(it => `
+        <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-700 flex justify-between items-center gap-2">
+          <div class="min-w-0">
+            <p class="text-[11px] font-bold text-white truncate">${escapeHtml(it.name)}</p>
+            <p class="text-[10px] text-slate-400">درخواست ورود به مرحله ${faDigits(it.targetStage)} · الان مرحله ${faDigits(it.stage)}</p>
+          </div>
+          <div class="flex gap-1 shrink-0">
+            <button onclick="decideApproval(${it.id}, true)" class="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold px-3 py-1.5 rounded-lg text-[11px]">تأیید</button>
+            <button onclick="decideApproval(${it.id}, false)" class="bg-slate-700 hover:bg-slate-600 text-slate-200 font-bold px-3 py-1.5 rounded-lg text-[11px]">رد</button>
+          </div>
+        </div>
+      `).join('')}
+    </div>`;
+}
+
+async function decideApproval(approvalId, approve) {
+  const r = await decideStageApproval(approvalId, approve);
+  if (!r.ok) {
+    alert(r.message || 'ثبت تصمیم ناموفق بود');
+    return;
+  }
+  await renderPendingApprovals();
+  await refreshOnlineTeam();
+}
+
 /* ---------------- دیده‌بانی آنلاین اعضای تیم برای بالاسری ---------------- */
 let onlineTeamCache = [];
+let myInviteCode = null;
+
+/** کد معرف خودم را از سرور می‌گیرد و در رابط می‌نویسد */
+async function loadMyInviteCode() {
+  myInviteCode = await getMyInviteCode();
+  const codeEl = document.getElementById('my-invite-code');
+  const preview = document.getElementById('my-invite-link-preview');
+  if (codeEl) codeEl.innerText = myInviteCode?.code || '—';
+  if (preview && myInviteCode?.code) {
+    const base = window.location.origin + window.location.pathname;
+    preview.innerText = `${base}?ref=${encodeURIComponent(myInviteCode.code)}`;
+  }
+  return myInviteCode;
+}
+
+/** ساخت کد معرف تازه برای خودم */
+async function generateMyInviteCode() {
+  const btn = document.getElementById('btn-new-invite-code');
+  if (btn) { btn.disabled = true; btn.innerText = 'در حال ساخت…'; }
+  const r = await createInviteCode(0, 0);
+  if (btn) { btn.disabled = false; btn.innerText = 'ساخت کد جدید'; }
+  if (!r.ok) {
+    alert(r.message || 'ساخت کد ناموفق بود');
+    return;
+  }
+  myInviteCode = { code: r.code };
+  await loadMyInviteCode();
+  renderOnlineTeam();
+}
 
 async function renderOnlineTeam() {
   const container = document.getElementById('online-team-container');
@@ -1487,11 +1570,19 @@ async function renderOnlineTeam() {
   const user = appState.user;
   const userEmail = (user?.email || '').trim().toLowerCase();
 
-  // تولید لینک دعوت
+  // تولید لینک دعوت بر پایهٔ کد معرف
   if (preview) {
     const base = window.location.origin + window.location.pathname;
-    const inviteUrl = userEmail ? `${base}?upline=${encodeURIComponent(userEmail)}` : `${base}?upline=${encodeURIComponent(user?.name || '')}`;
-    preview.innerText = inviteUrl;
+    const cached = myInviteCode?.code;
+    if (cached) {
+      preview.innerText = `${base}?ref=${encodeURIComponent(cached)}`;
+    } else if (userEmail) {
+      preview.innerText = `${base}?ref=`;
+    } else {
+      preview.innerText = '';
+    }
+    const codeEl = document.getElementById('my-invite-code');
+    if (codeEl) codeEl.innerText = cached || '—';
   }
 
   // در حالت بدون حساب یا آفلاین:
@@ -1684,6 +1775,7 @@ async function refreshOnlineTeam() {
   if (container) container.innerHTML = '<div class="text-[11px] text-slate-400 text-center py-2">در حال به‌روزرسانی زنده… ⏳</div>';
   try {
     onlineTeamCache = await loadTeamMembers();
+    await renderPendingApprovals();
   } catch (_) {
     onlineTeamCache = [];
   }
@@ -2228,6 +2320,10 @@ function startAIVoiceInput() {
 
 function initApp() {
   initTheme();
+  if (appState.user && !appState.user.local && loadSession() && isSupabaseConfigured()) {
+    loadMyInviteCode().catch(() => {});
+    renderPendingApprovals().catch(() => {});
+  }
   checkEveningReminder();
   try {
     const params = new URLSearchParams(window.location.search);
@@ -2396,6 +2492,10 @@ Object.assign(window, {
   handleBackupFileSelect,
   refreshOnlineTeam,
   copyMyInviteLink,
+  loadMyInviteCode,
+  generateMyInviteCode,
+  renderPendingApprovals,
+  decideApproval,
   toggleDarkMode,
   requestNotificationPermission,
   dismissEveningReminder,
