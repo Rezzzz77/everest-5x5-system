@@ -212,7 +212,10 @@
       white-space: nowrap; z-index: 2;
       background: linear-gradient(90deg, #fbbf24, #f97316);
       color: #0b0f19; border: 1px solid #fff;
-      font-size: 9px; font-weight: 900; padding: 2px 8px;
+      /* !important چون گروه Tailwind روی ریشه اجازه نمی‌داد */
+      font-size: 13px !important; font-weight: 900; padding: 3px 8px;
+      max-width: 112px; overflow: hidden; text-overflow: ellipsis;
+      line-height: 1.35; min-height: 20px;
       box-shadow: 0 4px 10px rgba(2,6,23,.55);
     }
   </style>
@@ -235,28 +238,26 @@
       <!-- مرحله ۱: ورود با ایمیل و رمز عبور یا لینک -->
       <div id="auth-step-email" class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-inner">
         <div>
-          <label class="text-xs text-slate-300 font-bold">نام و نام خانوادگی</label>
-          <input id="reg-name-input" type="text" placeholder="مثال: سارا محمدی" class="w-full mt-1 bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-white focus:border-blue-500 focus:outline-none" />
+          <label class="text-[13.5px] leading-6 text-slate-200 font-bold">نام و نام خانوادگی</label>
+          <input id="reg-name-input" type="text" placeholder="مثال: سارا محمدی" class="w-full mt-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 min-h-[44px] text-[13.5px] text-white focus:border-blue-500 focus:outline-none" />
         </div>
         <div>
-          <label class="text-xs text-slate-300 font-bold">نقش شما در تیم اورست *</label>
-          <select id="reg-role-select" onchange="toggleRoleUplineField()" class="w-full mt-1 bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-white focus:border-blue-500 focus:outline-none">
-            <option value="member">🎯 عضو تیم / مشاور فروش (پیشروی با تأیید راهبر)</option>
-            <option value="leader">👑 راهبر / لیدر تیم (سرپرست و ناظر تیم)</option>
-          </select>
-        </div>
-        <div id="reg-upline-box">
-          <label class="text-xs text-slate-300 font-bold">نام یا ایمیل راهبر / معرف شما *</label>
-          <input id="reg-upline-input" type="text" placeholder="مثال: leader@gmail.com یا نام راهبر" class="w-full mt-1 bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-white focus:border-blue-500 focus:outline-none" />
-          <p class="text-[10px] text-slate-400 mt-1">تأیید ورود شما به مراحل بعدی توسط این راهبر انجام خواهد شد.</p>
+          <label class="text-[13.5px] leading-6 text-slate-200 font-bold">شمارهٔ تلفن همراه *</label>
+          <input id="reg-phone" type="tel" dir="ltr" inputmode="tel" autocomplete="tel" placeholder="09121234567" class="w-full mt-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 min-h-[44px] text-[13.5px] text-white text-left focus:border-blue-500 focus:outline-none" />
+          <p class="text-[10px] text-slate-400 mt-1">برای ارتباط معرف و مشاور با شما؛ ورود همان با ایمیل و رمز است.</p>
         </div>
         <div>
-          <label class="text-xs text-slate-300 font-bold">ایمیل شما *</label>
-          <input id="reg-email" type="email" dir="ltr" autocomplete="email" placeholder="you@example.com" onkeydown="if(event.key==='Enter') document.getElementById('reg-password').focus()" class="w-full mt-1 bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-white text-left focus:border-blue-500 focus:outline-none" />
+          <label class="text-[13.5px] leading-6 text-slate-200 font-bold">کد معرف * <span class="text-amber-300">(اجباری)</span></label>
+          <input id="reg-invite-code" type="text" dir="ltr" autocomplete="off" placeholder="مثال: A7K2M9QX" oninput="this.value=this.value.toUpperCase().trim()" class="w-full mt-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 min-h-[44px] text-[13.5px] text-white text-left font-mono tracking-widest focus:border-amber-400 focus:outline-none" />
+          <p id="reg-invite-hint" class="text-[10px] text-slate-400 mt-1">بدون کد معرف ثبت‌نام ممکن نیست. تأیید هر مرحله توسط زنجیرهٔ معرف‌ها انجام می‌شود.</p>
         </div>
         <div>
-          <label class="text-xs text-slate-300 font-bold">رمز عبور (ورود آنی بدون معطلی ایمیل) *</label>
-          <input id="reg-password" type="password" dir="ltr" placeholder="حداقل ۶ کاراکتر" onkeydown="if(event.key==='Enter') handlePasswordAuth()" class="w-full mt-1 bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-white text-left focus:border-emerald-500 focus:outline-none font-mono" />
+          <label class="text-[13.5px] leading-6 text-slate-200 font-bold">ایمیل شما *</label>
+          <input id="reg-email" type="email" dir="ltr" autocomplete="email" placeholder="you@example.com" onkeydown="if(event.key==='Enter') document.getElementById('reg-password').focus()" class="w-full mt-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 min-h-[44px] text-[13.5px] text-white text-left focus:border-blue-500 focus:outline-none" />
+        </div>
+        <div>
+          <label class="text-[13.5px] leading-6 text-slate-200 font-bold">رمز عبور (ورود آنی بدون معطلی ایمیل) *</label>
+          <input id="reg-password" type="password" dir="ltr" placeholder="حداقل ۶ کاراکتر" onkeydown="if(event.key==='Enter') handlePasswordAuth()" class="w-full mt-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 min-h-[44px] text-[13.5px] text-white text-left focus:border-emerald-500 focus:outline-none font-mono" />
           <p class="text-[10px] text-emerald-400 mt-1">✓ ورود آنی بدون معطلی و بدون نیاز به دریافت ایمیل</p>
         </div>
         <button id="btn-password-auth" onclick="handlePasswordAuth()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold py-3 rounded-xl text-xs shadow-lg transition">
@@ -278,24 +279,24 @@
           <button onclick="backToEmailStep()" class="text-[10px] text-slate-400 hover:text-white">تغییر ایمیل</button>
         </div>
         <div>
-          <label class="text-xs text-slate-300 font-bold">کد ورود (۶ تا ۱۰ رقم) — اگر ایمیل کد دارد</label>
+          <label class="text-[13.5px] leading-6 text-slate-200 font-bold">کد ورود (۶ تا ۱۰ رقم) — اگر ایمیل کد دارد</label>
           <input id="reg-code" type="tel" inputmode="numeric" maxlength="10" dir="ltr" autocomplete="one-time-code" placeholder="123456"
-            class="w-full mt-1 bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-center tracking-[0.4em] font-mono text-base text-white focus:border-blue-500 focus:outline-none" />
+            class="w-full mt-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 min-h-[44px] text-center tracking-[0.4em] font-mono text-base text-white focus:border-blue-500 focus:outline-none" />
           <p class="text-[10px] text-slate-400 mt-1">اگر ایمیل فقط لینک دارد، روی همان لینک بزن؛ ورود خودکار انجام می‌شود.</p>
         </div>
         <div>
-          <label class="text-xs text-slate-300 font-bold">نام و نام خانوادگی *</label>
-          <input id="reg-name" type="text" placeholder="مثال: سارا محمدی" class="w-full mt-1 bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-white focus:border-blue-500 focus:outline-none" />
+          <label class="text-[13.5px] leading-6 text-slate-200 font-bold">نام و نام خانوادگی *</label>
+          <input id="reg-name" type="text" placeholder="مثال: سارا محمدی" class="w-full mt-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 min-h-[44px] text-[13.5px] text-white focus:border-blue-500 focus:outline-none" />
         </div>
         <div>
-          <label class="text-xs text-slate-300 font-bold">کد ملی / کد واحد بازاریابی نیوشانیک</label>
-          <input id="reg-id" type="text" inputmode="numeric" placeholder="کد ۱۰ رقمی" class="w-full mt-1 bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-white focus:border-blue-500 focus:outline-none" />
+          <label class="text-[13.5px] leading-6 text-slate-200 font-bold">کد ملی / کد واحد بازاریابی نیوشانیک</label>
+          <input id="reg-id" type="text" inputmode="numeric" placeholder="کد ۱۰ رقمی" class="w-full mt-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 min-h-[44px] text-[13.5px] text-white focus:border-blue-500 focus:outline-none" />
           <p class="text-[10px] text-slate-400 mt-1">فقط برای پروفایل شخصی؛ در سرور با سطح دسترسی خودت ذخیره می‌شود.</p>
         </div>
         <div>
-          <label class="text-xs text-slate-300 font-bold">ایمیل یا نام راهبر / معرف شما (جهت اتصال به تیم)</label>
-          <input id="reg-upline" type="text" placeholder="مثال: leader@gmail.com یا نام راهبر" class="w-full mt-1 bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-white focus:border-blue-500 focus:outline-none" />
-          <p class="text-[10px] text-slate-400 mt-1">با وارد کردن ایمیل راهبر، وضعیت پیشرفت شما به صورت خودکار در داشبورد تیم ثبت می‌شود.</p>
+          <label class="text-[13.5px] leading-6 text-slate-200 font-bold">کد معرف * <span class="text-amber-300">(اجباری)</span></label>
+          <input id="reg-invite-otp" type="text" dir="ltr" autocomplete="off" placeholder="مثال: A7K2M9QX" oninput="this.value=this.value.toUpperCase().trim()" class="w-full mt-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 min-h-[44px] text-[13.5px] text-white text-left font-mono tracking-widest focus:border-amber-400 focus:outline-none" />
+          <p class="text-[10px] text-slate-400 mt-1">کد معرف اجباری است؛ تأیید مراحل از طریق زنجیرهٔ معرف‌ها انجام می‌شود.</p>
         </div>
         <button onclick="verifyOtpAndStart()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold py-3 rounded-xl text-xs shadow-lg transition">
           ورود و استارت ۷۲ ساعت اول 🚀
@@ -317,7 +318,7 @@
           <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" aria-hidden="true"></span>
           <span id="cloud-badge" class="text-[11px] font-bold">آفلاین</span>
         </span>
-        <div class="flex items-center gap-1.5">
+        <div class="flex items-center gap-1.5 flex-wrap justify-end" id="icon-bar">
           <button onclick="toggleLeopard()" id="leopard-btn" aria-pressed="true" title="توقف انیمیشن کوهستان" class="icon-btn">🐆</button>
           <button onclick="toggleDarkMode()" id="dark-mode-btn" title="تغییر حالت شب/روز" class="icon-btn">🌙</button>
           <button onclick="requestNotificationPermission()" id="notif-btn" title="یادآور اعلان شبانه" class="icon-btn relative">🔔</button>
@@ -337,7 +338,7 @@
             <div id="leopard-progress" data-progress="0" class="leopard-ring" title="پیشرفت کل">
               <div id="leopard-avatar" class="leopard-avatar" data-level="1"></div>
             </div>
-            <span id="leopard-level-label" class="leopard-level-chip">LVL ۱ • تولهٔ نوزاد</span>
+            <span id="leopard-level-label" class="leopard-level-chip">سطح ۱ • تولهٔ نوزاد</span>
           </div>
 
           <!-- نام و پیشرفت -->
@@ -440,11 +441,11 @@
             <!-- ردیف ۱: نام و نسبت با ما -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div>
-                <label class="text-[10px] text-slate-300 font-bold block mb-1">نام و نام خانوادگی *</label>
+                <label class="text-[13px] leading-5 text-slate-200 font-bold block mb-1.5">نام و نام خانوادگی *</label>
                 <input id="l30-name" type="text" placeholder="مثال: علی رضایی" onkeydown="if(event.key==='Enter') addInitialList30Member()" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-white focus:border-blue-500 focus:outline-none" />
               </div>
               <div>
-                <label class="text-[10px] text-slate-300 font-bold block mb-1">نسبت شخص با ما *</label>
+                <label class="text-[13px] leading-5 text-slate-200 font-bold block mb-1.5">نسبت شخص با ما *</label>
                 <select id="l30-relation" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-white focus:border-blue-500 focus:outline-none">
                   <option value="دوست">دوست</option>
                   <option value="خانواده / فامیل نزدیک">خانواده / فامیل نزدیک</option>
@@ -460,7 +461,7 @@
             <!-- ردیف ۲: سطح ارتباط و نوع شخصیت شخص -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div>
-                <label class="text-[10px] text-slate-300 font-bold block mb-1">سطح ارتباط *</label>
+                <label class="text-[13px] leading-5 text-slate-200 font-bold block mb-1.5">سطح ارتباط *</label>
                 <select id="l30-level" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-white focus:border-blue-500 focus:outline-none">
                   <option value="گرم (صمیمی / ارتباط هفتگی)">🔥 گرم (صمیمی / ارتباط هفتگی)</option>
                   <option value="ولرم (معمولی / ارتباط گاه‌به‌گاه)">🌤 ولرم (معمولی / ارتباط گاه‌به‌گاه)</option>
@@ -468,7 +469,7 @@
                 </select>
               </div>
               <div>
-                <label class="text-[10px] text-slate-300 font-bold block mb-1">نوع شخصیت شخص *</label>
+                <label class="text-[13px] leading-5 text-slate-200 font-bold block mb-1.5">نوع شخصیت شخص *</label>
                 <select id="l30-personality" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-white focus:border-blue-500 focus:outline-none">
                   <option value="قرمز (قاطع، رهبر، نتیجه‌گرا)">🔴 قرمز (قاطع، هدفمند، لیدر)</option>
                   <option value="زرد (صمیمی، حامی، اهل کمک)">🟡 زرد (صمیمی، حامی، مهربان)</option>
@@ -481,7 +482,7 @@
             <!-- ردیف ۳: زمینه همکاری و زمان اولین ارتباط‌گیری -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div>
-                <label class="text-[10px] text-slate-300 font-bold block mb-1">همکاری در زمینه کار یا معرفی محصول *</label>
+                <label class="text-[13px] leading-5 text-slate-200 font-bold block mb-1.5">همکاری در زمینه کار یا معرفی محصول *</label>
                 <select id="l30-category" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-white focus:border-blue-500 focus:outline-none">
                   <option value="همکاری کاری (بیزنس / فرصت)">💼 همکاری کاری (بیزنس / فرصت درآمدی)</option>
                   <option value="معرفی محصول (مشتری / سلامتی)">📦 معرفی محصول (مشتری سلامت‌محور)</option>
@@ -489,7 +490,7 @@
                 </select>
               </div>
               <div>
-                <label class="text-[10px] text-slate-300 font-bold block mb-1">زمان اولین ارتباط‌گیری</label>
+                <label class="text-[13px] leading-5 text-slate-200 font-bold block mb-1.5">زمان اولین ارتباط‌گیری</label>
                 <input id="l30-time" type="text" placeholder="مثال: شنبه ساعت ۱۸ یا تاریخ" onkeydown="if(event.key==='Enter') addInitialList30Member()" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-white focus:border-blue-500 focus:outline-none" />
               </div>
             </div>
@@ -560,7 +561,7 @@
               🎙 ثبت با ویس
             </button>
           </div>
-          <textarea id="s2-note" rows="2" placeholder="نتیجه امروز، بازخوردها و آموخته‌هایت را بنویس..." class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white focus:border-emerald-500 focus:outline-none"></textarea>
+          <textarea id="s2-note" rows="2" placeholder="نتیجه امروز، بازخوردها و آموخته‌هایت را بنویس..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 min-h-[44px] text-[13.5px] text-white focus:border-emerald-500 focus:outline-none"></textarea>
           <button onclick="submitDailyReport(2)" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold py-2.5 rounded-xl text-xs shadow-lg transition">
             ثبت گزارش شبانه و تکمیل روز ✅
           </button>
@@ -855,15 +856,15 @@
         </div>
 
         <div>
-          <label class="text-[11px] font-bold text-slate-300">Project URL</label>
+          <label class="text-[13px] leading-5 font-bold text-slate-200">Project URL</label>
           <input id="cloud-url" type="text" dir="ltr" placeholder="https://xxxxx.supabase.co"
-            class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white text-left focus:border-sky-500 focus:outline-none" />
+            class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 min-h-[44px] text-[13.5px] text-white text-left focus:border-sky-500 focus:outline-none" />
         </div>
 
         <div>
-          <label class="text-[11px] font-bold text-slate-300">anon public key</label>
+          <label class="text-[13px] leading-5 font-bold text-slate-200">anon public key</label>
           <textarea id="cloud-key" rows="2" dir="ltr" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6..."
-            class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-[10px] text-white text-left focus:border-sky-500 focus:outline-none"></textarea>
+            class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 min-h-[44px] text-[13.5px] text-white text-left focus:border-sky-500 focus:outline-none"></textarea>
           <p class="text-[10px] text-slate-400 mt-1">این کلید برای استفاده در کلاینت طراحی شده؛ کلید service_role را هرگز اینجا نگذار.</p>
         </div>
 
@@ -881,9 +882,9 @@
             <span>⚡</span> پشتیبان‌گیری خودکار (n8n Webhook)
           </h4>
           <div>
-            <label class="text-[11px] font-bold text-slate-300">n8n Webhook URL</label>
+            <label class="text-[13px] leading-5 font-bold text-slate-200">n8n Webhook URL</label>
             <input id="n8n-url" type="text" dir="ltr" placeholder="https://n8n.your-domain.com/webhook/..."
-              class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white text-left focus:border-amber-500 focus:outline-none" />
+              class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 min-h-[44px] text-[13.5px] text-white text-left focus:border-amber-500 focus:outline-none" />
           </div>
           <button onclick="triggerN8nBackup()" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-2 rounded-xl text-xs">ارسال نسخه پشتیبان به n8n</button>
         </div>
@@ -894,9 +895,9 @@
             <span>🤖</span> مربی هوش مصنوعی (DeepSeek AI)
           </h4>
           <div>
-            <label class="text-[11px] font-bold text-slate-300">DeepSeek API Key</label>
+            <label class="text-[13px] leading-5 font-bold text-slate-200">DeepSeek API Key</label>
             <input id="cloud-deepseek-key" type="password" dir="ltr" placeholder="sk-..."
-              class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white text-left font-mono focus:border-purple-500 focus:outline-none" />
+              class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 min-h-[44px] text-[13.5px] text-white text-left font-mono focus:border-purple-500 focus:outline-none" />
           </div>
           <div class="grid grid-cols-2 gap-2">
             <button onclick="testDeepSeekKey('cloud')" class="bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 rounded-xl text-[11px]">تست اتصال AI</button>
@@ -939,15 +940,15 @@
           ★ نکته مهم: هر بار که انگیزه‌ات کم شد، هدفت را بلند بخوان!
         </div>
         <div>
-          <label class="text-[11px] font-bold text-slate-300">چرا این مسیر را انتخاب کرده‌ام و هدف مالی من چیست؟</label>
-          <textarea id="my-why-input" rows="2" class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white"></textarea>
+          <label class="text-[13px] leading-5 font-bold text-slate-200">چرا این مسیر را انتخاب کرده‌ام و هدف مالی من چیست؟</label>
+          <textarea id="my-why-input" rows="2" class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 min-h-[44px] text-[13.5px] text-white"></textarea>
         </div>
         <div>
           <div class="flex justify-between items-center">
-            <label class="text-[11px] font-bold text-slate-300">داستان کوتاه، ساده و صادقانه من:</label>
+            <label class="text-[13px] leading-5 font-bold text-slate-200">داستان کوتاه، ساده و صادقانه من:</label>
             <button onclick="startVoiceInput('my-story-input')" class="text-[10px] text-blue-400">🎙 ضبط صوتی</button>
           </div>
-          <textarea id="my-story-input" rows="3" class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white"></textarea>
+          <textarea id="my-story-input" rows="3" class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 min-h-[44px] text-[13.5px] text-white"></textarea>
         </div>
         <button onclick="saveGoalAndStory()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-extrabold py-2.5 rounded-xl text-xs">ذخیره و بستن</button>
       </div>
@@ -1046,6 +1047,6 @@
   <!-- اورلی جشن ارتقای مرحله -->
   <div id="celebrate-root" class="celebrate-root" aria-hidden="true"></div>
 
-  <script type="module" src="./app.js?v=0.9.4"></script>
+  <script type="module" src="./app.js?v=0.9.5"></script>
 </body>
 </html>

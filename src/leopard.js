@@ -415,7 +415,7 @@ export function initLeopardAvatar(
 
     const label = labelId ? doc.getElementById(labelId) : null;
     if (label) {
-      label.textContent = `LVL ${faDigits(item.level)} • ${item.titleFa}`;
+      label.textContent = `سطح ${faDigits(item.level)} • ${item.titleFa}`;
       label.setAttribute('aria-label', `مرحلهٔ ${faDigits(item.stage)} از ۵ — ${item.titleFa}`);
       label.setAttribute('title', `${item.code} — سطح ${faDigits(item.level)}`);
     }
