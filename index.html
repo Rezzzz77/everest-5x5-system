@@ -672,15 +672,18 @@
           <div class="bg-purple-950/80 p-1.5 rounded-xl border border-purple-700/40"><div class="font-extrabold text-purple-300">۵. واگذار کن</div><div class="text-[9px] text-slate-400">فرد مستقل</div></div>
         </div>
 
-        <!-- افزودن و مدیریت اعضای تیم در چرخه تکثیر -->
+        <!-- ماتریس ۵ گام تکثیر برای هر عضو مستقیم -->
         <div class="bg-slate-800/90 border border-purple-600/40 rounded-2xl p-3.5 space-y-2.5">
-          <div class="flex justify-between items-center">
-            <h3 class="text-xs font-extrabold text-purple-300">👥 ماتریس تکثیر نفرات مستقیم من</h3>
+          <div class="flex justify-between items-center gap-2">
+            <h3 class="text-xs font-extrabold text-purple-300">👥 ماتریس ۵ گام تکثیر</h3>
+            <span class="text-[9px] text-slate-500 shrink-0">برای هر عضو جدا ثبت می‌شود</span>
           </div>
+
           <div class="flex gap-2">
-            <input id="dup-member-name" type="text" placeholder="نام عضو جدید تیم..." class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white" />
-            <button onclick="addDuplicationMember()" class="bg-purple-600 hover:bg-purple-500 text-white px-3.5 py-2 rounded-xl text-xs font-bold">+ افزودن عضو</button>
+            <input id="dup-member-name" type="text" maxlength="60" onkeydown="if(event.key==='Enter') addDuplicationMember()" placeholder="نام عضو جدید..." class="flex-1 min-w-0 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 min-h-[40px] text-xs text-white focus:border-purple-500 focus:outline-none" />
+            <button onclick="addDuplicationMember()" class="shrink-0 bg-purple-600 hover:bg-purple-500 text-white px-3 py-2 min-h-[40px] rounded-xl text-xs font-bold">+ افزودن</button>
           </div>
+
           <div id="duplication-members-container" class="space-y-2"></div>
         </div>
 
@@ -1075,6 +1078,6 @@
   <!-- اورلی جشن ارتقای مرحله -->
   <div id="celebrate-root" class="celebrate-root" aria-hidden="true"></div>
 
-  <script type="module" src="./app.js?v=0.9.15"></script>
+  <script type="module" src="./app.js?v=0.9.16"></script>
 </body>
 </html>
