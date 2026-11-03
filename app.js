@@ -7,7 +7,8 @@ import {
   loadFromStorage, saveToStorage, syncState, loadFromCloud, isSupabaseConfigured, testConnection,
   clearStorage, getDefaultData, saveProfile, sendBackupToN8n, exportStateAsJson, importStateFromJson,
   loadTeamMembers, approveMemberStage, requestStageApproval, shouldPreferRemote,
-  resolveInviteCode, getMyInviteCode, createInviteCode, loadPendingApprovals, decideStageApproval
+  resolveInviteCode, getMyInviteCode, createInviteCode, loadPendingApprovals, decideStageApproval,
+  loadMyProfile
 } from './src/db.js';
 import {
   getSupabaseConfig, saveSupabaseConfig, clearSupabaseConfig, validateConfig,
@@ -656,8 +657,10 @@ async function handlePasswordAuth() {
           role: appState.user?.role || resolvedRole,
           upline: appState.user?.upline || resolvedUpline
         };
-        if (appState.user.role === 'leader') appState.approvedStage = 5;
       }
+      // مرحلهٔ تأیید همیشه از پروفایل authoritative خوانده می‌شود؛
+      // state_data ممکن است کهنه باشد و نباید تأیید راهبر را پنهان کند.
+      await syncApprovalFromProfile();
     } catch (_) {}
     saveToStorage(appState);
 
@@ -748,6 +751,9 @@ async function verifyOtpAndStart() {
 /** پس از ورود: اگر داده ابری جدیدتر بود، جایگزین کن */
 async function pullCloudAfterLogin() {
   try {
+    // ۱) مرحلهٔ تأیید از پروفایل (authoritative) خوانده می‌شود، نه از state_data.
+    await syncApprovalFromProfile();
+
     const remote = await loadFromCloud();
     if (!remote) return;
     if (shouldPreferRemote(remote.lastModified, appState.lastModified)) {
@@ -767,7 +773,44 @@ async function pullCloudAfterLogin() {
         }
       }
     }
+    // ۲) بعد از ادغام، دوباره مرحلهٔ تأیید را از پروفایل سینک کن (پروفایل اولویت دارد)
+    await syncApprovalFromProfile();
   } catch (_) { /* آفلاین */ }
+}
+
+/**
+ * خواندن مرحلهٔ تأیید از جدول profiles (نه state_data) و اعمال روی appState.
+ * این منبع حقیقتِ باز شدن مرحله است؛ state_data ممکن است کهنه باشد.
+ */
+async function syncApprovalFromProfile() {
+  if (!loadSession() || !isSupabaseConfigured() || appState.user?.local) return;
+  const profile = await loadMyProfile();
+  if (!profile) return;
+
+  const approved = Number(profile.approved_stage) || 1;
+  const pending = profile.pending_stage ? Number(profile.pending_stage) : null;
+  const role = profile.role || appState.user?.role || 'member';
+
+  let changed = false;
+  if (appState.approvedStage !== approved) {
+    appState.approvedStage = approved;
+    changed = true;
+  }
+  if ((appState.pendingApprovalStage || null) !== pending) {
+    appState.pendingApprovalStage = pending;
+    changed = true;
+  }
+  if (appState.user && appState.user.role !== role) {
+    appState.user.role = role;
+    changed = true;
+  }
+
+  if (changed) {
+    saveToStorage(appState);
+    renderTabs();
+    renderLeopardAvatar();
+    renderCoachCard();
+  }
 }
 
 /** حالت بدون حساب: فقط روی همین دستگاه */
@@ -2533,6 +2576,8 @@ function initApp() {
 
   // همگام‌سازی با ابر (اگر Supabase تنظیم شده باشد)
   if (isSupabaseConfigured() && loadSession() && !appState.user.local) {
+    // مرحلهٔ تأیید همیشه از پروفایل authoritative خوانده می‌شود (نه state_data)
+    syncApprovalFromProfile().catch(() => {});
     loadFromCloud(appState.user.id).then(remote => {
       if (!remote) return;
       cloudLabel('ok');
