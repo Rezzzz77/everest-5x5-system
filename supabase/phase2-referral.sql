@@ -523,6 +523,53 @@ begin
 end $$;
 
 -- ------------------------------------------------------------
+--  A.۱۱) بازسازی پیوند معرف برای رکوردهای ناقص
+--  مقایسه با upper(trim(...)) انجام می‌شود و منطق تریگر bind_referrer
+--  تکرار می‌شود. ردیف‌هایی که referrer_code دارند ولی referred_by
+--  ندارند، به صاحب کد وصل می‌شوند. بقیه دست‌نخورده می‌مانند.
+-- ------------------------------------------------------------
+update public.profiles p
+set referred_by   = ic.owner_id,
+    upline_id     = coalesce(p.upline_id, ic.owner_id),
+    referrer_code = upper(trim(p.referrer_code))
+from public.invite_codes ic
+where p.referred_by is null
+  and p.referrer_code is not null
+  and upper(trim(p.referrer_code)) = ic.code
+  and ic.owner_id <> p.id;
+
+-- ------------------------------------------------------------
+--  A.۱۱) بازسازی پیوند معرف برای رکوردهای ناقص
+-- ------------------------------------------------------------
+update public.profiles p
+set referred_by   = ic.owner_id,
+    upline_id     = coalesce(p.upline_id, ic.owner_id),
+    referrer_code = upper(trim(p.referrer_code))
+from public.invite_codes ic
+where p.referred_by is null
+  and p.referrer_code is not null
+  and upper(trim(p.referrer_code)) = ic.code
+  and ic.owner_id <> p.id;
+
+-- ------------------------------------------------------------
+--  A.۱۲) بازسازی درخواست‌های تأیید معلق
+--  رکوردهایی که pending_stage دارند ولی ردیفی در stage_approvals ندارند
+-- ------------------------------------------------------------
+insert into public.stage_approvals (user_id, target_stage, approver_id)
+select p.id, p.pending_stage, public.resolve_approver(p.id, p.pending_stage)
+from public.profiles p
+where p.pending_stage is not null
+  and p.pending_stage between 2 and 5
+  and coalesce(p.approved_stage, 1) < p.pending_stage
+  and public.resolve_approver(p.id, p.pending_stage) is not null
+  and not exists (
+    select 1 from public.stage_approvals a
+    where a.user_id = p.id
+      and a.target_stage = p.pending_stage
+      and a.status = 'pending'
+  );
+
+-- ------------------------------------------------------------
 --  ================= پایان بخش A — اجرا امن است =================
 -- ------------------------------------------------------------
 
